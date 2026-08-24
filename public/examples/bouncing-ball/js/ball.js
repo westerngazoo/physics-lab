@@ -14,7 +14,7 @@
 const NS = "http://www.w3.org/2000/svg";
 const G = 9.81;
 
-const state = { h0: 4.0, e: 0.75, vx: 1.6, t: 0, playing: true, rate: 1 };
+const state = { h0: 4.0, e: 0.75, t: 0, playing: true, rate: 1 };
 
 // ---- world <-> screen. 12 x 6 world units into a 1000 x 500 viewBox, so
 // ---- both axes scale alike and a parabola is not skewed into something else.
@@ -59,8 +59,11 @@ function el(name, attrs) {
 const scene = document.getElementById("scene");
 
 function render() {
-  const { h0, e, vx } = state;
+  const { h0, e } = state;
   const { segs, tRest } = flights(h0, e, 14);
+  // Time axis scaled per configuration: the whole path to rest always fits
+  // the frame, whatever e does to the rest time (it blows up as e -> 1).
+  const vx = 10.4 / tRest;
   const t = Math.min(state.t, tRest);
   scene.textContent = "";
 
@@ -126,7 +129,6 @@ function readout(t, y, segs, tRest) {
     n === 0 ? state.h0.toFixed(3) + " m" : (state.h0 * frac).toFixed(3) + " m";
   document.getElementById("r-energy").textContent = (frac * 100).toFixed(1) + " %";
   document.getElementById("r-rest").textContent = tRest.toFixed(3) + " s";
-  document.getElementById("r-e").textContent = state.e.toFixed(2);
   document.getElementById("atrest").hidden = t < tRest - 1e-9;
 }
 
