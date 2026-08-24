@@ -349,9 +349,18 @@ method; τ is the circle constant; Node never enters (mooted rev 2's Q2);
 rev 2's Q5 (park WASM) is reversed — WASM is the core; `ga2.mjs` is
 deleted (mooted Q6).
 
+**Settled by owner review, round three:** built `.wasm` binaries are
+committed to git (Q4 → yes); prim vocabulary follows motoreel's as a
+convention, chosen for pedagogy — the classroom and the studio draw with
+the same concepts (Q5); and the **program order** is fixed top-down:
+*physics learning first, then engineering implementation on physics
+systems (motoreel/garust), then engineering for its own sake (the
+Clifford language).* The lab is stage 1; S1 starts immediately.
+
 **Still open:**
 
-1. **Naming:** `examples/` → `lessons/`? (Recommend yes.)
+1. **Naming:** `examples/` → `lessons/`? (Recommend yes; S1 uses
+   `lessons/` for the new path, `examples/` stands until S2 ports.)
 2. **Process weight:** motoreel's full R-/SPEC- loop, or RFC + checks +
    CI? (Recommend the lighter one; revisit if the runtime ABI starts
    changing under lessons.)
