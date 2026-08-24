@@ -5,6 +5,14 @@
 - **Scope:** physics-lab's architecture, its pedagogic structure, and its
   seams with motoreel/garust/goosethropic.
 
+**Mission, stated so the architecture can be judged against it:**
+physics-lab is the interactive classroom of a **GA-first study program**.
+garust is its mathematical kernel, motoreel its film studio, and the
+conventional-notation lessons (optics, gravity, waves) are on-ramps — the
+syllabus's destination is geometric algebra, and the house measures its
+angles against **τ**. The first draft of this RFC omitted both; this
+revision makes them structural (§3.6–3.7, §4.7).
+
 ---
 
 ## 1. The ecosystem — four repos, four jobs
@@ -93,12 +101,24 @@ CSP; the drive-it-in-a-browser verification habit.
    motoreel film embedded as an asset, not a browser simulation.
 3. **One source of truth for the math.** The model the browser executes
    is the model the checks import. Same file, same bits.
-4. **Bespoke models, shared shell.** Physics is never flattened into
-   generic engine data; everything *around* it (controls, readouts,
-   playback, steppers, the hub) is declarative and generated.
+4. **Bespoke models, shared kernels, shared shell.** Physics is never
+   flattened into generic engine data; everything *around* it (controls,
+   readouts, playback, steppers, the hub) is declarative and generated.
+   Genuine mathematical kernels — the world mapping, and the small GA
+   algebra of §4.7 — are shared code, exactly like garust is to motoreel.
 5. **Zero build, zero runtime dependencies, CSP unchanged.** ES modules
    give us imports without a bundler; Node runs the same modules for
    checks. Node becomes a *dev* dependency only.
+6. **τ is the circle constant.** A full turn is one τ, matching garust
+   and motoreel's standing convention ("angles are radians measured
+   against TAU"). This governs prose, formulas, and code: mode angles are
+   `kτ/(2(N+1))`, the wave chain's cutoff speed is `4/τ ≈ 64%` of c, and
+   π survives only where a genuine half-turn is meant. The current
+   lessons are retrofitted in S1.
+7. **GA is the destination.** The lab exists inside a GA-first study
+   program. The syllabus carries a first-class GA track (§4.7) whose
+   reference implementation is garust itself — the classroom's algebra is
+   held to the kernel's bits, not to a second opinion.
 
 ---
 
@@ -213,17 +233,52 @@ same machine"). The lesson's claims cite the film's *measured* bands.
 This is how integrator-physics enters the classroom without smuggling an
 integrator into the browser.
 
+### 4.7 The GA track — the point of the whole thing
+
+**A tiny exact kernel, `engine/ga2.mjs`.** Deliberately small: `Cl(2,0)`
+— four-component multivectors `(1, e1, e2, e12)`, the geometric product
+as a 4×4 table, reverse, rotor `exp` — and, in a second stage, planar PGA
+`Cl(2,0,1)` for points, lines, meet/join, and 2D motors. On the order of
+150 lines, exact arithmetic, pure functions. This is a *kernel* in the
+§3.4 sense: shared like `world.mjs`, never "physics flattened to data".
+
+**Held to garust's bits.** For GA lessons, layer L2 is not Python — it is
+**garust itself**: `checks/ga-cross/` holds a small cargo test that runs
+the same operations through the real kernel and emits JSON; `check.mjs`
+compares the classroom's numbers against it. The lab teaches the algebra
+the engine actually computes with.
+
+**First GA lessons (syllabus order):**
+
+1. *One Turn Is τ* — arcs, angle addition, and the house convention
+   itself as a lesson: why the circle constant is the full turn.
+2. *Two Mirrors Make a Rotation* — reflections compose into a rotor; the
+   angle doubles. Ties directly to the mirror bench that already exists,
+   and it is the deepest elementary fact in GA: rotations are what
+   reflections do in pairs.
+3. *The Wedge* — oriented area, why `b∧a = −a∧b`, and where `e12` lives.
+4. *Rotors, Not Angles* — the sandwich `R v R̃`, composition without
+   angle addition headaches; checked against garust `Vga2`.
+5. *Motors* (film-assisted) — screws in the plane and in space, with the
+   motoreel M3 glyph films as embedded assets: the classroom shows what
+   the studio measured.
+
+**Bridges from the on-ramp lessons.** The optics bench gains a GA note —
+a mirror *is* a reflection sandwich, and the two-mirror rotor lesson
+reuses its bench; conventional lessons point forward into the track
+rather than existing beside it.
+
 ---
 
 ## 5. Migration plan — five stages, each shippable
 
 | Stage | Work | Outcome |
 |---|---|---|
-| S1 | Extract each page's math into `model.mjs` (ES module); write `check.mjs` importing it; keep pages working via `<script type="module">` | one-source-of-truth math; Node checks in CI |
+| S1 | Extract each page's math into `model.mjs` (ES module); write `check.mjs` importing it; keep pages working via `<script type="module">`. **Retrofit τ across current lessons' code and prose** | one-source-of-truth math; Node checks in CI; house convention holds |
 | S2 | `controls.mjs` + `readouts.mjs` + `playback.mjs` from `lesson.json`; delete the triplicated wiring | pages shrink to view + notes |
 | S3 | `lesson.json` full schema + `stepper.mjs`; port the wave stepper, add optics/ball dissections | the pedagogic template exists |
 | S4 | `tools/index.mjs` + generated hub with prereq ordering | the learning path |
-| S5 | `tryThis`/`misconceptions` rendering; first motoreel asset lesson (chaos, once R-0005 ships) | the full framework, proven by four lessons |
+| S5 | `tryThis`/`misconceptions` rendering; **`engine/ga2.mjs` (Cl(2,0)) + the first two GA lessons + the garust cross-check**; first motoreel asset lesson (chaos, once R-0005 ships) | the full framework, proven by six lessons incl. the GA track |
 
 Estimate: S1–S2 are a focused session; S3–S5 another. No stage breaks
 the deployed site.
@@ -242,7 +297,15 @@ the deployed site.
 4. **Prereq graph now or at ~6 lessons?** (Recommend the schema now —
    it is one JSON field — and the fancy path UI at 6.)
 5. **garust → WASM for live GA lessons:** park explicitly as
-   out-of-scope until motoreel M4? (Recommend park.)
+   out-of-scope until motoreel M4? (Recommend park — `ga2.mjs` covers 2D
+   lessons exactly; WASM becomes worth it when 3D PGA lessons want the
+   real kernel live.)
+6. **`ga2.mjs` scope:** start with `Cl(2,0)` only, adding planar PGA when
+   the motors lesson needs it? (Recommend yes — smallest kernel that
+   makes lessons 1–4 exact.)
+7. **τ retrofit timing:** fold into S1 as proposed, or do it immediately
+   as its own commit? (Recommend S1 — one pass over the math while it is
+   being extracted anyway.)
 
 ## 7. Explicitly out of scope
 
