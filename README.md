@@ -39,11 +39,38 @@ Shared shell: `public/js/lab.js` — the world→screen mapping (throws on a
 skewed aspect), SVG construction, control binding. Models stay per-page
 code on purpose; element/family tables and configs are data.
 
-## Local
+## Checking it yourself
+
+**The examples** — serve the site and click around; there is no build step:
 
 ```sh
 cd public && python3 -m http.server 8000
 ```
+
+**The physics** — every quantitative claim the pages make is asserted in
+`checks/`, in plain Python with no dependencies. Exit 0 means every claim
+holds:
+
+```sh
+python3 checks/run.py
+```
+
+- `checks/optics.py` — the five converging cases and the diverging family;
+  every principal-ray construction (lens *and* mirror) passes through the
+  solver's image point across a grid of distances and focal lengths.
+- `checks/bouncing_ball.py` — the geometric series really sums to
+  `T = √(2h₀/g)·(1+e)/(1−e)`; apex heights contain no `g`; and a 2 kHz
+  fixed-step integrator measurably steals energy — the reason the page
+  solves bounce times instead of stepping them.
+- `checks/wave.py` — the sine transform round-trips exactly; eigenmode
+  evolution matches an independent Verlet integration to ~1e-9; energy is
+  constant; the lattice cutoff descends to 2/π of `c` and never below; the
+  pluck's energy-weighted speed climbs with N.
+
+The page scripts port this math by hand (JS mirrors Python), so the checks
+guard the *model*; the browser is still the test bench for the *pages* —
+the shared mapping in `public/js/lab.js` additionally throws at load if a
+diagram's axes ever disagree on scale.
 
 ## Deploy
 
