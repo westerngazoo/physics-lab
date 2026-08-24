@@ -399,12 +399,13 @@ Clifford language).* The lab is stage 1; S1 starts immediately.
 6. **A physics language, someday.** The owner: if a lesson-authoring DSL
    is ever needed, "use Lisp or a better, more modern option." Recorded
    as parked with a named trigger — two concrete authoring pains Rust
-   cannot express cleanly — and a named first refusal: before any Lisp
-   (Steel and Janet embed well in Rust), the candidate is the owner's own
-   **Clifford language**, whose whole premise is GA in the type system.
-   A physics classroom authored in a GA-native language would close the
-   loop this ecosystem is drawing. Until that trigger: Rust *is* the
-   physics language here.
+   cannot express cleanly. **Amended by owner decision (2026-08-24):**
+   the Clifford language *continues its May pivot* — it is an
+   effect-system / separation-logic language whose own audit dropped the
+   GA framing as decorative. It keeps first refusal as *the owner's
+   language*, judged on what it actually is; a GA-native lesson DSL, if
+   ever triggered, would be a separate small thing over garust. Until
+   any trigger: Rust *is* the physics language here.
 
 ## 7. Explicitly out of scope
 
