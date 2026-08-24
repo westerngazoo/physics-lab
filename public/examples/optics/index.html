@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Real or Virtual &mdash; Goosethropic Lab</title>
+<title>Real or Virtual &mdash; Goosethropic Physics</title>
 <meta name="description" content="An interactive thin-lens ray diagram: move the object through the focal point and watch the image switch between real and virtual, for converging and diverging lenses." />
 <meta property="og:title" content="Real or Virtual &mdash; Goosethropic Lab" />
 <meta property="og:description" content="Interactive thin-lens ray diagram. Drag the object through the focal point and watch the image switch between real and virtual." />
@@ -69,6 +69,18 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 .ob .chip.real { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
 .ob .chip.virtual { border-style: dashed; border-color: var(--ash); color: var(--steel); }
 .ob .chip.none { background: var(--line-soft); }
+.ob .chip.el { border-color: var(--steel-dim); color: var(--bone); }
+.ob .chip.fam-conv { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+.ob .chip.fam-div { border-style: dashed; border-color: var(--ash); color: var(--steel); }
+.ob .traits { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.ob .tr-head { background: var(--ink-2); padding: 9px 13px; font-family: var(--mono); font-size: 10px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--ash); }
+.ob .tr-head.on { color: var(--gold); }
+.ob .tr-row { background: var(--panel); padding: 8px 13px; display: flex; justify-content: space-between;
+  gap: 14px; font-family: var(--mono); font-size: 11.5px; color: var(--ash); }
+.ob .tr-row span:last-child { color: var(--steel-dim); text-align: right; }
+.ob .tr-row.on { background: var(--red-dim); }
+.ob .tr-row.on span { color: var(--red-hot); }
 .ob .nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 1px;
   background: var(--line); border: 1px solid var(--line); }
 .ob .num { background: var(--panel); padding: 10px 12px; }
@@ -104,7 +116,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 <div class="ob">
   <header>
     <h1>Real or Virtual</h1>
-    <p>Slide the object through the focal point and watch what happens to the image. The rays are the actual construction &mdash; where they cross is where the image is. When they don't cross, the dashed lines show where they only <em>appear</em> to come from.</p>
+    <p>Four devices, one equation. Slide the object through the focal point of a lens or a mirror and watch the image flip between real and virtual. The rays are the actual construction &mdash; where they cross (or where their dashed back-extensions pretend to) is where the image is.</p>
   </header>
 
   <div class="bench">
@@ -115,11 +127,13 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 
   <div class="panel">
     <div class="controls">
-      <div class="ctl">
-        <label class="k" for="lens">Lens</label>
-        <div class="seg" role="group" aria-label="Lens type">
-          <button id="conv" aria-pressed="true">Converging</button>
-          <button id="div" aria-pressed="false">Diverging</button>
+      <div class="ctl" style="grid-column: 1 / -1">
+        <label class="k">Element</label>
+        <div class="seg" role="group" aria-label="Optical element">
+          <button data-el="lens-conv" aria-pressed="true">Lens &middot; converging</button>
+          <button data-el="lens-div" aria-pressed="false">Lens &middot; diverging</button>
+          <button data-el="mirror-conc" aria-pressed="false">Mirror &middot; concave</button>
+          <button data-el="mirror-conv" aria-pressed="false">Mirror &middot; convex</button>
         </div>
       </div>
       <div class="ctl">
@@ -153,10 +167,17 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 
   <div class="panel">
     <div class="legend">
-      <span><i class="swatch" style="background:var(--ob-r1)"></i> parallel in &rarr; through F&prime;</span>
-      <span><i class="swatch" style="background:var(--ob-r2)"></i> straight through the centre</span>
-      <span><i class="swatch" style="background:var(--ob-r3)"></i> through F &rarr; parallel out</span>
+      <span><i class="swatch" style="background:var(--ob-r1)"></i> <span id="l-r1"></span></span>
+      <span><i class="swatch" style="background:var(--ob-r2)"></i> <span id="l-r2"></span></span>
+      <span><i class="swatch" style="background:var(--ob-r3)"></i> <span id="l-r3"></span></span>
       <span><i class="swatch" style="background:var(--ob-image)"></i> image</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="strip" style="margin-top:0">
+      <h2>The abstraction &mdash; four devices, one equation, two families</h2>
+      <div id="traits" class="traits"></div>
     </div>
   </div>
 
@@ -164,7 +185,8 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
     <p class="note"><b>Real</b> means light actually arrives there &mdash; the refracted rays genuinely cross, and you could put a screen at that spot and see the picture. It lands on the far side of the lens, and it is upside down.</p>
     <p class="note"><b>Virtual</b> means the light never converges. It leaves the lens still spreading apart, and your eye traces it back to a place the light only <em>seems</em> to come from &mdash; dashed, because nothing is there. No screen will catch it. It sits on the same side as the object, and it stays upright.</p>
     <p class="note"><b>Why the glass gets fatter.</b> Drag the focal-length slider and the lens changes shape, because those are the same fact: the lensmaker's relation 1/f = (n&minus;1)(1/R<sub>1</sub> &minus; 1/R<sub>2</sub>) ties focal length to how sharply the surfaces curve. Short focal length means strongly curved, fat glass; long means nearly flat. The outline here is indicative &mdash; the thin-lens model still does all its bending at the centre plane, which is why the rays kink there rather than at the two surfaces.</p>
-    <p class="note">A <b>diverging lens</b> can only ever do the second thing. Sweep the object anywhere you like: the image stays virtual, upright, and smaller. That is why the case strip has just one zone.</p>
+    <p class="note"><b>The real category is the sign of f.</b> A convex lens and a concave mirror share the same five cases; a concave lens and a convex mirror share the same single one. Whether light bends through glass or bounces off silver barely matters &mdash; both obey <code>1/f = 1/d&#8338; + 1/d&#7522;</code>, and the sign of <code>f</code> decides everything about the case structure. The only trait the <em>kind</em> owns is geography: a lens forms its real images on the far side (light passes through), a mirror on the object&rsquo;s own side (light comes back). The traits table above is generated from the same data the solver runs on, so it cannot drift from the model.</p>
+    <p class="note">A <b>diverging element</b> &mdash; concave lens or convex mirror &mdash; can only ever make the virtual kind of image. Sweep the object anywhere: virtual, upright, reduced, every time. That is why its case strip has just one zone, and why shop-security mirrors (convex) show a small upright world regardless of where anything stands.</p>
   </div>
 
   <footer>

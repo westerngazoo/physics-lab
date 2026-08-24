@@ -31,8 +31,13 @@ Concretely, so far that has meant:
 
 | Page | Claim it makes |
 |---|---|
-| `examples/optics/` | At the focal point the image doesn't just recede — it ceases to exist; the rays leave exactly parallel. |
-| `examples/bouncing-ball/` | Infinitely many bounces, finite total time: `T = √(2h₀/g)·(1+e)/(1−e)`. |
+| `examples/optics/` | Four devices, one equation: a convex lens and a concave mirror share the same five cases — the deep category is the sign of f, not lens vs mirror. |
+| `examples/bouncing-ball/` | Infinitely many bounces, finite total time: `T = √(2h₀/g)·(1+e)/(1−e)` — and the apex heights contain no g at all. |
+| `examples/wave-equation/` | Newton on a chain of beads *is* the wave equation, up to a limit you can take with a slider. Evolution by exact eigenmodes, verified against an independent integrator to 2e-9. |
+
+Shared shell: `public/js/lab.js` — the world→screen mapping (throws on a
+skewed aspect), SVG construction, control binding. Models stay per-page
+code on purpose; element/family tables and configs are data.
 
 ## Local
 
