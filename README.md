@@ -33,6 +33,7 @@ Concretely, so far that has meant:
 |---|---|
 | `examples/optics/` | Four devices, one equation: a convex lens and a concave mirror share the same five cases — the deep category is the sign of f, not lens vs mirror. |
 | `examples/bouncing-ball/` | Infinitely many bounces, finite total time: `T = √(2h₀/g)·(1+e)/(1−e)` — and the apex heights contain no g at all. |
+| `lessons/three-mechanics/` | One motion, three characterizations: acceleration −g (Newton), action excess exactly ε²K with the minimum at the flown path (Lagrange), H constant per flight and ×e² per bounce (Hamilton) — asserted across Earth/Moon/Mars/Jupiter gravities on the crate the page runs. |
 | `lessons/two-mirrors/` | Two reflections are one rotation by twice the mirror angle — computed by garust (`Vga2`) compiled to WebAssembly; `cargo test` asserts the claims on the same crate the page runs. |
 | `examples/wave-equation/` | Newton on a chain of beads *is* the wave equation, up to a limit you can take with a slider. Evolution by exact eigenmodes, verified against an independent integrator to 2e-9. |
 

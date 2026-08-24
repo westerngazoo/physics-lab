@@ -4,7 +4,10 @@
 # on this machine and ships no cross-targets.
 set -e
 export RUSTC="$(rustup which rustc)"
-cargo build --target wasm32-unknown-unknown --release -p lesson-two-mirrors
-cp target/wasm32-unknown-unknown/release/lesson_two_mirrors.wasm \
-   public/lessons/two-mirrors/lesson.wasm
-echo "staged: $(wc -c < public/lessons/two-mirrors/lesson.wasm) bytes"
+for L in two-mirrors three-mechanics; do
+  CRATE="lesson-$(echo $L)"
+  cargo build --target wasm32-unknown-unknown --release -p "$CRATE"
+  WASM="target/wasm32-unknown-unknown/release/$(echo $CRATE | tr - _).wasm"
+  cp "$WASM" "public/lessons/$L/lesson.wasm"
+  echo "staged $L: $(wc -c < public/lessons/$L/lesson.wasm) bytes"
+done

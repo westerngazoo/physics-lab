@@ -1,0 +1,12 @@
+[package]
+name = "lesson-three-mechanics"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Deliberately no garust: a one-dimensional fall is scalar mechanics, and
+# per RFC-001 §4.7 a lesson says so where GA is not the honest tool. The
+# three-formulations comparison IS the content here.
+[dependencies]

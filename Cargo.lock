@@ -31,6 +31,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-three-mechanics"
+version = "0.1.0"
+
+[[package]]
 name = "lesson-two-mirrors"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>One Fall, Three Mechanics — Goosethropic Physics</title>
+<meta name="description" content="The same bouncing ball through Newton's forces, Lagrange's action, and Hamilton's phase space — with adjustable gravity, and every claim asserted by tests on the code the page runs." />
+<meta property="og:title" content="One Fall, Three Mechanics — Goosethropic Physics" />
+<meta property="og:description" content="One motion, three characterizations: F = ma, δS = 0, and a level set of H — interactive, exact, with gravity as a slider." />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="../../assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../../css/tokens.css" />
+<link rel="stylesheet" href="../../css/fonts.css" />
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--body); }
+.ls { max-width: 1060px; margin: 0 auto; padding: clamp(16px, 3.5vw, 40px);
+  display: flex; flex-direction: column; gap: 18px; }
+.ls .eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--red-hot); }
+.ls h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: .01em; text-transform: uppercase; margin: 6px 0 10px; color: var(--bone); }
+.ls .lede { font-family: var(--body); font-weight: 400; color: var(--steel-dim);
+  font-size: 16.5px; margin: 0; max-width: 68ch; line-height: 1.6; }
+.ls .stage { background: var(--ink-2); border: 1px solid var(--line); }
+.ls .stage svg { display: block; width: 100%; height: auto; }
+.ls .stagehead { display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 14px 0; }
+.ls .stagehead h2 { font-family: var(--display); font-weight: 700; font-size: 18px;
+  letter-spacing: .02em; text-transform: uppercase; margin: 0; color: var(--bone); }
+.ls .stagehead .law { font-family: var(--mono); font-size: 12px; color: var(--gold); }
+.ls .panel { background: var(--panel); border: 1px solid var(--line); padding: 16px 18px; }
+.ls #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; align-items: end; }
+.ls label.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-bottom: 8px; }
+.ls .val { color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; height: 22px; margin: 0; }
+.ls input[type=range]:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.ls .row { display: flex; gap: 8px; }
+.ls button { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 10px 16px; border: 1px solid var(--line);
+  background: transparent; color: var(--bone); cursor: pointer; flex: 1; }
+.ls button:hover { border-color: var(--red); color: var(--red-hot); }
+.ls button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.ls .speed { display: flex; gap: 6px; }
+.ls .speed button[aria-pressed=true] { background: var(--red-dim); border-color: var(--red); color: var(--red-hot); }
+.ls #readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); margin: 0; }
+.ls .num { background: var(--panel); padding: 11px 13px; }
+.ls .num dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ash); margin: 0 0 3px; }
+.ls .num dd { font-family: var(--mono); font-size: 16px; font-weight: 500; margin: 0;
+  color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls .num.hero dd { color: var(--gold); }
+.ls .note { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 15.5px; line-height: 1.68; }
+.ls .note b { color: var(--bone); font-weight: 500; }
+.ls .note + .note { margin-top: 11px; }
+.ls .note code { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+.ls footer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash-dim);
+  border-top: 1px solid var(--line); padding-top: 14px; }
+.ls a { color: var(--ash); text-decoration: none; }
+.ls a:hover { color: var(--red-hot); }
+</style>
+</head>
+<body>
+
+<div class="ls">
+  <header>
+    <div class="eyebrow">Goosethropic Physics &middot; Mechanics &middot; computed in Rust via WebAssembly</div>
+    <h1>One Fall, Three Mechanics</h1>
+    <p class="lede">The same bouncing ball, described three ways &mdash; and all three are the <em>same fact</em>. Newton sees a constant force; Lagrange sees the one path whose action cannot be lowered; Hamilton sees a point riding a level set of the energy. Change gravity and watch all three descriptions move together, because there is only one motion. Unit mass throughout.</p>
+  </header>
+
+  <div class="stage">
+    <div class="stagehead"><h2>I &middot; Newton &mdash; forces</h2><span class="law">y&#776; = &minus;g</span></div>
+    <svg viewBox="0 0 1000 500" role="img" aria-label="Trajectory with force arrow"><g id="scene0"></g></svg>
+  </div>
+
+  <div class="stage">
+    <div class="stagehead"><h2>II &middot; Lagrange &mdash; the action</h2><span class="law">&delta;S = 0,&nbsp; S = &int;(T &minus; V)&thinsp;dt</span></div>
+    <svg viewBox="0 0 800 500" role="img" aria-label="Action versus path perturbation"><g id="scene1"></g></svg>
+  </div>
+
+  <div class="stage">
+    <div class="stagehead"><h2>III &middot; Hamilton &mdash; phase space</h2><span class="law">H = p&sup2;/2 + g&thinsp;y,&nbsp; y&#775; = &part;H/&part;p,&nbsp; p&#775; = &minus;&part;H/&part;y</span></div>
+    <svg viewBox="0 0 1000 560" role="img" aria-label="Phase portrait with energy level sets"><g id="scene2"></g></svg>
+  </div>
+
+  <div class="panel">
+    <div id="controls">
+      <div>
+        <label class="k">Playback</label>
+        <div class="row"><button id="play">Play</button></div>
+      </div>
+      <div>
+        <label class="k">Speed</label>
+        <div class="speed" role="group" aria-label="Playback speed">
+          <button data-rate="0.25">0.25&times;</button>
+          <button data-rate="1" aria-pressed="true">1&times;</button>
+          <button data-rate="2">2&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel"><dl id="readouts"></dl></div>
+
+  <div class="panel">
+    <p class="note"><b>I &middot; Newton.</b> One statement: the force is constant, <code>&minus;g</code> per unit mass, drawn as the red arrow on the ball &mdash; the same length at the apex as at the floor, which is the whole content of the law. Slide gravity and the arrow grows while every clock tightens; the apex <em>heights</em> never move, because <code>h&#8345; = e&sup2;&#8345;h&#8320;</code> contains no g.</p>
+    <p class="note"><b>II &middot; Lagrange.</b> Forget forces. Consider every path the ball <em>could</em> take between two bounces, and score each by its action <code>S = &int;(T &minus; V)dt</code>. Drag the <code>&epsilon;</code> slider to bend the path (dashed, panel I) and watch its score climb the parabola in panel II: the flown path sits exactly at the bottom, and the excess is exactly <code>&epsilon;&sup2;K</code> &mdash; the linear term vanishes <em>because</em> the flown path obeys Newton. Stationary action and <code>F = ma</code> are one claim wearing two notations.</p>
+    <p class="note"><b>III &middot; Hamilton.</b> Forget paths. The whole state is one point <code>(y, p)</code>, and it rides a level set of <code>H = p&sup2;/2 + g&thinsp;y</code> &mdash; the nested curves in panel III, one per flight. In flight, H is conserved to the last digit. At each bounce the point teleports down to the next level set: <code>H &rarr; e&sup2;H</code>, every time, exactly. That staircase is where this system stops being conservative &mdash; and seeing <em>where</em> a formulation's guarantee ends is as much the lesson as the guarantee.</p>
+    <p class="note"><b>Verify it yourself.</b> <code>cargo test -p lesson-three-mechanics</code> asserts all of it on the same crate this page runs: acceleration is <code>&minus;g</code> in every flight (C1); the action excess equals <code>&epsilon;&sup2;K</code> against an independent quadrature, minimum at the flown path (C2); H constant per flight (C3); <code>e&sup2;</code> per bounce (C4); and the phase point emitted to this page rides its level set (C5) &mdash; across Earth, Moon, Mars and Jupiter gravities.</p>
+  </div>
+
+  <footer><a href="../../index.html">&larr; Physics lab</a> &middot; closed forms only, nothing stepped &middot; time slider runs in fractions of the rest time so one sweep spans any gravity &middot; unit mass</footer>
+</div>
+
+<script data-lesson="." src="../../js/runtime.js"></script>
+</body>
+</html>

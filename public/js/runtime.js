@@ -9,10 +9,15 @@
  * Prim records (motoreel's vocabulary as a convention):
  *   [0, x, y, style]                point
  *   [1, x1, y1, x2, y2, style]      segment
+ *   [2, n, x0,y0, ... , style]      polyline (n points)
  *   [3, x1, y1, x2, y2, style]      arrow (runtime draws the head)
- * Styles index lesson.json's palette. Coordinates are world units; the
- * world box comes from lesson.json and must scale both axes alike -- a
- * skewed mapping throws at load, as always.
+ *   [9, view]                       switch target view for what follows
+ * Styles index lesson.json's palette. A lesson has one view (#scene,
+ * lesson.world) or several (lesson.views: [{world, viewBox, uniform?}],
+ * painted into #scene0..#sceneN). Geometry views must scale both axes
+ * alike -- the skew guard throws, as always; a view may declare
+ * "uniform": false ONLY where axes carry different quantities (a phase
+ * portrait, a graph), which is a statement, not an escape hatch.
  */
 "use strict";
 
@@ -58,14 +63,28 @@ function fatal(title, detail) {
   }
   try {
 
-  // ---- world <-> screen (uniform, or refuse to run) ----------------------
-  const W = lesson.world, VB = lesson.viewBox;
-  const px = VB.w / (W.x1 - W.x0), py = VB.h / (W.y1 - W.y0);
-  if (Math.abs(px - py) > 1e-9 * Math.max(px, py)) {
-    throw new Error("runtime: non-uniform world scale (" + px + " vs " + py + ")");
+  // ---- world <-> screen, per view (uniform unless declared otherwise) ---
+  function mapping(world, vb, uniform, label) {
+    const mx = vb.w / (world.x1 - world.x0), my = vb.h / (world.y1 - world.y0);
+    if (uniform !== false && Math.abs(mx - my) > 1e-9 * Math.max(mx, my)) {
+      throw new Error("runtime: non-uniform world scale in " + label +
+        " (" + mx + " vs " + my + ")");
+    }
+    return {
+      sx: x => (x - world.x0) * mx,
+      sy: y => vb.h - (y - world.y0) * my,
+      wx: p => world.x0 + p / mx,
+    };
   }
-  const sx = x => (x - W.x0) * px;
-  const sy = y => VB.h - (y - W.y0) * py;
+  const views = lesson.views
+    ? lesson.views.map((v, i) => ({
+        map: mapping(v.world, v.viewBox, v.uniform, "view " + i),
+        scene: document.getElementById("scene" + i),
+      }))
+    : [{
+        map: mapping(lesson.world, lesson.viewBox, true, "the view"),
+        scene: document.getElementById("scene"),
+      }];
 
   // ---- controls generated from lesson.json -------------------------------
   const state = {};
@@ -111,30 +130,48 @@ function fatal(title, detail) {
   };
 
   // ---- painting ----------------------------------------------------------
-  const scene = document.getElementById("scene");
   const styles = lesson.styles;
 
   function paint(buf, n) {
-    scene.textContent = "";
+    for (const v of views) v.scene.textContent = "";
+    let view = views[0];
     let i = 0;
     while (i < n) {
       const tag = buf[i];
-      if (tag === 0) {
+      const { sx, sy } = view.map;
+      if (tag === 9) {
+        view = views[buf[i + 1] | 0];
+        i += 2;
+      } else if (tag === 0) {
         const [x, y, st] = [buf[i + 1], buf[i + 2], buf[i + 3]];
-        scene.appendChild(el("circle", { cx: sx(x), cy: sy(y), r: 4,
+        view.scene.appendChild(el("circle", { cx: sx(x), cy: sy(y), r: 4.5,
           fill: css(st) }));
         i += 4;
+      } else if (tag === 2) {
+        const cnt = buf[i + 1] | 0;
+        const st = buf[i + 2 + 2 * cnt];
+        const s = styles[st | 0];
+        let pts = "";
+        for (let j = 0; j < cnt; j++) {
+          pts += (j ? " " : "") + sx(buf[i + 2 + 2 * j]).toFixed(2) + "," +
+                 sy(buf[i + 3 + 2 * j]).toFixed(2);
+        }
+        view.scene.appendChild(el("polyline", { points: pts, fill: "none",
+          stroke: css(st), "stroke-width": s.width ?? 2,
+          "stroke-dasharray": s.dash ? "6 5" : "none",
+          "stroke-linejoin": "round", "stroke-linecap": "round" }));
+        i += 3 + 2 * cnt;
       } else if (tag === 1 || tag === 3) {
         const [x1, y1, x2, y2, st] = [buf[i+1], buf[i+2], buf[i+3], buf[i+4], buf[i+5]];
         const s = styles[st | 0];
-        scene.appendChild(el("line", { x1: sx(x1), y1: sy(y1), x2: sx(x2), y2: sy(y2),
+        view.scene.appendChild(el("line", { x1: sx(x1), y1: sy(y1), x2: sx(x2), y2: sy(y2),
           stroke: css(st), "stroke-width": s.width ?? 2,
           "stroke-dasharray": s.dash ? "6 5" : "none", "stroke-linecap": "round" }));
         if (tag === 3) {
           const ang = Math.atan2(sy(y2) - sy(y1), sx(x2) - sx(x1));
           const L = 11, Wd = 4.5;
           const hx = sx(x2), hy = sy(y2);
-          scene.appendChild(el("path", {
+          view.scene.appendChild(el("path", {
             d: "M " + hx + " " + hy +
                " L " + (hx - L * Math.cos(ang) + Wd * Math.sin(ang)) + " " +
                        (hy - L * Math.sin(ang) - Wd * Math.cos(ang)) +
