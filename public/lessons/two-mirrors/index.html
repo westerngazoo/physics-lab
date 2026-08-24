@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Two Mirrors Make a Rotation — Goosethropic Physics</title>
+<meta name="description" content="Reflect a vector in one mirror, then another: you get a rotation by twice the angle between the mirrors. In geometric algebra this is an identity you can read, and here it is computed live by the same GA kernel that powers the rest of the ecosystem." />
+<meta property="og:title" content="Two Mirrors Make a Rotation — Goosethropic Physics" />
+<meta property="og:description" content="The first GA-native lesson: rotors are what reflections do in pairs, computed live by garust compiled to WebAssembly." />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="../../assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../../css/tokens.css" />
+<link rel="stylesheet" href="../../css/fonts.css" />
+<style>
+/* Lesson shell — palette and type from tokens.css. --wv-wall reused for
+   the steel mirror stroke so the styles table stays on shared tokens. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--body);
+  --wv-wall: var(--steel-dim); }
+.ls { max-width: 1060px; margin: 0 auto; padding: clamp(16px, 3.5vw, 40px);
+  display: flex; flex-direction: column; gap: 18px; }
+.ls .eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--red-hot); }
+.ls h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: .01em; text-transform: uppercase; margin: 6px 0 10px; color: var(--bone); }
+.ls .lede { font-family: var(--body); font-weight: 400; color: var(--steel-dim);
+  font-size: 16.5px; margin: 0; max-width: 68ch; line-height: 1.6; }
+.ls .claim { border: 1px solid var(--gold); background: var(--gold-dim); padding: 13px 17px;
+  font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--gold); }
+.ls .stage { background: var(--ink-2); border: 1px solid var(--line); }
+.ls .stage svg { display: block; width: 100%; height: auto; }
+.ls .panel { background: var(--panel); border: 1px solid var(--line); padding: 16px 18px; }
+.ls #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; align-items: end; }
+.ls label.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-bottom: 8px; }
+.ls .val { color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; height: 22px; margin: 0; }
+.ls input[type=range]:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.ls .row { display: flex; gap: 8px; }
+.ls button { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 10px 16px; border: 1px solid var(--line);
+  background: transparent; color: var(--bone); cursor: pointer; flex: 1; }
+.ls button:hover { border-color: var(--red); color: var(--red-hot); }
+.ls button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.ls .speed { display: flex; gap: 6px; }
+.ls .speed button[aria-pressed=true] { background: var(--red-dim); border-color: var(--red); color: var(--red-hot); }
+.ls #readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); margin: 0; }
+.ls .num { background: var(--panel); padding: 11px 13px; }
+.ls .num dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ash); margin: 0 0 3px; }
+.ls .num dd { font-family: var(--mono); font-size: 16px; font-weight: 500; margin: 0;
+  color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls .num.hero dd { color: var(--gold); }
+.ls .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--mono);
+  font-size: 10.5px; letter-spacing: .06em; color: var(--ash); }
+.ls .legend span { display: inline-flex; align-items: center; gap: 8px; }
+.ls .swatch { width: 18px; height: 2.5px; display: inline-block; }
+.ls .note { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 15.5px; line-height: 1.68; }
+.ls .note b { color: var(--bone); font-weight: 500; }
+.ls .note + .note { margin-top: 11px; }
+.ls .note code { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+.ls .eq { font-family: var(--mono); font-size: 15px; color: var(--gold); background: var(--ink-2);
+  border: 1px solid var(--line); padding: 10px 14px; margin: 10px 0; overflow-x: auto; white-space: nowrap; }
+.ls footer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash-dim);
+  border-top: 1px solid var(--line); padding-top: 14px; }
+.ls a { color: var(--ash); text-decoration: none; }
+.ls a:hover { color: var(--red-hot); }
+</style>
+</head>
+<body>
+
+<div class="ls">
+  <header>
+    <div class="eyebrow">Goosethropic Physics &middot; Geometric Algebra &middot; computed by garust via WebAssembly</div>
+    <h1>Two Mirrors Make a Rotation</h1>
+    <p class="lede">Reflect a vector across one mirror, then across another. What you get is a rotation &mdash; by <em>twice</em> the angle between the mirrors, no matter which vector you started with. Nothing on this page is animated by hand: every frame is garust computing sandwiches.</p>
+  </header>
+
+  <div class="claim">b (a v a) b&nbsp;&nbsp;=&nbsp;&nbsp;(b a) v (a b)&nbsp;&nbsp;=&nbsp;&nbsp;R v R&#771;&nbsp;,&nbsp;&nbsp;&nbsp;R = b a &mdash; the rotor <em>is</em> the pair of reflections, reassociated.</div>
+
+  <div class="stage">
+    <svg id="svg" viewBox="0 0 1000 800" role="img" aria-label="Two mirrors and a reflected vector">
+      <g id="scene"></g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div id="controls">
+      <div>
+        <label class="k">Sweep</label>
+        <div class="row"><button id="play">Sweep mirror B</button></div>
+      </div>
+      <div>
+        <label class="k">Speed</label>
+        <div class="speed" role="group" aria-label="Sweep speed">
+          <button data-rate="0.25">0.25&times;</button>
+          <button data-rate="1" aria-pressed="true">1&times;</button>
+          <button data-rate="2">2&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <dl id="readouts"></dl>
+  </div>
+
+  <div class="panel">
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--steel-dim)"></i> mirror A</span>
+      <span><i class="swatch" style="background:var(--gold)"></i> mirror B</span>
+      <span><i class="swatch" style="background:var(--bone)"></i> v</span>
+      <span><i class="swatch" style="background:var(--ash)"></i> v after mirror A (dashed)</span>
+      <span><i class="swatch" style="background:var(--red-hot)"></i> v after both mirrors</span>
+      <span><i class="swatch" style="background:var(--gold)"></i> &times; where the single rotor says it lands</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="note"><b>Watch the doubling.</b> Sweep mirror B and compare the two readouts: the rotation of <code>v</code> is always exactly twice the mirror angle. Drag the <code>v</code> slider instead and the rotation does not change at all &mdash; the rotor <code>R = b a</code> never heard of <code>v</code>. That is why rotors compose cleanly where angle bookkeeping gets messy: they are built from the mirrors, not from the things being rotated.</p>
+    <p class="note"><b>The gold &times; is the whole argument.</b> The red arrow is computed the long way: two sandwiches, <code>b (a v a) b</code>. The &times; is one sandwich with the rotor <code>R = b a</code>. They coincide to the last floating-point digit &mdash; the <em>two paths differ by</em> readout shows the actual separation, around 10&#8315;&#185;&#8310; &mdash; because they are the same expression with the parentheses moved. Associativity is the proof.</p>
+    <p class="note"><b>Try the degenerate cases.</b> Set both mirrors to the same angle: the rotation reads 0 &mdash; reflecting twice across one mirror undoes itself. Set them a quarter turn (0.25&nbsp;τ) apart: <code>v</code> comes back rotated half a turn, and the rotor reads <code>&#10216;R&#10217;&#8320; = 0</code>, pure <code>e&#8321;&#8322;</code>.</p>
+    <p class="note"><b>Verify it yourself.</b> The claims on this page are assertions in the same crate the page runs: <code>cargo test -p lesson-two-mirrors</code> checks C1&ndash;C5 across a τ-fraction grid of mirror and vector angles &mdash; including that the rotor's components follow <code>cos&nbsp;Δ</code> and <code>&minus;sin&nbsp;Δ</code>, pinned against garust's own conventions rather than assumed.</p>
+  </div>
+
+  <footer><a href="../../index.html">&larr; Physics lab</a> &middot; angles in turns (τ) &middot; computed by garust <code>Vga2</code> compiled to WebAssembly (38&nbsp;KB) &middot; the page's only JavaScript is the shared runtime</footer>
+</div>
+
+<script data-lesson="." src="../../js/runtime.js"></script>
+</body>
+</html>

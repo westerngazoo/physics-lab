@@ -1,0 +1,12 @@
+# physics-lab lesson crates — Rust on garust, compiled to wasm32 for the
+# browser and tested natively. cargo test here runs the same code the
+# pages run; that identity is the whole point (RFC-001 §4.0).
+[workspace]
+resolver = "2"
+members = ["lessons/two-mirrors/crate"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"

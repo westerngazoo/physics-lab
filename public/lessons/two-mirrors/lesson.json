@@ -1,0 +1,34 @@
+{
+  "slug": "two-mirrors",
+  "title": "Two Mirrors Make a Rotation",
+  "topic": "geometric-algebra",
+  "world": { "x0": -2.0, "x1": 2.0, "y0": -1.6, "y1": 1.6 },
+  "viewBox": { "w": 1000, "h": 800 },
+  "params": {
+    "alpha": { "label": "Mirror A angle", "min": 0, "max": 1, "step": 0.001,
+               "value": 0.0, "unit": "τ", "digits": 3,
+               "scale": 6.283185307179586 },
+    "beta":  { "label": "Mirror B angle", "min": 0, "max": 1, "step": 0.001,
+               "value": 0.125, "unit": "τ", "digits": 3,
+               "scale": 6.283185307179586 },
+    "phi":   { "label": "Vector v angle", "min": 0, "max": 1, "step": 0.001,
+               "value": 0.055, "unit": "τ", "digits": 3,
+               "scale": 6.283185307179586 }
+  },
+  "sweep": { "param": "beta", "rate": 0.04, "label": "Sweep mirror B" },
+  "readouts": [
+    { "slot": 0, "label": "Mirror angle Δ", "fmt": "turns3" },
+    { "slot": 1, "label": "Rotation of v", "fmt": "turns3", "hero": true },
+    { "slot": 2, "label": "Rotor ⟨R⟩₀", "fmt": "fix3" },
+    { "slot": 3, "label": "Rotor e₁₂", "fmt": "fix3" },
+    { "slot": 4, "label": "Two paths differ by", "fmt": "sci" }
+  ],
+  "styles": [
+    { "var": "--wv-wall",    "width": 2.5 },
+    { "var": "--gold",       "width": 2.5 },
+    { "var": "--bone",       "width": 3 },
+    { "var": "--ash",        "width": 2, "dash": true },
+    { "var": "--red-hot",    "width": 3 },
+    { "var": "--gold",       "width": 2 }
+  ]
+}

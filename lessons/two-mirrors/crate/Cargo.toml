@@ -1,0 +1,10 @@
+[package]
+name = "lesson-two-mirrors"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]   # cdylib -> .wasm; rlib -> native tests
+
+[dependencies]
+garust = { path = "../../../../garust" }
