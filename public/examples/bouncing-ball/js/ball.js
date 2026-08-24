@@ -11,16 +11,27 @@
  * which is only convincing if the numbers on screen actually agree with it.
  */
 
-const NS = "http://www.w3.org/2000/svg";
+// ---- physics + presentation config (data) ------------------------------
+// Everything tunable lives here; the model below is pure code over it.
+const CONFIG = {
+  h0: 4.0,                    // drop height, m
+  e: 0.75,                    // restitution: speed fraction kept per impact
+  g: 9.81,                    // gravity, m/s^2 (slider spans Moon..Jupiter)
+  gPresets: { moon: 1.62, earth: 9.81, jupiter: 24.79 },
+  segments: 14,               // bounces in the flight table (apex 15 < 1 mm)
+  apexCutoff: 0.045,          // hide apex markers below this height, m
+  ballRadius: 0.075,          // drawn ball radius, world units
+  timeSpan: 10.4,             // world-x units the full path is scaled into
+  world: { x0: -0.6, x1: 11.4, y0: -0.6, y1: 5.4 },
+  viewBox: { w: 1000, h: 500 },
+};
 
-const state = { h0: 4.0, e: 0.75, g: 9.81, t: 0, playing: true, rate: 1 };
+const state = { h0: CONFIG.h0, e: CONFIG.e, g: CONFIG.g, t: 0, playing: true, rate: 1 };
 
-// ---- world <-> screen. 12 x 6 world units into a 1000 x 500 viewBox, so
-// ---- both axes scale alike and a parabola is not skewed into something else.
-const W = { x0: -0.6, x1: 11.4, y0: -0.6, y1: 5.4 };
-const VB = { w: 1000, h: 500 };
-const sx = x => (x - W.x0) / (W.x1 - W.x0) * VB.w;
-const sy = y => VB.h - (y - W.y0) / (W.y1 - W.y0) * VB.h;
+// Shared shell: uniform mapping (throws on a skewed aspect) + SVG helper.
+const { sx, sy } = Lab.world(CONFIG.world, CONFIG.viewBox);
+const el = Lab.el;
+const W = CONFIG.world, VB = CONFIG.viewBox;
 
 /** Flight segments: segment n starts at t_n with upward speed v_n.
  * Gravity sets every time and speed here -- but notice it cancels out of
@@ -51,20 +62,14 @@ function heightAt(t, segs, g) {
   return 0;
 }
 
-function el(name, attrs) {
-  const e = document.createElementNS(NS, name);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
-  return e;
-}
-
 const scene = document.getElementById("scene");
 
 function render() {
   const { h0, e, g } = state;
-  const { segs, tRest } = flights(h0, e, g, 14);
+  const { segs, tRest } = flights(h0, e, g, CONFIG.segments);
   // Time axis scaled per configuration: the whole path to rest always fits
   // the frame, whatever e does to the rest time (it blows up as e -> 1).
-  const vx = 10.4 / tRest;
+  const vx = CONFIG.timeSpan / tRest;
   const t = Math.min(state.t, tRest);
   scene.textContent = "";
 
@@ -94,7 +99,7 @@ function render() {
     if (s.drop) continue;
     const tApex = s.t0 + s.dur / 2;
     const hApex = h0 * Math.pow(e, 2 * s.n);
-    if (hApex < 0.045) continue;
+    if (hApex < CONFIG.apexCutoff) continue;
     scene.appendChild(el("line", {
       x1: sx(tApex * vx), y1: sy(0), x2: sx(tApex * vx), y2: sy(hApex),
       stroke: "var(--bb-apex)", "stroke-width": 1, "stroke-dasharray": "2 4", opacity: 0.55
@@ -108,7 +113,8 @@ function render() {
   const y = heightAt(t, segs, g);
   const ballX = t * vx;
   scene.appendChild(el("circle", {
-    cx: sx(ballX), cy: sy(y + 0.075), r: 0.075 / (W.y1 - W.y0) * VB.h,
+    cx: sx(ballX), cy: sy(y + CONFIG.ballRadius),
+    r: CONFIG.ballRadius / (W.y1 - W.y0) * VB.h,
     fill: "var(--bb-ball)"
   }));
 
@@ -133,22 +139,11 @@ function readout(t, y, segs, tRest) {
   document.getElementById("atrest").hidden = t < tRest - 1e-9;
 }
 
-// ---- controls -----------------------------------------------------------
-function bind(id, key, fmt) {
-  const input = document.getElementById(id);
-  const out = document.getElementById(id + "lab");
-  const upd = () => {
-    state[key] = +input.value;
-    out.textContent = fmt(state[key]);
-    state.t = 0;
-    render();
-  };
-  input.addEventListener("input", upd);
-  upd();
-}
-bind("hh", "h0", v => v.toFixed(1) + " m");
-bind("ee", "e", v => v.toFixed(2));
-bind("gg", "g", v => v.toFixed(2) + " m/s\u00B2");
+// ---- controls (shared binder; any change restarts the run) --------------
+const restart = () => { state.t = 0; render(); };
+Lab.bind("hh", state, "h0", v => v.toFixed(1) + " m", restart);
+Lab.bind("ee", state, "e", v => v.toFixed(2), restart);
+Lab.bind("gg", state, "g", v => v.toFixed(2) + " m/s\u00B2", restart);
 
 const play = document.getElementById("play");
 play.addEventListener("click", () => {
@@ -173,7 +168,7 @@ function tick(ts) {
   const dt = Math.min(60, ts - last) / 1000;
   last = ts;
   if (state.playing) {
-    const { tRest } = flights(state.h0, state.e, state.g, 14);
+    const { tRest } = flights(state.h0, state.e, state.g, CONFIG.segments);
     state.t += dt * state.rate;
     if (state.t > tRest + 0.8) state.t = 0;
     render();

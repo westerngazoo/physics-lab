@@ -1,16 +1,21 @@
-const NS = "http://www.w3.org/2000/svg";
 const scene = document.getElementById("scene");
 const svg = document.getElementById("svg");
 
-// ---- world <-> screen -------------------------------------------------
-const W = { x0: -9, x1: 9, y0: -3.6, y1: 3.6 };   // 18 x 7.2 == 1000 x 400, so x and y scale alike
-const VB = { w: 1000, h: 400 };
-const sx = x => (x - W.x0) / (W.x1 - W.x0) * VB.w;
-const sy = y => VB.h - (y - W.y0) / (W.y1 - W.y0) * VB.h;
-const wx = px => W.x0 + px / VB.w * (W.x1 - W.x0);
+// ---- physics + presentation config (data) ------------------------------
+const CONFIG = {
+  objectHeight: 1.0,        // world units
+  noImageBand: 0.055,       // |do - f| below this: rays emerge parallel
+  world: { x0: -9, x1: 9, y0: -3.6, y1: 3.6 },  // 18 x 7.2 == 1000 x 400
+  viewBox: { w: 1000, h: 400 },
+};
 
-const H = 1.0;              // object height, world units
-const NO_IMAGE = 0.055;     // |do - f| below this: rays emerge parallel
+// Shared shell: uniform mapping (throws on a skewed aspect) + SVG helper.
+const { sx, sy, wx } = Lab.world(CONFIG.world, CONFIG.viewBox);
+const el = Lab.el;
+const W = CONFIG.world, VB = CONFIG.viewBox;
+
+const H = CONFIG.objectHeight;
+const NO_IMAGE = CONFIG.noImageBand;
 const state = { do: 6, f: 2, converging: true, playing: false, dir: -1 };
 
 // ---- optics ------------------------------------------------------------
@@ -46,11 +51,6 @@ function rays(dobj, f, s) {
 }
 
 // ---- drawing helpers ---------------------------------------------------
-function el(name, attrs) {
-  const e = document.createElementNS(NS, name);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
-  return e;
-}
 function line(a, b, cls, dashed, width) {
   return el("line", {
     x1: sx(a[0]), y1: sy(a[1]), x2: sx(b[0]), y2: sy(b[1]),
