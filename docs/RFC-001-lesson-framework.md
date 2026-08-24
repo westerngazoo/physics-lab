@@ -5,6 +5,13 @@
 - **Scope:** physics-lab's architecture, its pedagogic structure, and its
   seams with motoreel/garust/goosethropic.
 
+**Review log:** rev 2 added τ and the GA track after owner review. Rev 3
+records the owner's second review: *structure approved; JS rejected* —
+models move to Rust-on-garust compiled to WebAssembly (§4.0), the JS
+mini-kernel is deleted, and GA-first derivation becomes the method, not a
+track beside the method. "Learning GA means building GA, even if it takes
+longer."
+
 **Mission, stated so the architecture can be judged against it:**
 physics-lab is the interactive classroom of a **GA-first study program**.
 garust is its mathematical kernel, motoreel its film studio, and the
@@ -124,15 +131,48 @@ CSP; the drive-it-in-a-browser verification habit.
 
 ## 4. Proposed architecture
 
+### 4.0 Language decision — Rust everywhere JS was (owner review, rev 3)
+
+The owner's constraint is blunt and productive: avoid JS at all costs.
+The resolution is not a workaround, it is the better architecture:
+
+- **Models are Rust crates that depend on garust**, compiled to
+  `wasm32-unknown-unknown`. *Verified on this machine: garust builds for
+  that target unmodified, `physics` feature included* (std exists on
+  wasm32; the `no_std+libm+physics` combination has 2 errors upstream —
+  not needed, noted for honesty).
+- **The lesson computes primitives, one fixed JS file paints them.** Each
+  lesson exports a C-ABI (`#[no_mangle] extern "C"`): `build(params)` and
+  `state_at(t) -> prim buffer` — a flat f64 array of tagged drawing
+  records, the same architectural move as motoreel's `Prim2`: physics on
+  one side of a dumb boundary, painting on the other. The painter +
+  loader + controls + clock is **one shared `runtime.js`, on the order of
+  300 lines, written once and never touched per lesson.** Nobody authors
+  JS to make a lesson.
+- **wasm-bindgen is rejected** for the same reason JS was: it generates
+  thousands of lines of glue and drags in npm. The hand C-ABI keeps every
+  byte of the boundary understood — the garust discipline, applied to the
+  browser.
+- **Costs, owned:** the zero-build principle dies — `cargo build
+  --target wasm32-unknown-unknown --release` is now the build (the only
+  toolchain is the one the house already lives in); and the CSP gains
+  `'wasm-unsafe-eval'` in `script-src` — a contained loosening that
+  permits wasm compilation only, not JS eval.
+- **Checks collapse into honesty:** the same crate runs under
+  `cargo test` natively. "One source of truth" stops being a discipline
+  and becomes a tautology. Node never enters the project. The Python
+  layer stays as the independent second implementation.
+
 ### 4.1 A lesson is a folder with a contract
 
 ```
 lessons/<slug>/
   lesson.json        metadata + declarations (see schema below)
-  model.mjs          PURE physics. No DOM, no imports from engine/.
-  view.mjs           drawing only: (state, scene, world) → SVG
+  crate/             Rust: the model AND its drawing-to-primitives,
+    src/lib.rs         on garust; multivector-first derivations;
+    src/tests.rs       cargo tests assert every claim IN the same crate
   notes.html         prose fragments: intro, derivation steps, notes
-  check.mjs          imports model.mjs, asserts every claim. Runs in Node.
+  pkg/lesson.wasm    the built artifact the page loads (committed)
   assets/            optional: motoreel films + provenance.json
 ```
 
@@ -164,32 +204,35 @@ lessons/<slug>/
 }
 ```
 
-`model.mjs` contract:
+The crate's contract (C-ABI, no wasm-bindgen):
 
-```js
-export const defaults = {...};              // mirrors lesson.json params
-export function build(params) {...}         // precompute (modes, tables)
-export function stateAt(built, t) {...}     // pure; the ONLY time input
-export function derived(built) {...}        // readout quantities
+```rust
+#[no_mangle] pub extern "C" fn build(params: *const f64, n: usize);
+#[no_mangle] pub extern "C" fn state_at(t: f64) -> *const f64; // prim buffer
+#[no_mangle] pub extern "C" fn prim_len() -> usize;
+// Pure over (params, t): same inputs, same buffer, bit for bit.
+// The prim records use motoreel's vocabulary as a *convention*
+// (point / segment / polyline / edges + style), not a dependency — until
+// motoreel publishes, at which point depending on it is one line.
 ```
 
-### 4.2 The engine — lab.js grows into six small modules
+### 4.2 The engine — one fixed runtime, mostly Rust-side
 
 ```
 engine/
-  world.mjs      the uniform mapping + skew guard        (exists)
-  svg.mjs        element helpers                          (exists)
-  controls.mjs   control panel GENERATED from lesson.json params
-  readouts.mjs   readout strip generated from lesson.json
-  playback.mjs   the one clock: owns t, rates, replay; calls stateAt
-  stepper.mjs    derivation steps: shows notes fragments, drives view highlights
-  lesson.mjs     loader: fetch lesson.json + notes, wire everything
+  runtime.js     THE one JS file (~300 lines, written once): wasm loader,
+                 painter (prim buffer → SVG), controls + readouts
+                 generated from lesson.json, the clock, the stepper hooks.
+                 Carries the skew guard. Nobody edits it to add a lesson.
+lessons-common/  a Rust crate: prim-buffer writer, world box, shared
+                 drawing helpers (arrows, axes, labels-as-prims) — the
+                 shell that was lab.js, now on the right side of the
+                 boundary, in Rust, testable under cargo.
 ```
 
-Pages shrink to a shell: `index.html` declares containers and loads
-`lesson.mjs` with the slug. Controls/readouts stop being hand-written
-three ways. The playback module enforces principle 2 mechanically — no
-lesson ever owns a clock again.
+Pages shrink to a static shell that names the slug; `runtime.js` does the
+rest. The clock lives in the runtime, so principle 2 (models are pure over
+`t`) is enforced mechanically — no lesson ever owns time.
 
 ### 4.3 The pedagogic template — every lesson has the same spine
 
@@ -217,12 +260,13 @@ lesson = adding a folder; the hub cannot forget it or misdescribe it.
 
 | Layer | What | Runs where |
 |---|---|---|
-| L1 | `check.mjs` per lesson — asserts claims against **the same model.mjs the browser runs** | Node ≥18, `node checks/run.mjs`, CI |
-| L2 | The existing Python checks, **kept and reframed**: an independent second implementation of the flagship claims (N-version cross-check, the strongest kind) | `python3 checks/run.py`, CI |
-| L3 | Page behavior: the browser drive (clock advances, controls bound, culls hold) + `world.mjs`'s load-time skew guard | manual today; scriptable later |
+| L1 | `cargo test --workspace` — asserts every claim against **the same Rust that compiles to the wasm the browser runs** | native, CI |
+| L2 | The existing Python checks, kept: an independent second implementation of the flagship claims (N-version cross-check) | `python3 checks/run.py`, CI |
+| L3 | Page behavior: the browser drive (clock advances, controls bound) + the runtime's load-time skew guard | manual today; scriptable later |
 
-A GitHub Action runs L1 + L2 on every push. The README's claims section
-points at the workflow badge instead of at prose.
+A GitHub Action runs L1 + L2 on every push, plus the wasm build so a
+lesson that stops compiling for the browser fails loudly. No Node
+anywhere in the project.
 
 ### 4.6 The motoreel seam, concretely
 
@@ -233,20 +277,30 @@ same machine"). The lesson's claims cite the film's *measured* bands.
 This is how integrator-physics enters the classroom without smuggling an
 integrator into the browser.
 
-### 4.7 The GA track — the point of the whole thing
+### 4.7 GA is the method, not a track beside it (rev 3)
 
-**A tiny exact kernel, `engine/ga2.mjs`.** Deliberately small: `Cl(2,0)`
-— four-component multivectors `(1, e1, e2, e12)`, the geometric product
-as a 4×4 table, reverse, rotor `exp` — and, in a second stage, planar PGA
-`Cl(2,0,1)` for points, lines, meet/join, and 2D motors. On the order of
-150 lines, exact arithmetic, pure functions. This is a *kernel* in the
-§3.4 sense: shared like `world.mjs`, never "physics flattened to data".
+The rev-2 design — a JS mini-kernel cross-checked against garust — is
+**deleted**. With lessons written in Rust, the classroom's kernel IS
+garust; there is nothing to cross-check because there is only one
+implementation, and it is the real one. The owner's directive sharpens
+the pedagogy too: *learning GA means building with GA* — lessons derive
+and integrate multivectors directly, because that is how the owner finds
+the physics clearest, and taking longer is the point, not a cost.
 
-**Held to garust's bits.** For GA lessons, layer L2 is not Python — it is
-**garust itself**: `checks/ga-cross/` holds a small cargo test that runs
-the same operations through the real kernel and emits JSON; `check.mjs`
-compares the classroom's numbers against it. The lab teaches the algebra
-the engine actually computes with.
+Concretely, GA-first means:
+
+- **Optics:** the image point stops being `di = do·f/(do−f)` plugged into
+  a formula and becomes **the meet of two refracted rays** — PGA
+  `line ∧ line`, computed live by garust, exactly the incidence trick
+  motoreel's RFC was founded on (`MeetPoint`), now teaching itself. The
+  thin-lens equation is *derived on the page* from the construction, not
+  assumed.
+- **Mechanics:** poses are motors, rotations are rotors applied by
+  sandwich, angular quantities are bivectors — the same objects the
+  student meets again in motoreel's films.
+- **Where GA is not the honest tool** (the wave chain's scalar mode
+  amplitudes), the lesson says so — knowing where an algebra earns its
+  keep is part of learning it.
 
 **First GA lessons (syllabus order):**
 
@@ -274,38 +328,48 @@ rather than existing beside it.
 
 | Stage | Work | Outcome |
 |---|---|---|
-| S1 | Extract each page's math into `model.mjs` (ES module); write `check.mjs` importing it; keep pages working via `<script type="module">`. **Retrofit τ across current lessons' code and prose** | one-source-of-truth math; Node checks in CI; house convention holds |
-| S2 | `controls.mjs` + `readouts.mjs` + `playback.mjs` from `lesson.json`; delete the triplicated wiring | pages shrink to view + notes |
-| S3 | `lesson.json` full schema + `stepper.mjs`; port the wave stepper, add optics/ball dissections | the pedagogic template exists |
-| S4 | `tools/index.mjs` + generated hub with prereq ordering | the learning path |
-| S5 | `tryThis`/`misconceptions` rendering; **`engine/ga2.mjs` (Cl(2,0)) + the first two GA lessons + the garust cross-check**; first motoreel asset lesson (chaos, once R-0005 ships) | the full framework, proven by six lessons incl. the GA track |
+| S1 | **The pilot, end to end:** *Two Mirrors Make a Rotation* as a Rust crate on garust `Vga2` → wasm via the C-ABI, `runtime.js` written once, `cargo test` asserting its claims, τ throughout | toolchain proven by the first GA-native lesson; the one JS file exists and is finished |
+| S2 | Port the bouncing ball and optics to Rust crates; optics goes GA-first (image = meet of rays, thin-lens equation derived); retire their page JS and the hand-ported Python where superseded | all lessons on one architecture; τ retrofit complete |
+| S3 | `lesson.json` full schema + stepper in the runtime; dissections for ball and optics | the pedagogic template exists |
+| S4 | hub generated from manifests with prereq ordering | the learning path |
+| S5 | `tryThis`/`misconceptions` rendering; the wave chain ported; *One Turn Is τ*, *The Wedge*, *Rotors Not Angles*; first motoreel film lesson (chaos, once R-0005 ships) | the framework, proven by seven lessons |
 
-Estimate: S1–S2 are a focused session; S3–S5 another. No stage breaks
-the deployed site.
+Estimate: S1 is a focused session (most of it is `runtime.js` and the
+prim ABI, paid once); S2–S3 another; S4–S5 another. No stage breaks the
+deployed site — old pages stand until their replacement lands.
 
 ---
 
-## 6. Open questions for the owner
+## 6. Decisions so far, and what remains open
 
-1. **Naming:** `examples/` → `lessons/`? (Recommend yes — the word is
-   the mission.)
-2. **Node as a dev dependency** (runtime stays zero-dep) for same-code
-   checks? (Recommend yes; Python stays as the independent layer.)
-3. **Process weight:** adopt motoreel's full R-/SPEC- requirement loop
-   here, or stay RFC + checks + CI? (Recommend the lighter one: this is
-   a content site; the loop's cost belongs where irreversibility lives.)
-4. **Prereq graph now or at ~6 lessons?** (Recommend the schema now —
-   it is one JSON field — and the fancy path UI at 6.)
-5. **garust → WASM for live GA lessons:** park explicitly as
-   out-of-scope until motoreel M4? (Recommend park — `ga2.mjs` covers 2D
-   lessons exactly; WASM becomes worth it when 3D PGA lessons want the
-   real kernel live.)
-6. **`ga2.mjs` scope:** start with `Cl(2,0)` only, adding planar PGA when
-   the motors lesson needs it? (Recommend yes — smallest kernel that
-   makes lessons 1–4 exact.)
-7. **τ retrofit timing:** fold into S1 as proposed, or do it immediately
-   as its own commit? (Recommend S1 — one pass over the math while it is
-   being extracted anyway.)
+**Settled by owner review (recorded):** the structure (lesson contract,
+pedagogic template, generated hub) stands; JS is rejected — Rust on
+garust via WASM, one fixed runtime file; GA-first derivation is the
+method; τ is the circle constant; Node never enters (mooted rev 2's Q2);
+rev 2's Q5 (park WASM) is reversed — WASM is the core; `ga2.mjs` is
+deleted (mooted Q6).
+
+**Still open:**
+
+1. **Naming:** `examples/` → `lessons/`? (Recommend yes.)
+2. **Process weight:** motoreel's full R-/SPEC- loop, or RFC + checks +
+   CI? (Recommend the lighter one; revisit if the runtime ABI starts
+   changing under lessons.)
+3. **Prereq path UI now or at ~6 lessons?** (Schema now, UI at 6.)
+4. **Built `.wasm` in git, or CI-built on deploy?** (Recommend commit
+   them: tens of KB each, reproducible from a pinned toolchain, and the
+   site stays deployable from a bare checkout with no toolchain.)
+5. **Prim vocabulary:** motoreel's `Prim2` as a *convention* now, a
+   *dependency* when motoreel publishes? (Recommend convention now.)
+6. **A physics language, someday.** The owner: if a lesson-authoring DSL
+   is ever needed, "use Lisp or a better, more modern option." Recorded
+   as parked with a named trigger — two concrete authoring pains Rust
+   cannot express cleanly — and a named first refusal: before any Lisp
+   (Steel and Janet embed well in Rust), the candidate is the owner's own
+   **Clifford language**, whose whole premise is GA in the type system.
+   A physics classroom authored in a GA-native language would close the
+   loop this ecosystem is drawing. Until that trigger: Rust *is* the
+   physics language here.
 
 ## 7. Explicitly out of scope
 
