@@ -1,4 +1,4 @@
-/* Bouncing ball — event-driven, not integrated.
+/* Bouncing ball -- event-driven, not integrated.
  *
  * Each flight between bounces is an exact parabola, and each bounce time is
  * solved for in closed form, so apex heights land on h_n = e^(2n)*h0 to the
@@ -12,9 +12,8 @@
  */
 
 const NS = "http://www.w3.org/2000/svg";
-const G = 9.81;
 
-const state = { h0: 4.0, e: 0.75, t: 0, playing: true, rate: 1 };
+const state = { h0: 4.0, e: 0.75, g: 9.81, t: 0, playing: true, rate: 1 };
 
 // ---- world <-> screen. 12 x 6 world units into a 1000 x 500 viewBox, so
 // ---- both axes scale alike and a parabola is not skewed into something else.
@@ -23,28 +22,30 @@ const VB = { w: 1000, h: 500 };
 const sx = x => (x - W.x0) / (W.x1 - W.x0) * VB.w;
 const sy = y => VB.h - (y - W.y0) / (W.y1 - W.y0) * VB.h;
 
-/** Flight segments: segment n starts at t_n with upward speed v_n. */
-function flights(h0, e, count) {
-  const v0 = Math.sqrt(2 * G * h0);          // speed arriving at the floor
+/** Flight segments: segment n starts at t_n with upward speed v_n.
+ * Gravity sets every time and speed here -- but notice it cancels out of
+ * the apex heights entirely: h_n = e^(2n)*h0, no g in sight. */
+function flights(h0, e, g, count) {
+  const v0 = Math.sqrt(2 * g * h0);          // speed arriving at the floor
   const segs = [];
-  let t = Math.sqrt(2 * h0 / G);             // the initial fall ends here
+  let t = Math.sqrt(2 * h0 / g);             // the initial fall ends here
   segs.push({ t0: 0, dur: t, vUp: 0, y0: h0, drop: true });
   for (let n = 1; n <= count; n++) {
     const v = v0 * Math.pow(e, n);           // speed leaving the nth bounce
-    const dur = 2 * v / G;
+    const dur = 2 * v / g;
     segs.push({ t0: t, dur, vUp: v, y0: 0, drop: false, n });
     t += dur;
   }
-  return { segs, tRest: Math.sqrt(2 * h0 / G) * (1 + e) / (1 - e) };
+  return { segs, tRest: Math.sqrt(2 * h0 / g) * (1 + e) / (1 - e) };
 }
 
-/** Height at time t, exactly — no accumulated state. */
-function heightAt(t, segs) {
+/** Height at time t, exactly -- no accumulated state. */
+function heightAt(t, segs, g) {
   for (const s of segs) {
     if (t >= s.t0 && t < s.t0 + s.dur) {
       const dt = t - s.t0;
-      return s.drop ? s.y0 - 0.5 * G * dt * dt
-                    : s.vUp * dt - 0.5 * G * dt * dt;
+      return s.drop ? s.y0 - 0.5 * g * dt * dt
+                    : s.vUp * dt - 0.5 * g * dt * dt;
     }
   }
   return 0;
@@ -59,8 +60,8 @@ function el(name, attrs) {
 const scene = document.getElementById("scene");
 
 function render() {
-  const { h0, e } = state;
-  const { segs, tRest } = flights(h0, e, 14);
+  const { h0, e, g } = state;
+  const { segs, tRest } = flights(h0, e, g, 14);
   // Time axis scaled per configuration: the whole path to rest always fits
   // the frame, whatever e does to the rest time (it blows up as e -> 1).
   const vx = 10.4 / tRest;
@@ -79,7 +80,7 @@ function render() {
     const N = 26;
     for (let i = 0; i <= N; i++) {
       const tt = s.t0 + s.dur * (i / N);
-      const y = heightAt(tt, segs);
+      const y = heightAt(tt, segs, g);
       d += (d ? " " : "") + sx(tt * vx).toFixed(2) + "," + sy(y).toFixed(2);
     }
   }
@@ -104,7 +105,7 @@ function render() {
   }
 
   // the ball
-  const y = heightAt(t, segs);
+  const y = heightAt(t, segs, g);
   const ballX = t * vx;
   scene.appendChild(el("circle", {
     cx: sx(ballX), cy: sy(y + 0.075), r: 0.075 / (W.y1 - W.y0) * VB.h,
@@ -147,6 +148,7 @@ function bind(id, key, fmt) {
 }
 bind("hh", "h0", v => v.toFixed(1) + " m");
 bind("ee", "e", v => v.toFixed(2));
+bind("gg", "g", v => v.toFixed(2) + " m/s\u00B2");
 
 const play = document.getElementById("play");
 play.addEventListener("click", () => {
@@ -171,7 +173,7 @@ function tick(ts) {
   const dt = Math.min(60, ts - last) / 1000;
   last = ts;
   if (state.playing) {
-    const { tRest } = flights(state.h0, state.e, 14);
+    const { tRest } = flights(state.h0, state.e, state.g, 14);
     state.t += dt * state.rate;
     if (state.t > tRest + 0.8) state.t = 0;
     render();

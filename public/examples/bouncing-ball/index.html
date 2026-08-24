@@ -100,6 +100,10 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
         <input type="range" id="ee" min="0.3" max="0.92" step="0.01" value="0.75">
       </div>
       <div>
+        <label class="k" for="gg">Gravity g <span class="val" id="gglab">9.81 m/s&sup2;</span></label>
+        <input type="range" id="gg" min="1.62" max="24.79" step="0.01" value="9.81">
+      </div>
+      <div>
         <label class="k" for="play">Playback</label>
         <div class="row">
           <button id="play">Pause</button>
@@ -138,10 +142,11 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
   <div class="panel">
     <p class="note"><b>Where the paradox goes.</b> Each bounce returns the ball to <code>e&sup2;</code> of its previous height, so the apexes fall away as a geometric sequence and there is no final bounce. The <em>times</em> shrink geometrically too, and a geometric series converges &mdash; so the infinite sequence of bounces is crammed into a finite total, <code>T = &radic;(2h&#8320;/g) &middot; (1+e)/(1&minus;e)</code>. Nothing here is approximated: the number in <b>comes to rest at</b> is that formula, and the animation is drawn from the same closed form.</p>
     <p class="note"><b>Why the apexes are exact.</b> Each flight is drawn as a true parabola with its bounce time solved for directly, rather than by stepping a simulation forward. A fixed-step integrator detects the floor a fraction of a step late, quietly steals energy, and drifts below the theoretical apexes &mdash; about 0.1&nbsp;% per bounce here, which is small until you are trying to demonstrate a precise claim about heights. Measured against theory, the apexes on screen agree to every digit shown.</p>
+    <p class="note"><b>What each knob owns.</b> Restitution is the fraction of <em>speed</em> kept at each impact, so each bounce keeps <code>e&sup2;</code> of the energy &mdash; the rest leaves as sound, heat and deformation, which is what you hear. Gravity owns every <em>clock</em>: all times scale as <code>1/&radic;g</code>. But look at the apex formula &mdash; <code>h&#8345; = e&sup2;&#8345;&middot;h&#8320;</code> has no <code>g</code> in it at all. Slide gravity to the Moon (1.62) and the path does not move: the ball bounces to exactly the same heights, taking 2.46&times; longer to do it. Height ratios belong to <code>e</code> alone; tempo belongs to <code>g</code>.</p>
     <p class="note"><b>Try e near the extremes.</b> At <code>e = 0.9</code> the ball is still visibly hopping long after it should have settled, and the rest time stretches out sharply &mdash; the <code>1/(1&minus;e)</code> factor blows up as <code>e</code> approaches 1. A perfectly elastic ball would never stop at all.</p>
   </div>
 
-  <footer><a href="../../index.html">&larr; Physics lab</a> &middot; g = 9.81 m/s&sup2;, no air resistance, no spin &middot; the horizontal axis is time, scaled so the whole path to rest fits the frame</footer>
+  <footer><a href="../../index.html">&larr; Physics lab</a> &middot; no air resistance, no spin &middot; the horizontal axis is time, scaled so the whole path to rest fits the frame</footer>
 </div>
 
 <!-- external file so the CSP can stay script-src 'self' -->
