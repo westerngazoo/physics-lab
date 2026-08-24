@@ -248,6 +248,31 @@ rest. The clock lives in the runtime, so principle 2 (models are pure over
 5. **Extend** — `tryThis` explorations and `misconceptions`, rendered
    from data.
 
+### 4.3.1 The snapshot dissector (owner, rev 3 review)
+
+A notebook-style device for derivation steps, specified here so the wave
+port builds it in Rust rather than anyone bolting it onto the old JS:
+
+- **Freeze:** any derivation step can pin a *time snapshot* — the chain
+  stops at `t*`, chosen by scrubbing, like a cell output in a notebook.
+- **Zoom:** an inset magnifies one bead and its two string segments at
+  that frozen instant.
+- **Decompose:** the inset draws **the two tension vectors** along the
+  actual segments and splits each into components. This is where the
+  derivation's one approximation becomes *visible and interrogable*:
+  the true transverse pull is `T·sin θ`, the derivation uses the slope
+  `T·tan θ = T·Δy/Δx`, and the inset shows both — geometrically and as
+  numbers — with a live `|tan−sin|/sin` error readout.
+- **Break it on purpose:** an exaggerate-amplitude control drives the
+  angles large, so the student watches the small-angle approximation
+  fail and understands it as a *modeling choice with a budget*, not a
+  magic step. (The main stage stays honest; the inset is where the
+  student is allowed to bend it.)
+
+All computed lesson-side in Rust (the components are just projections);
+the runtime only gains a generic inset viewport — a second world box
+painting the same prim vocabulary.
+
 ### 4.4 The hub becomes a generated learning path
 
 `tools/index.mjs` (run by hand or CI, output committed) walks
@@ -329,7 +354,8 @@ rather than existing beside it.
 | Stage | Work | Outcome |
 |---|---|---|
 | S1 | **The pilot, end to end:** *Two Mirrors Make a Rotation* as a Rust crate on garust `Vga2` → wasm via the C-ABI, `runtime.js` written once, `cargo test` asserting its claims, τ throughout | toolchain proven by the first GA-native lesson; the one JS file exists and is finished |
-| S2 | Port the bouncing ball and optics to Rust crates; optics goes GA-first (image = meet of rays, thin-lens equation derived); retire their page JS and the hand-ported Python where superseded | all lessons on one architecture; τ retrofit complete |
+| S2 | **Port the wave-equation lesson first** (promoted from S5 at owner request): Rust crate, the snapshot dissector (§4.3.1), the sin→tan inset, τ throughout | the derivation's one approximation becomes interactive |
+| S2b | Port the bouncing ball and optics to Rust crates; optics goes GA-first (image = meet of rays, thin-lens equation derived); retire their page JS and the hand-ported Python where superseded | all lessons on one architecture; τ retrofit complete |
 | S3 | `lesson.json` full schema + stepper in the runtime; dissections for ball and optics | the pedagogic template exists |
 | S4 | hub generated from manifests with prereq ordering | the learning path |
 | S5 | `tryThis`/`misconceptions` rendering; the wave chain ported; *One Turn Is τ*, *The Wedge*, *Rotors Not Angles*; first motoreel film lesson (chaos, once R-0005 ships) | the framework, proven by seven lessons |
