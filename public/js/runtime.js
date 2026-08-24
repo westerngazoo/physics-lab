@@ -16,16 +16,47 @@
  */
 "use strict";
 
+/* A lesson that cannot start must SAY SO on the page. A dead stage with
+ * live-looking prose is the one failure mode this lab cannot afford. */
+function fatal(title, detail) {
+  const d = document.createElement("div");
+  d.setAttribute("role", "alert");
+  d.style.cssText = "margin:16px auto;max-width:1060px;border:1px solid #e0322a;" +
+    "background:rgba(224,50,42,.12);color:#ff4a40;padding:14px 18px;" +
+    "font:500 13px/1.6 'JetBrains Mono',monospace;white-space:pre-wrap";
+  d.textContent = "This lesson could not start.\n" + title +
+    (detail ? "\n\n" + detail : "");
+  document.body.prepend(d);
+}
+
 (async function () {
   const NS = "http://www.w3.org/2000/svg";
-  const TAU = 2 * Math.PI;
+
+  if (location.protocol === "file:") {
+    fatal("Opened as a file:// URL, where the browser blocks loading the " +
+          "lesson's data and WebAssembly.",
+          "Serve the site instead (any static server works):\n" +
+          "    cd physics-lab/public && python3 -m http.server 8000\n" +
+          "then open http://localhost:8000/");
+    return;
+  }
 
   const base = document.querySelector("script[data-lesson]").dataset.lesson;
 
-  const lesson = await (await fetch(base + "/lesson.json")).json();
-  const bytes = await (await fetch(base + "/lesson.wasm")).arrayBuffer();
-  const { instance } = await WebAssembly.instantiate(bytes, {});
-  const wasm = instance.exports;
+  let lesson, wasm;
+  try {
+    lesson = await (await fetch(base + "/lesson.json")).json();
+    const bytes = await (await fetch(base + "/lesson.wasm")).arrayBuffer();
+    const { instance } = await WebAssembly.instantiate(bytes, {});
+    wasm = instance.exports;
+  } catch (e) {
+    fatal("Loading the lesson failed: " + e,
+          "If this is a Content-Security-Policy error, script-src needs " +
+          "'wasm-unsafe-eval' (it is set in this site's _headers; a proxy " +
+          "or different host may be overriding it).");
+    return;
+  }
+  try {
 
   // ---- world <-> screen (uniform, or refuse to run) ----------------------
   const W = lesson.world, VB = lesson.viewBox;
@@ -172,4 +203,8 @@
 
   for (const f of updaters) f();   // set labels; each ends in draw()
   draw();
+  } catch (e) {
+    fatal("The lesson loaded but failed while starting: " + e,
+          e && e.stack ? String(e.stack).split("\n").slice(0, 3).join("\n") : "");
+  }
 })();
