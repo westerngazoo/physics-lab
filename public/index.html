@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Goosethropic Physics — Interactive Notes</title>
+<meta name="description" content="Interactive physics notes: thin-lens ray diagrams, bouncing balls, and other things that are easier to believe when you can move them." />
+<meta property="og:title" content="Goosethropic Physics" />
+<meta property="og:description" content="Interactive physics notes — things that are easier to believe when you can move them." />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/fonts.css" />
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--body); }
+.hub { max-width: 1060px; margin: 0 auto; padding: clamp(20px, 4vw, 56px);
+  display: flex; flex-direction: column; gap: 30px; }
+.eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--red-hot); }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(34px, 7vw, 64px);
+  letter-spacing: .01em; text-transform: uppercase; margin: 8px 0 12px; line-height: .98; }
+.lede { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 17px;
+  margin: 0; max-width: 64ch; line-height: 1.6; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); }
+.card { background: var(--panel); padding: 22px 24px 24px; text-decoration: none; color: inherit;
+  display: flex; flex-direction: column; gap: 10px; border-left: 2px solid transparent; }
+.card:hover { background: var(--ink-2); border-left-color: var(--accent); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.card .tag { font-family: var(--mono); font-size: 9.5px; font-weight: 500; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent); }
+.card h2 { font-family: var(--display); font-weight: 700; font-size: 24px; letter-spacing: .01em;
+  text-transform: uppercase; margin: 0; color: var(--bone); }
+.card p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--steel-dim); font-weight: 400; }
+.card .claim { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash);
+  border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.card .go { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--accent); margin-top: auto; }
+
+.about { border: 1px solid var(--line); background: var(--panel); padding: 20px 24px; }
+.about p { font-size: 15px; line-height: 1.68; color: var(--steel-dim); margin: 0; font-weight: 400; }
+.about p + p { margin-top: 11px; }
+.about b { color: var(--bone); font-weight: 500; }
+.about code { font-family: var(--mono); font-size: 13.5px; color: var(--gold); }
+footer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash-dim);
+  border-top: 1px solid var(--line); padding-top: 16px; }
+footer a { color: var(--ash); text-decoration: none; }
+footer a:hover { color: var(--red-hot); }
+</style>
+</head>
+<body>
+
+<div class="hub">
+  <header>
+    <div class="eyebrow">Goosethropic</div>
+    <h1>Physics you can<br>push around</h1>
+    <p class="lede">Interactive notes on things that are easier to believe once you can move them. Every page states a quantitative claim and then lets you check it &mdash; the numbers on screen come from the closed form, not from something that merely looks about right.</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" style="--accent: var(--steel)" href="examples/optics/index.html">
+      <span class="tag">Geometric optics</span>
+      <h2>Real or Virtual</h2>
+      <p>Drag an object through the focal point of a lens and watch the image flip between real and virtual. All five converging cases, plus the diverging lens that can only ever do one of them.</p>
+      <div class="claim">At the focal point the image does not merely move far away &mdash; it ceases to exist. The rays leave exactly parallel.</div>
+      <div class="go">Open &rarr;</div>
+    </a>
+
+    <a class="card" style="--accent: var(--gold)" href="examples/bouncing-ball/index.html">
+      <span class="tag">Gravity</span>
+      <h2>Infinitely Many Bounces</h2>
+      <p>A ball keeping a fixed fraction of its speed each bounce never has a last bounce. Watch the apexes fall away geometrically, and the clock stop anyway.</p>
+      <div class="claim">Infinitely many bounces, finite total time: <code>T = &radic;(2h&#8320;/g)&middot;(1+e)/(1&minus;e)</code>.</div>
+      <div class="go">Open &rarr;</div>
+    </a>
+  </div>
+
+  <div class="about">
+    <p><b>The rule for these pages.</b> Physics demos drift toward looking right rather than being right, and the two are easy to confuse on a screen. So each page here is built the other way round: the relationship is derived first, checked numerically against a closed form, and only then drawn. Where a shortcut would have been invisible, it is documented instead of taken.</p>
+    <p>Concretely, that has meant things like: scaling a lens's drawn thickness to <code>1/f</code> because the lensmaker's equation says it must; keeping both axes of a diagram on one scale so a parabola is not quietly skewed; and solving bounce times in closed form rather than stepping a simulation that loses a tenth of a percent of energy per impact.</p>
+  </div>
+
+  <footer><a href="https://goosethropic.systems">goosethropic.systems</a> &middot; source on <a href="https://github.com/westerngazoo/physics-lab">GitHub</a> &middot; no telemetry, no third-party requests</footer>
+</div>
+
+</body>
+</html>

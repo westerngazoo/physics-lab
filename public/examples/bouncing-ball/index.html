@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Infinitely Many Bounces — Goosethropic Physics</title>
+<meta name="description" content="A bouncing ball loses a fixed fraction of its speed each time it hits the floor. It bounces infinitely many times and still comes to rest at a finite, calculable moment." />
+<meta property="og:title" content="Infinitely Many Bounces — Goosethropic Physics" />
+<meta property="og:description" content="A ball that bounces infinitely many times and still stops at a finite moment. Interactive, with the numbers on screen." />
+<meta property="og:type" content="article" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="../../assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../../css/tokens.css" />
+<link rel="stylesheet" href="../../css/fonts.css" />
+<style>
+/* Bouncing ball — page styles. Palette and type come from tokens.css. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--body); }
+.bb {
+  --bb-floor: var(--steel-dim);
+  --bb-path: var(--steel);
+  --bb-apex: var(--gold);
+  --bb-ball: var(--red-hot);
+  max-width: 1060px; margin: 0 auto; padding: clamp(16px, 3.5vw, 40px);
+  display: flex; flex-direction: column; gap: 18px;
+}
+.bb .eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--red-hot); }
+.bb h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: .01em; text-transform: uppercase; margin: 6px 0 10px; color: var(--bone); }
+.bb .lede { font-family: var(--body); font-weight: 400; color: var(--steel-dim);
+  font-size: 16.5px; margin: 0; max-width: 68ch; line-height: 1.6; }
+.bb .stage { background: var(--ink-2); border: 1px solid var(--line); position: relative; }
+.bb .stage svg { display: block; width: 100%; height: auto; }
+.bb .atrest { position: absolute; top: 14px; right: 18px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.bb .panel { background: var(--panel); border: 1px solid var(--line); padding: 16px 18px; }
+.bb .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; align-items: end; }
+.bb label.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-bottom: 8px; }
+.bb .val { color: var(--bone); font-variant-numeric: tabular-nums; }
+.bb input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; height: 22px; margin: 0; }
+.bb input[type=range]:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.bb .row { display: flex; gap: 8px; }
+.bb button { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 10px 16px; border: 1px solid var(--line);
+  background: transparent; color: var(--bone); cursor: pointer; flex: 1; }
+.bb button:hover { border-color: var(--red); color: var(--red-hot); }
+.bb button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.bb .speed { display: flex; gap: 6px; }
+.bb .speed button { padding: 10px 8px; }
+.bb .speed button[aria-pressed=true] { background: var(--red-dim); border-color: var(--red); color: var(--red-hot); }
+.bb .nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); }
+.bb .num { background: var(--panel); padding: 11px 13px; }
+.bb .num dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ash); margin: 0 0 3px; }
+.bb .num dd { font-family: var(--mono); font-size: 16px; font-weight: 500; margin: 0;
+  color: var(--bone); font-variant-numeric: tabular-nums; }
+.bb .num.hero dd { color: var(--gold); }
+.bb .note { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 15.5px; line-height: 1.68; }
+.bb .note b { color: var(--bone); font-weight: 500; }
+.bb .note + .note { margin-top: 11px; }
+.bb .note code { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+.bb .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--mono);
+  font-size: 10.5px; letter-spacing: .06em; color: var(--ash); }
+.bb .legend span { display: inline-flex; align-items: center; gap: 8px; }
+.bb .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.bb .swatch { width: 18px; height: 2px; display: inline-block; }
+.bb footer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash-dim);
+  border-top: 1px solid var(--line); padding-top: 14px; }
+.bb a { color: var(--ash); text-decoration: none; }
+.bb a:hover { color: var(--red-hot); }
+</style>
+</head>
+<body>
+
+<div class="bb">
+  <header>
+    <div class="eyebrow">Goosethropic Physics &middot; Gravity</div>
+    <h1>Infinitely Many Bounces</h1>
+    <p class="lede">A ball keeps a fixed fraction of its speed at every bounce. So it never has a last bounce &mdash; there is always another, smaller one. And yet it stops, at a moment you can calculate exactly.</p>
+  </header>
+
+  <div class="stage">
+    <div class="atrest" id="atrest" hidden>at rest</div>
+    <svg viewBox="0 0 1000 500" role="img" aria-label="Bouncing ball trajectory">
+      <g id="scene"></g>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div>
+        <label class="k" for="hh">Drop height <span class="val" id="hhlab">4.0 m</span></label>
+        <input type="range" id="hh" min="1" max="5" step="0.1" value="4">
+      </div>
+      <div>
+        <label class="k" for="ee">Restitution e <span class="val" id="eelab">0.75</span></label>
+        <input type="range" id="ee" min="0.3" max="0.92" step="0.01" value="0.75">
+      </div>
+      <div>
+        <label class="k" for="play">Playback</label>
+        <div class="row">
+          <button id="play">Pause</button>
+          <button id="replay">Replay</button>
+        </div>
+      </div>
+      <div>
+        <label class="k">Speed</label>
+        <div class="speed" role="group" aria-label="Playback speed">
+          <button data-rate="0.25">0.25&times;</button>
+          <button data-rate="1" aria-pressed="true">1&times;</button>
+          <button data-rate="2">2&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <dl class="nums">
+      <div class="num"><dt>Elapsed</dt><dd id="r-t">0.00 s</dd></div>
+      <div class="num"><dt>Bounces so far</dt><dd id="r-bounces">0</dd></div>
+      <div class="num"><dt>Next apex</dt><dd id="r-apex">4.000 m</dd></div>
+      <div class="num"><dt>Energy left</dt><dd id="r-energy">100.0 %</dd></div>
+      <div class="num hero"><dt>Comes to rest at</dt><dd id="r-rest">6.321 s</dd></div>
+    </dl>
+  </div>
+
+  <div class="panel">
+    <div class="legend">
+      <span><i class="dot" style="background:var(--red-hot)"></i> the ball</span>
+      <span><i class="swatch" style="background:var(--steel)"></i> its whole future path</span>
+      <span><i class="dot" style="background:var(--gold)"></i> apex of each bounce</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="note"><b>Where the paradox goes.</b> Each bounce returns the ball to <code>e&sup2;</code> of its previous height, so the apexes fall away as a geometric sequence and there is no final bounce. The <em>times</em> shrink geometrically too, and a geometric series converges &mdash; so the infinite sequence of bounces is crammed into a finite total, <code>T = &radic;(2h&#8320;/g) &middot; (1+e)/(1&minus;e)</code>. Nothing here is approximated: the number in <b>comes to rest at</b> is that formula, and the animation is drawn from the same closed form.</p>
+    <p class="note"><b>Why the apexes are exact.</b> Each flight is drawn as a true parabola with its bounce time solved for directly, rather than by stepping a simulation forward. A fixed-step integrator detects the floor a fraction of a step late, quietly steals energy, and drifts below the theoretical apexes &mdash; about 0.1&nbsp;% per bounce here, which is small until you are trying to demonstrate a precise claim about heights. Measured against theory, the apexes on screen agree to every digit shown.</p>
+    <p class="note"><b>Try e near the extremes.</b> At <code>e = 0.9</code> the ball is still visibly hopping long after it should have settled, and the rest time stretches out sharply &mdash; the <code>1/(1&minus;e)</code> factor blows up as <code>e</code> approaches 1. A perfectly elastic ball would never stop at all.</p>
+  </div>
+
+  <footer><a href="../../index.html">&larr; Physics lab</a> &middot; g = 9.81 m/s&sup2;, no air resistance, no spin &middot; horizontal speed constant, so each arc marches to the right</footer>
+</div>
+
+<!-- external file so the CSP can stay script-src 'self' -->
+<script src="js/ball.js"></script>
+</body>
+</html>

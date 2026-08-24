@@ -1,0 +1,29 @@
+/* tokens.css — the Goosethropic brand kit as CSS custom properties.
+   SINGLE SOURCE OF TRUTH for color + type. site.css, the lab pages and the
+   canvas engines (via getComputedStyle) all read from here — change the red
+   once, it changes everywhere, including inside the canvases. */
+
+:root {
+  /* palette — Ink · Red · Gold · Steel · Bone */
+  --ink: #0a0a0b;
+  --ink-2: #0e0e11;
+  --panel: #141417;
+  --steel: #ced1d9;        /* bright blade metal */
+  --steel-dim: #a8abb3;    /* shadowed blade metal (canvas mid-tone) */
+  --white: #eceef2;        /* hot highlight (canvas cores) */
+  --bone: #f4f2ec;
+  --ash: #74757d;
+  --ash-dim: #4a4b51;
+  --line: rgba(255, 255, 255, 0.10);
+  --line-soft: rgba(255, 255, 255, 0.05);
+  --red: #e0322a;
+  --red-hot: #ff4a40;
+  --red-dim: rgba(224, 50, 42, 0.16);
+  --gold: #e9b23f;
+  --gold-dim: rgba(233, 178, 63, 0.16);
+
+  /* type — self-hosted, see fonts.css */
+  --display: 'Saira Condensed', sans-serif;
+  --body: 'Saira', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}

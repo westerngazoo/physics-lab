@@ -1,0 +1,16 @@
+# physics.goosethropic.systems — Cloudflare Workers Static Assets.
+# No worker script: every request is served straight from public/.
+# public/_headers carries the CSP and security headers (Workers Assets honors it).
+name = "goosethropic-physics"
+compatibility_date = "2026-06-13"
+
+[assets]
+directory = "./public"
+
+# The custom domain must be attached once, either in the Cloudflare dashboard
+# (Workers > goosethropic-physics > Settings > Domains & Routes) or by
+# uncommenting the route below and running `wrangler deploy`. Requires the
+# goosethropic.systems zone to be in the same account.
+# routes = [
+#   { pattern = "physics.goosethropic.systems", custom_domain = true }
+# ]
