@@ -3,40 +3,152 @@
   "title": "One Fall, Three Mechanics",
   "topic": "mechanics",
   "views": [
-    { "world": { "x0": -0.6, "x1": 11.4, "y0": -0.6, "y1": 5.4 },
-      "viewBox": { "w": 1000, "h": 500 } },
-    { "world": { "x0": -1.28, "x1": 1.28, "y0": -0.2, "y1": 1.4 },
-      "viewBox": { "w": 800, "h": 500 } },
-    { "world": { "x0": -0.4, "x1": 5.8, "y0": -17.0, "y1": 17.0 },
-      "viewBox": { "w": 1000, "h": 560 }, "uniform": false }
+    {
+      "world": {
+        "x0": -0.6,
+        "x1": 11.4,
+        "y0": -0.6,
+        "y1": 5.4
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 500
+      }
+    },
+    {
+      "world": {
+        "x0": -1.28,
+        "x1": 1.28,
+        "y0": -0.2,
+        "y1": 1.4
+      },
+      "viewBox": {
+        "w": 800,
+        "h": 500
+      }
+    },
+    {
+      "world": {
+        "x0": -0.4,
+        "x1": 5.8,
+        "y0": -17.0,
+        "y1": 17.0
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 560
+      },
+      "uniform": false
+    }
   ],
   "params": {
-    "h0":   { "label": "Drop height", "min": 1, "max": 5, "step": 0.1,
-              "value": 4.0, "unit": "m", "digits": 1 },
-    "e":    { "label": "Restitution e", "min": 0.3, "max": 0.92, "step": 0.01,
-              "value": 0.75, "digits": 2 },
-    "g":    { "label": "Gravity g", "min": 1.62, "max": 24.79, "step": 0.01,
-              "value": 9.81, "unit": "m/s²", "digits": 2 },
-    "eps":  { "label": "Path perturbation ε", "min": -1, "max": 1, "step": 0.01,
-              "value": 0.0, "digits": 2 },
-    "tfrac": { "label": "Time (fraction of rest)", "min": 0, "max": 1,
-               "step": 0.001, "value": 0.0, "digits": 3 }
+    "h0": {
+      "label": "Drop height",
+      "min": 1,
+      "max": 5,
+      "step": 0.1,
+      "value": 4.0,
+      "unit": "m",
+      "digits": 1
+    },
+    "e": {
+      "label": "Restitution e (1 elastic · 0 beanbag)",
+      "min": 0.3,
+      "max": 0.92,
+      "step": 0.01,
+      "value": 0.75,
+      "digits": 2
+    },
+    "g": {
+      "label": "Gravity g",
+      "min": 1.62,
+      "max": 24.79,
+      "step": 0.01,
+      "value": 9.81,
+      "unit": "m/s²",
+      "digits": 2
+    },
+    "eps": {
+      "label": "Path perturbation ε",
+      "min": -1,
+      "max": 1,
+      "step": 0.01,
+      "value": 0.0,
+      "digits": 2
+    },
+    "tfrac": {
+      "label": "Time (fraction of rest)",
+      "min": 0,
+      "max": 1,
+      "step": 0.001,
+      "value": 0.0,
+      "digits": 3
+    }
   },
-  "sweep": { "param": "tfrac", "rate": 0.12, "label": "Play" },
+  "sweep": {
+    "param": "tfrac",
+    "rate": 0.12,
+    "label": "Play"
+  },
   "readouts": [
-    { "slot": 0, "label": "Time", "fmt": "fix3" },
-    { "slot": 1, "label": "Action excess / K", "fmt": "fix3" },
-    { "slot": 2, "label": "H (per unit mass)", "fmt": "fix3", "hero": true },
-    { "slot": 3, "label": "H remaining", "fmt": "fix3" },
-    { "slot": 4, "label": "Bounces", "fmt": "fix3" },
-    { "slot": 5, "label": "Comes to rest at", "fmt": "fix3" }
+    {
+      "slot": 0,
+      "label": "Time",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 1,
+      "label": "Action excess / K",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 2,
+      "label": "H (per unit mass)",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "H remaining",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 4,
+      "label": "Bounces",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 5,
+      "label": "Comes to rest at",
+      "fmt": "fix3"
+    }
   ],
   "styles": [
-    { "var": "--ash-dim",   "width": 1.5 },
-    { "var": "--steel",     "width": 2 },
-    { "var": "--gold",      "width": 2, "dash": true },
-    { "var": "--red-hot",   "width": 3 },
-    { "var": "--red-hot",   "width": 2.5 },
-    { "var": "--ash-dim",   "width": 1.2, "dash": true }
+    {
+      "var": "--ash-dim",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 2
+    },
+    {
+      "var": "--gold",
+      "width": 2,
+      "dash": true
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    },
+    {
+      "var": "--red-hot",
+      "width": 2.5
+    },
+    {
+      "var": "--ash-dim",
+      "width": 1.2,
+      "dash": true
+    }
   ]
 }
