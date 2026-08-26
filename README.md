@@ -37,9 +37,24 @@ Concretely, so far that has meant:
 | `lessons/two-mirrors/` | Two reflections are one rotation by twice the mirror angle — computed by garust (`Vga2`) compiled to WebAssembly; `cargo test` asserts the claims on the same crate the page runs. |
 | `examples/wave-equation/` | Newton on a chain of beads *is* the wave equation, up to a limit you can take with a slider. Evolution by exact eigenmodes, verified against an independent integrator to 2e-9. |
 
-Shared shell: `public/js/lab.js` — the world→screen mapping (throws on a
-skewed aspect), SVG construction, control binding. Models stay per-page
-code on purpose; element/family tables and configs are data.
+## The framework (what a new lesson costs)
+
+A lesson is four small files — no HTML layout, no JS, no plumbing:
+
+| File | Contains |
+|---|---|
+| `lessons/<slug>/crate/src/lib.rs` | the physics: a model + ONE `draw(params, prims, readouts)` function + `lessons_common::lesson!(draw)` + the claims as `#[cfg(test)]` |
+| `public/lessons/<slug>/lesson.json` | everything else as data: title/lede, views (world boxes), sliders, readouts, styles, legend, claims, try-this, hub card |
+| `public/lessons/<slug>/notes.html` | the prose |
+| `public/lessons/<slug>/index.html` | a 21-line stub |
+
+`lessons-common` generates the uniform wasm ABI; `public/js/runtime.js`
+(the one JS file, written once) builds the whole page from the manifest,
+generates the controls, owns the clock, and paints the primitive buffer;
+`tools/gen-index.py` regenerates the hub from the manifests, so the hub
+cannot forget or misdescribe a lesson. `tools/build-wasm.sh` stages the
+binaries. Legacy JS examples (`public/examples/`, `public/js/lab.js`)
+stand until their ports land.
 
 ## For students: run the tests, then break them
 

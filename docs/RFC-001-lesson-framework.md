@@ -383,6 +383,15 @@ the same concepts (Q5); and the **program order** is fixed top-down:
 systems (motoreel/garust), then engineering for its own sake (the
 Clifford language).* The lab is stage 1; S1 starts immediately.
 
+**Landed 2026-08-26 (S2-shell/S3-data/S4-hub, owner demand: "something
+composable"):** `lessons-common` (the `lesson!` macro and `Prims` writer
+— a lesson is one `draw` function on a uniform ABI); the runtime builds
+the entire page from `lesson.json` (claims, views, bar, legend, notes,
+try-this) so a lesson's HTML is a 21-line stub; the hub is generated
+from the manifests by `tools/gen-index.py`. Both existing lessons ported
+as the proof; claims render on-page with their test names, tying each
+page to CI.
+
 **Still open:**
 
 1. **Naming:** `examples/` → `lessons/`? (Recommend yes; S1 uses

@@ -33,10 +33,18 @@ dependencies = [
 [[package]]
 name = "lesson-three-mechanics"
 version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
 
 [[package]]
 name = "lesson-two-mirrors"
 version = "0.1.0"
 dependencies = [
  "garust",
+ "lessons-common",
 ]
+
+[[package]]
+name = "lessons-common"
+version = "0.1.0"

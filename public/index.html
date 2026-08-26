@@ -60,47 +60,7 @@ footer a:hover { color: var(--red-hot); }
     <p class="lede">Interactive notes on things that are easier to believe once you can move them. Every page states a quantitative claim and then lets you check it &mdash; the numbers on screen come from the closed form, not from something that merely looks about right.</p>
   </header>
 
-  <div class="grid">
-    <a class="card" style="--accent: var(--steel)" href="examples/optics/index.html">
-      <span class="tag">Geometric optics</span>
-      <h2>Real or Virtual</h2>
-      <p>Four devices &mdash; converging and diverging lenses, concave and convex mirrors &mdash; over one equation. The deep category is not lens vs mirror: it is the sign of f.</p>
-      <div class="claim">A convex lens and a concave mirror share the same five cases; their diverging twins share a single one.</div>
-      <div class="go">Open &rarr;</div>
-    </a>
-
-    <a class="card" style="--accent: var(--gold)" href="lessons/three-mechanics/index.html">
-      <span class="tag">Mechanics &middot; wasm</span>
-      <h2>One Fall, Three Mechanics</h2>
-      <p>The bouncing ball through Newton, Lagrange, and Hamilton &mdash; force arrow, action parabola, phase portrait &mdash; with gravity as a slider, all three views moving together.</p>
-      <div class="claim">F = ma, &delta;S = 0, and dH/dt = 0 are one motion in three notations; each bounce costs exactly e&sup2; of H.</div>
-      <div class="go">Open &rarr;</div>
-    </a>
-
-    <a class="card" style="--accent: var(--gold)" href="examples/bouncing-ball/index.html">
-      <span class="tag">Gravity</span>
-      <h2>Infinitely Many Bounces</h2>
-      <p>A ball keeping a fixed fraction of its speed each bounce never has a last bounce. Watch the apexes fall away geometrically, and the clock stop anyway.</p>
-      <div class="claim">Infinitely many bounces, finite total time: <code>T = &radic;(2h&#8320;/g)&middot;(1+e)/(1&minus;e)</code>.</div>
-      <div class="go">Open &rarr;</div>
-    </a>
-
-    <a class="card" style="--accent: var(--red-hot)" href="lessons/two-mirrors/index.html">
-      <span class="tag">Geometric algebra &middot; wasm</span>
-      <h2>Two Mirrors Make a Rotation</h2>
-      <p>The first GA-native lesson: every frame is garust computing sandwiches, compiled to 38&nbsp;KB of WebAssembly. Reflections compose into a rotor; the angle doubles.</p>
-      <div class="claim">b (a v a) b = (b a) v (a b) &mdash; the rotor is the pair of reflections, reassociated.</div>
-      <div class="go">Open &rarr;</div>
-    </a>
-
-    <a class="card" style="--accent: var(--red-hot)" href="examples/wave-equation/index.html">
-      <span class="tag">Waves</span>
-      <h2>Deriving the Wave Equation</h2>
-      <p>Beads, string, Newton &mdash; nothing wavy in the ingredients. Pluck the chain, step through F&nbsp;=&nbsp;ma on one bead, and raise the bead count to take the limit yourself.</p>
-      <div class="claim">Acceleration is proportional to curvature; send &Delta;x&nbsp;&rarr;&nbsp;0 and Newton becomes &part;&sup2;y/&part;t&sup2; = c&sup2;&part;&sup2;y/&part;x&sup2;.</div>
-      <div class="go">Open &rarr;</div>
-    </a>
-  </div>
+  <div class="grid" id="cards"></div>
 
   <div class="about">
     <p><b>The rule for these pages.</b> Physics demos drift toward looking right rather than being right, and the two are easy to confuse on a screen. So each page here is built the other way round: the relationship is derived first, checked numerically against a closed form, and only then drawn. Where a shortcut would have been invisible, it is documented instead of taken.</p>
@@ -110,5 +70,6 @@ footer a:hover { color: var(--red-hot); }
   <footer><a href="https://goosethropic.systems">goosethropic.systems</a> &middot; source on <a href="https://github.com/westerngazoo/physics-lab">GitHub</a> &middot; no telemetry, no third-party requests</footer>
 </div>
 
+<script src="js/hub.js"></script>
 </body>
 </html>

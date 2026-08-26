@@ -13,7 +13,10 @@
       "viewBox": {
         "w": 1000,
         "h": 500
-      }
+      },
+      "wide": true,
+      "title": "I · Newton — forces",
+      "law": "ÿ = −g"
     },
     {
       "world": {
@@ -25,7 +28,9 @@
       "viewBox": {
         "w": 800,
         "h": 500
-      }
+      },
+      "title": "II · Lagrange — the action",
+      "law": "δS = 0,  S = ∫(T − V) dt"
     },
     {
       "world": {
@@ -38,7 +43,9 @@
         "w": 1000,
         "h": 560
       },
-      "uniform": false
+      "uniform": false,
+      "title": "III · Hamilton — phase space",
+      "law": "H = p²/2 + g y"
     }
   ],
   "params": {
@@ -150,5 +157,62 @@
       "width": 1.2,
       "dash": true
     }
-  ]
+  ],
+  "eyebrow": "Goosethropic Physics · Mechanics · computed in Rust via WebAssembly",
+  "lede": "The same bouncing ball, described three ways — and all three are the <em>same fact</em>. Newton sees a constant force; Lagrange sees the one path whose action cannot be lowered; Hamilton sees a point riding a level set of the energy. Change gravity and watch all three descriptions move together, because there is only one motion. Unit mass throughout.",
+  "claims": [
+    {
+      "id": "C1",
+      "text": "Acceleration is −g everywhere in flight.",
+      "test": "c1_acceleration_is_minus_g_in_flight"
+    },
+    {
+      "id": "C2",
+      "text": "The action excess is exactly ε²K — minimum at the flown path.",
+      "test": "c2_action_is_stationary_at_the_flown_path"
+    },
+    {
+      "id": "C3",
+      "text": "H is constant along every flight.",
+      "test": "c3_hamiltonian_constant_in_flight"
+    },
+    {
+      "id": "C4",
+      "text": "Each bounce multiplies H by exactly e².",
+      "test": "c4_each_bounce_costs_e_squared"
+    },
+    {
+      "id": "C5",
+      "text": "The phase point this page draws rides its level set.",
+      "test": "c5_phase_point_rides_its_level_set"
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "trajectory / active level set"
+    },
+    {
+      "style": 2,
+      "label": "the ε-perturbed path (dashed)"
+    },
+    {
+      "style": 3,
+      "label": "the ball / phase point / chosen ε"
+    },
+    {
+      "style": 4,
+      "label": "force arrow / the flown path's minimum"
+    }
+  ],
+  "tryThis": [
+    "Slide gravity to the Moon (1.62): every clock stretches 2.46×, the force arrow shrinks — and not one apex height moves.",
+    "Set ε = 1 and press Play: the dashed path is a legal history the ball refuses to have; its cost never leaves the top of the parabola.",
+    "Push e to 0.92 and watch the Hamilton staircase become shallow — near-elastic means near-conservative.",
+    "Set e = 0.30: two bounces and done. Where did H go? (The page's answer: sound, heat, deformation — the thud.)"
+  ],
+  "notes": "notes.html",
+  "footer": "closed forms only, nothing stepped · time slider runs in fractions of the rest time · unit mass",
+  "card": "The bouncing ball through Newton, Lagrange, and Hamilton — force arrow, action parabola, phase portrait — with gravity as a slider, all three views moving together.",
+  "cardClaim": "F = ma, δS = 0, and dH/dt = 0 are one motion in three notations; each bounce costs exactly e² of H."
 }

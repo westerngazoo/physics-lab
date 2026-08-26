@@ -75,82 +75,41 @@ pub fn eval(alpha: f64, beta: f64, phi: f64) -> MirrorState {
     }
 }
 
-// ---- the wasm boundary --------------------------------------------------
-// A flat f64 primitive buffer, motoreel's drawing vocabulary as a
-// convention: [tag, ...payload] records. Tags: 1 segment(x1,y1,x2,y2,style),
-// 3 arrow(x1,y1,x2,y2,style). Styles index the palette in lesson.json.
-// One fixed runtime.js paints it; nobody writes lesson JS.
+// ---- the wasm boundary: one function, the framework does the rest ------
 
-const CAP: usize = 128;
-static mut PRIMS: [f64; CAP] = [0.0; CAP];
-static mut PRIM_LEN: usize = 0;
-static mut READ: [f64; 6] = [0.0; 6];
+use lessons_common::{Prims, Readouts};
 
-fn put(buf: &mut [f64], at: &mut usize, rec: &[f64]) {
-    buf[*at..*at + rec.len()].copy_from_slice(rec);
-    *at += rec.len();
-}
-
-/// Fill the primitive buffer for mirror angles and input angle.
-/// Returns the number of f64s written. Pure over its arguments: same
-/// inputs, same buffer, bit for bit.
-///
-/// # Safety
-/// Single-threaded wasm; the statics are written only here and read via
-/// the pointer accessors below between calls.
-#[no_mangle]
-pub extern "C" fn state_at(alpha: f64, beta: f64, phi: f64) -> usize {
+/// Params (manifest order): [alpha, beta, phi], radians.
+fn draw(p: &[f64], out: &mut Prims, read: &mut Readouts) {
+    let (alpha, beta, phi) = (p[0], p[1], p[2]);
     let s = eval(alpha, beta, phi);
     let m = 1.35; // mirror half-length in world units
-    let (ax, ay) = (alpha.cos(), alpha.sin());
-    let (bx, by) = (beta.cos(), beta.sin());
     let tip = |w: &Vga2| (w.coeffs[1], w.coeffs[2]);
     let (vx, vy) = tip(&s.v);
     let (v1x, v1y) = tip(&s.v1);
     let (v2x, v2y) = tip(&s.v2_steps);
     let (rx, ry) = (s.v2_rotor.coeffs[1], s.v2_rotor.coeffs[2]);
 
-    let mut at = 0;
-    // SAFETY: see fn docs.
-    unsafe {
-        let buf = &mut *core::ptr::addr_of_mut!(PRIMS);
-        // mirrors A and B: full lines through the origin (style 0, 1)
-        put(buf, &mut at, &[1.0, -m * ax, -m * ay, m * ax, m * ay, 0.0]);
-        put(buf, &mut at, &[1.0, -m * bx, -m * by, m * bx, m * by, 1.0]);
-        // v, v1 (ghost), v2 via two reflections (styles 2, 3, 4)
-        put(buf, &mut at, &[3.0, 0.0, 0.0, vx, vy, 2.0]);
-        put(buf, &mut at, &[3.0, 0.0, 0.0, v1x, v1y, 3.0]);
-        put(buf, &mut at, &[3.0, 0.0, 0.0, v2x, v2y, 4.0]);
-        // the rotor's answer, drawn as a short cross-tick at its tip
-        // (style 5): if the claim holds it sits exactly on v2's tip.
-        let t = 0.07;
-        put(buf, &mut at, &[1.0, rx - t, ry - t, rx + t, ry + t, 5.0]);
-        put(buf, &mut at, &[1.0, rx - t, ry + t, rx + t, ry - t, 5.0]);
-        PRIM_LEN = at;
+    // mirrors A and B: full lines through the origin
+    out.segment(-m * alpha.cos(), -m * alpha.sin(), m * alpha.cos(), m * alpha.sin(), 0);
+    out.segment(-m * beta.cos(), -m * beta.sin(), m * beta.cos(), m * beta.sin(), 1);
+    // v, v after mirror A (ghost), v after both mirrors
+    out.arrow(0.0, 0.0, vx, vy, 2);
+    out.arrow(0.0, 0.0, v1x, v1y, 3);
+    out.arrow(0.0, 0.0, v2x, v2y, 4);
+    // the rotor's answer as a cross-tick: coincides iff the claim holds
+    let t = 0.07;
+    out.segment(rx - t, ry - t, rx + t, ry + t, 5);
+    out.segment(rx - t, ry + t, rx + t, ry - t, 5);
 
-        let rd = &mut *core::ptr::addr_of_mut!(READ);
-        rd[0] = ((beta - alpha) / TAU).rem_euclid(1.0); // mirror angle, turns
-        rd[1] = s.rotation_turns;                       // rotation, turns
-        rd[2] = s.rotor_scalar;
-        rd[3] = s.rotor_e12;
-        // coincidence of the two constructions, in ulps-ish world units
-        rd[4] = ((v2x - rx).powi(2) + (v2y - ry).powi(2)).sqrt();
-        rd[5] = 0.0;
-    }
-    at
+    read.set(0, ((beta - alpha) / TAU).rem_euclid(1.0));
+    read.set(1, s.rotation_turns);
+    read.set(2, s.rotor_scalar);
+    read.set(3, s.rotor_e12);
+    read.set(4, ((v2x - rx).powi(2) + (v2y - ry).powi(2)).sqrt());
 }
 
-/// Pointer to the primitive buffer (f64s; `state_at`'s return is the length).
-#[no_mangle]
-pub extern "C" fn prims_ptr() -> *const f64 {
-    core::ptr::addr_of!(PRIMS) as *const f64
-}
-
-/// Pointer to the 6-slot readout buffer.
-#[no_mangle]
-pub extern "C" fn readouts_ptr() -> *const f64 {
-    core::ptr::addr_of!(READ) as *const f64
-}
+lessons_common::lesson!(draw);
 
 // ---- the claims, asserted on the code the page runs ---------------------
 #[cfg(test)]
@@ -226,14 +185,20 @@ mod tests {
         }
     }
 
-    /// C5: the drawn coincidence readout is honest — the buffer's own
-    /// separation figure is at floating-point scale for a τ-fraction grid.
+    /// C5: the drawn coincidence readout is honest — through the same
+    /// uniform ABI the browser uses: write params, call state_at, read.
     #[test]
     fn c5_buffer_coincidence_is_fp_small() {
         for alpha in angles().take(8) {
             for beta in angles().take(8) {
-                state_at(alpha, beta, TAU / 6.0);
-                let sep = unsafe { (*core::ptr::addr_of!(READ))[4] };
+                unsafe {
+                    let p = params_ptr();
+                    *p.add(0) = alpha;
+                    *p.add(1) = beta;
+                    *p.add(2) = TAU / 6.0;
+                }
+                state_at(3);
+                let sep = unsafe { *readouts_ptr().add(4) };
                 assert!(sep < 1e-12, "alpha={alpha} beta={beta} sep={sep}");
             }
         }

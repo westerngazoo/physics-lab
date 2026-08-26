@@ -4,7 +4,8 @@
 # on this machine and ships no cross-targets.
 set -e
 export RUSTC="$(rustup which rustc)"
-for L in two-mirrors three-mechanics; do
+LESSONS=$(ls -d lessons/*/crate | sed 's|lessons/||; s|/crate||')
+for L in $LESSONS; do
   CRATE="lesson-$(echo $L)"
   cargo build --target wasm32-unknown-unknown --release -p "$CRATE"
   WASM="target/wasm32-unknown-unknown/release/$(echo $CRATE | tr - _).wasm"

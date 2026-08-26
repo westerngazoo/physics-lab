@@ -22,10 +22,6 @@
 
 use std::f64::consts::TAU;
 
-const CAP: usize = 4096;
-static mut PRIMS: [f64; CAP] = [0.0; CAP];
-static mut READ: [f64; 6] = [0.0; 6];
-
 // ---- the motion: exact flight table ------------------------------------
 
 /// One parabolic flight: starts at `t0` on the floor (or at the drop
@@ -120,133 +116,67 @@ pub fn action_k(f: &Flight, amp: f64) -> f64 {
     amp * amp * TAU * TAU / (16.0 * f.dur)
 }
 
-// ---- the wasm boundary --------------------------------------------------
-// Prim records: [0,x,y,style] point · [1,x1,y1,x2,y2,style] segment ·
-// [2,n,x0,y0,...,style] polyline · [3,...] arrow · [9,view] view switch.
+// ---- the wasm boundary: one function, the framework does the rest ------
 
-struct Buf {
-    at: usize,
-}
-impl Buf {
-    fn put(&mut self, rec: &[f64]) {
-        // SAFETY: single-threaded wasm; sole writer.
-        unsafe {
-            let b = &mut *core::ptr::addr_of_mut!(PRIMS);
-            b[self.at..self.at + rec.len()].copy_from_slice(rec);
-        }
-        self.at += rec.len();
-    }
-    fn view(&mut self, v: f64) {
-        self.put(&[9.0, v]);
-    }
-    fn poly(&mut self, pts: &[(f64, f64)], style: f64) {
-        let mut rec = Vec::with_capacity(2 + 2 * pts.len() + 1);
-        rec.push(2.0);
-        rec.push(pts.len() as f64);
-        for &(x, y) in pts {
-            rec.push(x);
-            rec.push(y);
-        }
-        rec.push(style);
-        self.put(&rec);
-    }
-}
+use lessons_common::{Prims, Readouts};
 
-/// Fill the primitive and readout buffers.
-/// Args: drop height, restitution, gravity, path-perturbation ε, and
-/// time as a FRACTION of the rest time (so one slider spans any g).
-#[no_mangle]
-pub extern "C" fn state_at(h0: f64, e: f64, g: f64, eps: f64, tfrac: f64) -> usize {
+/// Params (manifest order): [h0, e, g, eps, tfrac].
+fn draw(p: &[f64], out: &mut Prims, read: &mut Readouts) {
+    let (h0, e, g, eps, tfrac) = (p[0], p[1], p[2], p[3], p[4]);
     let m = motion(h0, e, g, 14);
     let t = tfrac.clamp(0.0, 1.0) * m.t_rest;
     let (y, v) = state(&m, g, t);
     let vf = variational_flight(&m);
     let amp = pert_amp(&vf, g);
 
-    let mut b = Buf { at: 0 };
-
     // ---- view 0: Newton -- trajectory in (scaled time, height) ---------
-    b.view(0.0);
-    let vx = 10.4 / m.t_rest; // time axis scaled to fit, as before
-    b.put(&[1.0, -0.5, 0.0, 10.9, 0.0, 0.0]); // floor
+    out.view(0);
+    let vx = 10.4 / m.t_rest;
+    out.segment(-0.5, 0.0, 10.9, 0.0, 0);
     for f in &m.flights {
-        let n = 22;
-        let pts: Vec<(f64, f64)> = (0..=n)
-            .map(|i| {
-                let tt = f.t0 + f.dur * i as f64 / n as f64;
-                (tt * vx, state(&m, g, tt).0)
-            })
-            .collect();
-        b.poly(&pts, 1.0);
+        out.curve(f.t0, f.t0 + f.dur, 22, 1, |tt| (tt * vx, state(&m, g, tt).0));
     }
-    // the ε-perturbed alternative over the variational flight, dashed
     if eps.abs() > 1e-9 {
-        let n = 30;
-        let pts: Vec<(f64, f64)> = (0..=n)
-            .map(|i| {
-                let dt = vf.dur * i as f64 / n as f64;
-                let yy = vf.v_up * dt - 0.5 * g * dt * dt
-                    + eps * amp * (TAU * dt / (2.0 * vf.dur)).sin();
-                ((vf.t0 + dt) * vx, yy)
-            })
-            .collect();
-        b.poly(&pts, 2.0);
+        out.curve(0.0, vf.dur, 30, 2, |dt| {
+            let yy = vf.v_up * dt - 0.5 * g * dt * dt
+                + eps * amp * (TAU * dt / (2.0 * vf.dur)).sin();
+            ((vf.t0 + dt) * vx, yy)
+        });
     }
-    b.put(&[0.0, t * vx, y + 0.07, 3.0]); // the ball
-    // Newton's one statement: the constant force arrow on the ball
-    b.put(&[3.0, t * vx, y + 0.07, t * vx, y + 0.07 - 0.16 * g.max(1.0).min(12.0) / 3.0, 4.0]);
+    out.point(t * vx, y + 0.07, 3);
+    out.arrow(t * vx, y + 0.07, t * vx, y + 0.07 - 0.16 * g.clamp(1.0, 12.0) / 3.0, 4);
 
-    // ---- view 1: Lagrange -- the action parabola over ε ----------------
-    b.view(1.0);
-    b.put(&[1.0, -1.15, 0.0, 1.15, 0.0, 0.0]); // axes
-    b.put(&[1.0, 0.0, -0.1, 0.0, 1.3, 0.0]);
-    let n = 40;
-    let pts: Vec<(f64, f64)> = (0..=n)
-        .map(|i| {
-            let x = -1.1 + 2.2 * i as f64 / n as f64;
-            (x, x * x)
-        })
-        .collect();
-    b.poly(&pts, 1.0); // (S(ε)-S(0))/K = ε², exactly
-    b.put(&[0.0, eps, eps * eps, 3.0]); // where the chosen path sits
-    b.put(&[0.0, 0.0, 0.0, 4.0]);       // the flown path: the minimum
+    // ---- view 1: Lagrange -- the action parabola over eps ---------------
+    out.view(1);
+    out.segment(-1.15, 0.0, 1.15, 0.0, 0);
+    out.segment(0.0, -0.1, 0.0, 1.3, 0);
+    out.curve(-1.1, 1.1, 40, 1, |x| (x, x * x)); // (S(eps)-S(0))/K = eps^2
+    out.point(eps, eps * eps, 3);
+    out.point(0.0, 0.0, 4);
 
-    // ---- view 2: Hamilton -- phase portrait (y, p) ---------------------
-    b.view(2.0);
-    b.put(&[1.0, 0.0, -16.0, 0.0, 16.0, 0.0]); // y = 0 wall (bounce line)
-    b.put(&[1.0, 0.0, 0.0, 5.6, 0.0, 0.0]);    // p = 0 axis
-    // level sets of H for the first few flights: the energy staircase
+    // ---- view 2: Hamilton -- phase portrait (y, p) ----------------------
+    out.view(2);
+    out.segment(0.0, -16.0, 0.0, 16.0, 0);
+    out.segment(0.0, 0.0, 5.6, 0.0, 0);
+    let here = flight_index(&m, t);
     for (i, f) in m.flights.iter().take(5).enumerate() {
         let h_level = if f.drop { g * f.y0 } else { 0.5 * f.v_up * f.v_up };
         let y_max = h_level / g;
-        let n = 32;
-        let mut up = Vec::with_capacity(n + 1);
-        let mut dn = Vec::with_capacity(n + 1);
-        for j in 0..=n {
-            let yy = y_max * j as f64 / n as f64;
-            let pp = (2.0 * (h_level - g * yy)).max(0.0).sqrt();
-            up.push((yy, pp));
-            dn.push((yy, -pp));
-        }
-        let style = if i == flight_index(&m, t) { 1.0 } else { 5.0 };
-        b.poly(&up, style);
-        b.poly(&dn, style);
+        let style = if i == here { 1 } else { 5 };
+        out.curve(0.0, y_max, 32, style, |yy| (yy, (2.0 * (h_level - g * yy)).max(0.0).sqrt()));
+        out.curve(0.0, y_max, 32, style, |yy| (yy, -(2.0 * (h_level - g * yy)).max(0.0).sqrt()));
     }
-    b.put(&[0.0, y, v, 3.0]); // the phase point rides its level set
+    out.point(y, v, 3);
 
-    // ---- readouts -------------------------------------------------------
-    // SAFETY: single-threaded wasm; sole writer.
-    unsafe {
-        let rd = &mut *core::ptr::addr_of_mut!(READ);
-        rd[0] = t;
-        rd[1] = eps * eps; // action excess in units of K
-        rd[2] = hamiltonian(y, v, g);
-        rd[3] = hamiltonian(y, v, g) / (g * h0) * 100.0; // % of initial H
-        rd[4] = bounces_by(&m, t) as f64;
-        rd[5] = m.t_rest;
-    }
-    b.at
+    read.set(0, t);
+    read.set(1, eps * eps);
+    read.set(2, hamiltonian(y, v, g));
+    read.set(3, hamiltonian(y, v, g) / (g * h0) * 100.0);
+    read.set(4, bounces_by(&m, t) as f64);
+    read.set(5, m.t_rest);
 }
+
+lessons_common::lesson!(draw);
 
 fn flight_index(m: &Motion, t: f64) -> usize {
     for (i, f) in m.flights.iter().enumerate() {
@@ -259,18 +189,6 @@ fn flight_index(m: &Motion, t: f64) -> usize {
 
 fn bounces_by(m: &Motion, t: f64) -> usize {
     m.flights.iter().filter(|f| !f.drop && t >= f.t0).count()
-}
-
-/// Pointer to the primitive buffer.
-#[no_mangle]
-pub extern "C" fn prims_ptr() -> *const f64 {
-    core::ptr::addr_of!(PRIMS) as *const f64
-}
-
-/// Pointer to the 6-slot readout buffer.
-#[no_mangle]
-pub extern "C" fn readouts_ptr() -> *const f64 {
-    core::ptr::addr_of!(READ) as *const f64
 }
 
 // ---- the claims ---------------------------------------------------------
@@ -370,8 +288,14 @@ mod tests {
     fn c5_phase_point_rides_its_level_set() {
         for (h0, e, g) in CASES {
             for tf in [0.05, 0.3, 0.55, 0.8] {
-                state_at(h0, e, g, 0.0, tf);
-                let rd = unsafe { &*core::ptr::addr_of!(READ) };
+                unsafe {
+                    let p = params_ptr();
+                    for (i, v) in [h0, e, g, 0.0, tf].iter().enumerate() {
+                        *p.add(i) = *v;
+                    }
+                }
+                state_at(5);
+                let rd = unsafe { core::slice::from_raw_parts(readouts_ptr(), 6) };
                 let m = motion(h0, e, g, 14);
                 let t = tf * m.t_rest;
                 let idx = flight_index(&m, t);

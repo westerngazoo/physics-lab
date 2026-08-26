@@ -1,0 +1,78 @@
+
+/* lesson.css -- the framework's one stylesheet. Every lesson page is a
+   ~15-line stub; the runtime builds this structure from lesson.json. */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--body); }
+.ls { max-width: 1060px; margin: 0 auto; padding: clamp(16px, 3.5vw, 40px);
+  display: flex; flex-direction: column; gap: 18px; }
+.ls .eyebrow { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--red-hot); }
+.ls h1 { font-family: var(--display); font-weight: 700; font-size: clamp(28px, 5vw, 44px);
+  letter-spacing: .01em; text-transform: uppercase; margin: 6px 0 10px; color: var(--bone); }
+.ls .lede { font-family: var(--body); font-weight: 400; color: var(--steel-dim);
+  font-size: 16.5px; margin: 0; max-width: 68ch; line-height: 1.6; }
+.ls .stages { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ls .stage.wide { grid-column: 1 / -1; }
+@media (max-width: 900px) { .ls .stages { grid-template-columns: 1fr; } }
+.ls .stage { background: var(--ink-2); border: 1px solid var(--line); }
+.ls .stage svg { display: block; width: 100%; height: auto; }
+.ls .stagehead { display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 14px 0; }
+.ls .stagehead h2 { font-family: var(--display); font-weight: 700; font-size: 18px;
+  letter-spacing: .02em; text-transform: uppercase; margin: 0; color: var(--bone); }
+.ls .stagehead .law { font-family: var(--mono); font-size: 12px; color: var(--gold); }
+.ls .panel { background: var(--panel); border: 1px solid var(--line); padding: 16px 18px; }
+/* The transport: one sticky bar with every control and readout, so the
+   eye never has to leave the panel that is moving. */
+.ls .bar { position: sticky; bottom: 10px; z-index: 5; background: var(--panel);
+  border: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0,0,0,.45);
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ls .bar #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 14px; align-items: end; }
+.ls .bar label.k { margin-bottom: 4px; font-size: 9px; }
+.ls .bar button { padding: 8px 10px; }
+.ls .bar #readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); margin: 0; }
+.ls .bar .num { padding: 7px 10px; }
+.ls .bar .num dd { font-size: 14px; }
+@media (max-width: 900px) { .ls .bar { position: static; box-shadow: none; } }
+.ls #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; align-items: end; }
+.ls label.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-bottom: 8px; }
+.ls .val { color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; height: 22px; margin: 0; }
+.ls input[type=range]:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.ls .row { display: flex; gap: 8px; }
+.ls button { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em;
+  text-transform: uppercase; padding: 10px 16px; border: 1px solid var(--line);
+  background: transparent; color: var(--bone); cursor: pointer; flex: 1; }
+.ls button:hover { border-color: var(--red); color: var(--red-hot); }
+.ls button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.ls .speed { display: flex; gap: 6px; }
+.ls .speed button[aria-pressed=true] { background: var(--red-dim); border-color: var(--red); color: var(--red-hot); }
+.ls #readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line); margin: 0; }
+.ls .num { background: var(--panel); padding: 11px 13px; }
+.ls .num dt { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ash); margin: 0 0 3px; }
+.ls .num dd { font-family: var(--mono); font-size: 16px; font-weight: 500; margin: 0;
+  color: var(--bone); font-variant-numeric: tabular-nums; }
+.ls .num.hero dd { color: var(--gold); }
+.ls .note { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 15.5px; line-height: 1.68; }
+.ls .note b { color: var(--bone); font-weight: 500; }
+.ls .note + .note { margin-top: 11px; }
+.ls .note code { font-family: var(--mono); font-size: 14px; color: var(--gold); }
+.ls footer { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ash-dim);
+  border-top: 1px solid var(--line); padding-top: 14px; }
+.ls a { color: var(--ash); text-decoration: none; }
+.ls a:hover { color: var(--red-hot); }
+
+.ls .claims { border: 1px solid var(--gold); background: var(--gold-dim); padding: 10px 17px;
+  display: flex; flex-direction: column; gap: 6px; }
+.ls .claim-row { font-family: var(--mono); font-size: 12.5px; line-height: 1.65; color: var(--gold); }
+.ls .cid { color: var(--bone); font-weight: 600; margin-right: 6px; }
+.ls .ctest { color: var(--ash); font-size: 10.5px; margin-left: 8px; }
+.ls .tryhead { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+.ls .trylist { margin: 0; padding-left: 20px; }
+.ls .trylist li { font-family: var(--body); color: var(--steel-dim); font-size: 15px;
+  line-height: 1.65; margin-bottom: 7px; }

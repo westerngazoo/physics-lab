@@ -10,3 +10,4 @@ crate-type = ["cdylib", "rlib"]
 # per RFC-001 §4.7 a lesson says so where GA is not the honest tool. The
 # three-formulations comparison IS the content here.
 [dependencies]
+lessons-common = { path = "../../../lessons-common" }
