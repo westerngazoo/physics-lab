@@ -3,7 +3,9 @@
 # Pins rustup's toolchain explicitly: Homebrew's rustc shadows it in PATH
 # on this machine and ships no cross-targets.
 set -e
-export RUSTC="$(rustup which rustc)"
+# A consistent toolchain end to end: Homebrew rust shadows rustup on this
+# machine, and MIXING them (RUSTC alone) breaks clippy with E0514.
+export PATH="$(dirname "$(rustup which rustc)"):$PATH"
 LESSONS=$(ls -d lessons/*/crate | sed 's|lessons/||; s|/crate||')
 for L in $LESSONS; do
   CRATE="lesson-$(echo $L)"

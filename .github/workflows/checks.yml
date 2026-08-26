@@ -26,6 +26,9 @@ jobs:
       - name: L1 — the crates the pages run
         working-directory: physics-lab
         run: cargo test --workspace
+      - name: L1a — lints
+        working-directory: physics-lab
+        run: cargo clippy --workspace --all-targets -- -D warnings
       - name: L1b — the browser build still compiles
         working-directory: physics-lab
         run: cargo build --workspace --target wasm32-unknown-unknown --release
