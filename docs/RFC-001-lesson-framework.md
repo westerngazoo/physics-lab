@@ -392,6 +392,17 @@ from the manifests by `tools/gen-index.py`. Both existing lessons ported
 as the proof; claims render on-page with their test names, tying each
 page to CI.
 
+**Landed 2026-08-26 (S2: the wave port + §4.3.1):** the wave-equation
+lesson is a Rust crate on the framework — exact eigenmode evolution
+(verified against independent Verlet, W2), τ throughout (the cutoff is
+4/τ of c, W4) — and the **snapshot dissector is real**: freeze any
+instant, magnify the focus bead, see its two tension pulls split into
+T·sin θ (true) versus T·tan θ (used), with the error as a live readout
+that the tests pin to the closed form and that grows monotonically
+under the exaggeration control (W6). The runtime gained data-driven
+derivation steps (`steps` + a hidden step param driving per-step
+highlights in `draw`). The legacy JS wave page is retired.
+
 **Still open:**
 
 1. **Naming:** `examples/` → `lessons/`? (Recommend yes; S1 uses

@@ -1,0 +1,242 @@
+{
+  "slug": "wave-equation",
+  "title": "Deriving the Wave Equation",
+  "topic": "waves",
+  "eyebrow": "Goosethropic Physics · Waves · computed in Rust via WebAssembly",
+  "lede": "There is nothing wavy in the ingredients: beads, string, Newton. Pluck the chain, then use the four steps to dissect one bead at any frozen instant — its two tension pulls, and the single approximation the whole derivation stands on, measured live. Raise the bead count to take the limit yourself.",
+  "views": [
+    {
+      "world": {
+        "x0": -0.5,
+        "x1": 10.5,
+        "y0": -3.3,
+        "y1": 3.3
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 600
+      },
+      "wide": true,
+      "title": "The chain",
+      "law": "yᵢ̈ = c²·(yᵢ₊₁ − 2yᵢ + yᵢ₋₁)/Δx²"
+    },
+    {
+      "world": {
+        "x0": -1.2,
+        "x1": 1.2,
+        "y0": -1.2,
+        "y1": 1.2
+      },
+      "viewBox": {
+        "w": 500,
+        "h": 500
+      },
+      "title": "The dissector — one bead, frozen",
+      "law": "T·sin θ  vs  T·tan θ = T·Δy/Δx"
+    }
+  ],
+  "params": {
+    "n": {
+      "label": "Beads N",
+      "min": 5,
+      "max": 80,
+      "step": 1,
+      "value": 24,
+      "digits": 0
+    },
+    "c": {
+      "label": "Wave speed c",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.01,
+      "value": 1.5,
+      "digits": 2
+    },
+    "pos": {
+      "label": "Pluck position",
+      "min": 0.08,
+      "max": 0.92,
+      "step": 0.01,
+      "value": 0.3,
+      "digits": 2
+    },
+    "xa": {
+      "label": "Amplitude ×(break it on purpose)",
+      "min": 0.2,
+      "max": 2.4,
+      "step": 0.01,
+      "value": 1.0,
+      "digits": 2
+    },
+    "t": {
+      "label": "Time",
+      "min": 0,
+      "max": 16,
+      "step": 0.01,
+      "value": 0.6,
+      "unit": "s",
+      "digits": 2
+    },
+    "step": {
+      "label": "step",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "value": 1,
+      "widget": "hidden"
+    }
+  },
+  "stepParam": "step",
+  "sweep": {
+    "param": "t",
+    "rate": 1.0,
+    "label": "Play"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "Time",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 5,
+      "label": "Beads",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 1,
+      "label": "Spacing Δx",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 2,
+      "label": "Pluck speed vs c (%)",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "tan-for-sin error (%)",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 4,
+      "label": "Segment angle (τ)",
+      "fmt": "turns3"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash-dim",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 2
+    },
+    {
+      "var": "--steel-dim",
+      "width": 2
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    },
+    {
+      "var": "--gold",
+      "width": 3
+    },
+    {
+      "var": "--bone",
+      "width": 2.5
+    },
+    {
+      "var": "--red",
+      "width": 2.5,
+      "dash": true
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "the string"
+    },
+    {
+      "style": 3,
+      "label": "the dissected bead / its net pull"
+    },
+    {
+      "style": 4,
+      "label": "tension along each segment"
+    },
+    {
+      "style": 5,
+      "label": "T·sin θ — the true transverse pull"
+    },
+    {
+      "style": 6,
+      "label": "T·tan θ = T·slope — what the derivation uses (dashed)"
+    }
+  ],
+  "claims": [
+    {
+      "id": "W1",
+      "text": "The sine transform round-trips the pluck exactly.",
+      "test": "w1_dst_round_trips"
+    },
+    {
+      "id": "W2",
+      "text": "Exact mode evolution matches an independent Verlet integration to 1e-6.",
+      "test": "w2_modes_match_verlet"
+    },
+    {
+      "id": "W3",
+      "text": "Energy is constant, identically.",
+      "test": "w3_energy_constant"
+    },
+    {
+      "id": "W4",
+      "text": "The lattice cutoff speed pins at 4/τ of c — no bead count fixes it.",
+      "test": "w4_cutoff_pins_at_four_over_tau"
+    },
+    {
+      "id": "W5",
+      "text": "The pluck's energy-weighted speed climbs with N toward c.",
+      "test": "w5_fidelity_monotone"
+    },
+    {
+      "id": "W6",
+      "text": "The dissector's tan-for-sin error matches the closed form and grows with amplitude.",
+      "test": "w6_dissector_error_is_honest"
+    }
+  ],
+  "steps": [
+    {
+      "title": "1 · One bead, Newton's law",
+      "html": "<p>The highlighted bead has mass <code>m = μ·Δx</code> — its share of the string. Newton:</p><div class='eq'>m·ÿᵢ = Fᵢ</div><p>Everything that follows is bookkeeping on <code>Fᵢ</code>. Pause anywhere — the dissector below the chain shows this bead magnified at the frozen instant.</p>"
+    },
+    {
+      "title": "2 · The two tension pulls",
+      "html": "<p>Only the two string segments touch the bead. Each pulls with tension <code>T</code> <em>along itself</em> (gold, in the dissector). The true transverse part of each pull is <code>T·sin θ</code> (solid); the derivation instead uses the slope, <code>T·tan θ = T·Δy/Δx</code> (dashed). At honest amplitudes you cannot tell them apart — the error readout says by how little. Now drag the amplitude slider up and watch the dashed and solid arrows split: that is the small-angle approximation failing, measured.</p><div class='eq'>Fᵢ ≈ T·[(yᵢ₊₁ − yᵢ)/Δx − (yᵢ − yᵢ₋₁)/Δx]</div>"
+    },
+    {
+      "title": "3 · The bracket is curvature",
+      "html": "<div class='eq'>ÿᵢ = (T/μ)·(yᵢ₊₁ − 2yᵢ + yᵢ₋₁)/Δx²</div><p>The second difference is sampled <b>curvature</b> — and the red arrow at the dissected bead is exactly it: peaks accelerate down, valleys up, straight stretches feel nothing. Watch the arrow vanish whenever the chain runs locally straight through the bead.</p>"
+    },
+    {
+      "title": "4 · Send Δx → 0",
+      "html": "<div class='eq'>∂²y/∂t² = c²·∂²y/∂x²,   c = √(T/μ)</div><p><b>Now take the limit yourself:</b> raise the bead slider and watch <em>pluck speed vs c</em> climb toward 100%. One honest wrinkle stays: the chain's shortest waves travel at <code>4/τ ≈ 64%</code> of <code>c</code> no matter how many beads — what the limit fixes is every wave a smooth pluck contains. The wave equation is Newton with the bookkeeping finished.</p>"
+    }
+  ],
+  "tryThis": [
+    "Freeze mid-flight, set amplitude ×2.4, and read the tan-for-sin error — then ask: at what error would YOU stop trusting the derivation?",
+    "Pluck dead centre and step to 3: which bead never feels a net pull, and why?",
+    "Set N = 5 and play: the trailing wiggles are dispersion — the waves the limit has not yet rescued.",
+    "Watch the pluck split into two half-height travellers — d'Alembert's y = f(x−ct) + g(x+ct) in the flesh — and flip upside down at each wall."
+  ],
+  "notes": "notes.html",
+  "footer": "exact eigenmode evolution — nothing stepped, scrub-safe · fixed ends, unit tension · angles against τ",
+  "card": "Beads, string, Newton — dissect one bead at any frozen instant, watch the sin→tan approximation earn (and lose) its keep, then raise N and take the limit yourself.",
+  "cardClaim": "Acceleration is proportional to curvature; Δx → 0 turns Newton into ∂²y/∂t² = c²∂²y/∂x²."
+}

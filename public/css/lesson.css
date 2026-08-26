@@ -76,3 +76,15 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 .ls .trylist { margin: 0; padding-left: 20px; }
 .ls .trylist li { font-family: var(--body); color: var(--steel-dim); font-size: 15px;
   line-height: 1.65; margin-bottom: 7px; }
+
+.ls .deriv { display: flex; flex-direction: column; gap: 12px; }
+.ls .deriv-nav { display: flex; align-items: center; gap: 12px; }
+.ls .deriv-nav .stepno { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--ash); }
+.ls .deriv-nav button { flex: 0 0 auto; min-width: 90px; }
+.ls button:disabled { opacity: .35; cursor: default; }
+.ls .step h3 { font-family: var(--display); font-weight: 700; font-size: 19px; text-transform: uppercase;
+  letter-spacing: .02em; margin: 0 0 8px; color: var(--bone); }
+.ls .step p { font-family: var(--body); font-weight: 400; color: var(--steel-dim); font-size: 15px;
+  line-height: 1.65; margin: 0 0 8px; }
+.ls .eq { font-family: var(--mono); font-size: 15px; color: var(--gold); background: var(--ink-2);
+  border: 1px solid var(--line); padding: 10px 14px; margin: 10px 0; overflow-x: auto; white-space: nowrap; }

@@ -23,10 +23,6 @@ LEGACY = [
       "title": "Infinitely Many Bounces",
       "card": "A ball keeping a fixed fraction of its speed each bounce never has a last bounce. Watch the apexes fall away geometrically, and the clock stop anyway.",
       "claim": "Infinitely many bounces, finite total time: T = √(2h₀/g)·(1+e)/(1−e)." },
-    { "href": "examples/wave-equation/index.html", "topic": "waves", "wasm": False,
-      "title": "Deriving the Wave Equation",
-      "card": "Beads, string, Newton — nothing wavy in the ingredients. Pluck the chain, step through F = ma on one bead, and raise the bead count to take the limit yourself.",
-      "claim": "Acceleration is proportional to curvature; send Δx → 0 and Newton becomes ∂²y/∂t² = c²∂²y/∂x²." },
 ]
 
 out = { "lessons": entries + LEGACY }

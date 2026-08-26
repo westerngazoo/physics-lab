@@ -46,5 +46,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-wave-equation"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
 name = "lessons-common"
 version = "0.1.0"

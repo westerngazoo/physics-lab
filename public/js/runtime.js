@@ -109,6 +109,23 @@ function fatal(title, detail) {
   });
   root.append(stages);
 
+  if (lesson.steps && lesson.steps.length) {
+    const dv = h("div", "panel deriv");
+    const nav = h("div", "deriv-nav",
+      "<button id='prev'>&larr; Prev</button>" +
+      "<span class='stepno' id='stepno'></span>" +
+      "<button id='next'>Next &rarr;</button>");
+    dv.append(nav);
+    lesson.steps.forEach((st, i) => {
+      const sec = h("div", "step",
+        "<h3>" + st.title + "</h3>" + st.html);
+      sec.dataset.step = i + 1;
+      sec.hidden = i !== 0;
+      dv.append(sec);
+    });
+    root.append(dv);
+  }
+
   const bar = h("div", "bar");
   const ctlBox = h("div", "");
   ctlBox.id = "controls";
@@ -179,6 +196,7 @@ function fatal(title, detail) {
   const updaters = [];
   for (const [key, p] of Object.entries(lesson.params)) {
     state[key] = p.value;
+    if (p.widget === "hidden") continue;   // e.g. the stepper's parameter
     const wrap = document.createElement("div");
     const lab = document.createElement("label");
     lab.className = "k";
@@ -320,6 +338,28 @@ function fatal(title, detail) {
       }
       requestAnimationFrame(tick);
     })(performance.now());
+  }
+
+  // ---- stepper wiring (drives the hidden step param) ---------------------
+  if (lesson.steps && lesson.stepParam) {
+    const total = lesson.steps.length;
+    const show = () => {
+      const cur = state[lesson.stepParam];
+      document.querySelectorAll(".step").forEach(d => {
+        d.hidden = +d.dataset.step !== cur;
+      });
+      document.getElementById("stepno").textContent = cur + " / " + total;
+      document.getElementById("prev").disabled = cur === 1;
+      document.getElementById("next").disabled = cur === total;
+      draw();
+    };
+    document.getElementById("prev").addEventListener("click", () => {
+      if (state[lesson.stepParam] > 1) { state[lesson.stepParam]--; show(); }
+    });
+    document.getElementById("next").addEventListener("click", () => {
+      if (state[lesson.stepParam] < total) { state[lesson.stepParam]++; show(); }
+    });
+    show();
   }
 
   for (const f of updaters) f();

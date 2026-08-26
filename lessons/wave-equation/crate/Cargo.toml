@@ -1,0 +1,13 @@
+[package]
+name = "lesson-wave-equation"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Scalar mechanics by honest choice (RFC-001 §4.7): the chain's mode
+# amplitudes are scalars, and saying so is part of learning where an
+# algebra earns its keep.
+[dependencies]
+lessons-common = { path = "../../../lessons-common" }
