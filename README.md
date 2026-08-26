@@ -41,6 +41,47 @@ Shared shell: `public/js/lab.js` — the world→screen mapping (throws on a
 skewed aspect), SVG construction, control binding. Models stay per-page
 code on purpose; element/family tables and configs are data.
 
+## For students: run the tests, then break them
+
+Everything this site claims is an assertion you can execute — and the
+best way to learn from it is to make one fail on purpose.
+
+**Setup (once).** The Rust lessons build against garust as a *sibling
+checkout* — clone both, side by side:
+
+```sh
+git clone https://github.com/westerngazoo/garust
+git clone https://github.com/westerngazoo/physics-lab
+cd physics-lab
+```
+
+**Level 1 — no toolchain:** the deployed pages themselves show the
+claims live (the H staircase, the action excess, the two-paths-differ-by
+readout at 1e-16).
+
+**Level 2 — Python only, zero deps:**
+
+```sh
+python3 checks/run.py
+```
+
+**Level 3 — the real thing:** run the exact code the pages run:
+
+```sh
+cargo test --workspace
+```
+
+**Level 4 — break it.** Open
+`lessons/three-mechanics/crate/src/lib.rs`, find claim C4, and change
+`e * e` to `e` — then run the tests and watch physics disagree with
+you. Or edit the model itself (make the bounce keep energy, tilt
+gravity), rebuild the browser version with `sh tools/build-wasm.sh`,
+serve `public/`, and watch your physics live. The claims failing is the
+framework working: every page is falsifiable, including by you.
+
+CI runs all of it on every push (`.github/workflows/checks.yml`), so
+the badge is the claims being re-proven in public.
+
 ## Checking it yourself
 
 **The examples** — serve the site and click around; there is no build step:
