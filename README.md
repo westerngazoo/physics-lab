@@ -1,76 +1,43 @@
 # physics-lab
 
-Interactive physics notes for [physics.goosethropic.systems](https://physics.goosethropic.systems).
+Interactive physics, taught claim-first, for
+[physics.goosethropic.systems](https://physics.goosethropic.systems)
+(live today at
+[goosethropic-physics…workers.dev](https://goosethropic-physics.gustavo-delgadillo.workers.dev)).
 
-A zero-build static site served by Cloudflare Workers Static Assets. No
-framework, no bundler, no third-party requests at runtime — the strict CSP in
-`public/_headers` keeps everything first-party, which is why every page's
-JavaScript lives in its own external file and the fonts are self-hosted.
+Every page states falsifiable claims and lets you check them — on the
+page, in an independent Python implementation, and with `cargo test` on
+the **same Rust the browser runs** (lessons compile to WebAssembly).
+The site doubles as a course, and the framework is small enough that
+writing a new lesson is one function and one manifest.
+
+## Choose your door
+
+| You are… | Start here | The commands |
+|---|---|---|
+| **a student** | [The Classroom](https://goosethropic-physics.gustavo-delgadillo.workers.dev/classroom/) — six units of predict-then-check exercises over the lessons | none needed; the readouts are live claims |
+| **a student who wants proof** | the ladder below | `python3 checks/run.py` → `cargo test --workspace` → break a claim on purpose |
+| **an instructor** | the Classroom's instructor note — claims map to named tests, so "break-it" homework grades as a diff + a failing test's output | fork; CI re-proves every claim on your students' pushes |
+| **a lesson author** | [Writing a Lesson](https://goosethropic-physics.gustavo-delgadillo.workers.dev/classroom/authoring.html) — walks the live minimal template line by line | `sh tools/build-wasm.sh` · `python3 tools/gen-index.py` |
+| **a maintainer** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the stack, the wasm ABI, the manifest schema, the invariants and the bugs that bought them | see §8 Toolchain there (including the Homebrew/rustup landmine) |
+
+Decision history — how the architecture got this way, through three
+owner-review rounds — is [docs/RFC-001](docs/RFC-001-lesson-framework.md).
 
 ## The rule for these pages
 
-Physics demos drift toward *looking* right rather than *being* right, and on a
-screen the two are easy to confuse. So each page is built the other way round:
-the relationship is derived first, checked numerically against a closed form,
-and only then drawn. Where a shortcut would have been invisible, it is
-documented instead of taken.
-
-Concretely, so far that has meant:
-
-- **Lens thickness scales as `1/f`**, because the lensmaker's equation
-  `1/f = (n−1)(1/R₁ − 1/R₂)` says it must. A fixed outline would have let you
-  drag the focal length while the glass stayed put.
-- **Both axes of a diagram share one scale.** An 18 × 6.8 world mapped into a
-  1000 × 400 viewBox skews every ray angle by ~6% — invisible to the eye,
-  fatal to a geometry diagram.
-- **Bounce times are solved, not stepped.** A fixed-step integrator notices the
-  floor a fraction of a step late and quietly loses ~0.1% of the energy per
-  impact. The apexes here match `h_n = e^(2n)·h₀` exactly.
-
-## Contents
-
-| Page | Claim it makes |
-|---|---|
-| `examples/optics/` | Four devices, one equation: a convex lens and a concave mirror share the same five cases — the deep category is the sign of f, not lens vs mirror. |
-| `examples/bouncing-ball/` | Infinitely many bounces, finite total time: `T = √(2h₀/g)·(1+e)/(1−e)` — and the apex heights contain no g at all. |
-| `lessons/three-mechanics/` | One motion, three characterizations: acceleration −g (Newton), action excess exactly ε²K with the minimum at the flown path (Lagrange), H constant per flight and ×e² per bounce (Hamilton) — asserted across Earth/Moon/Mars/Jupiter gravities on the crate the page runs. |
-| `lessons/two-mirrors/` | Two reflections are one rotation by twice the mirror angle — computed by garust (`Vga2`) compiled to WebAssembly; `cargo test` asserts the claims on the same crate the page runs. |
-| `examples/wave-equation/` | Newton on a chain of beads *is* the wave equation, up to a limit you can take with a slider. Evolution by exact eigenmodes, verified against an independent integrator to 2e-9. |
-
-## The framework (what a new lesson costs)
-
-A lesson is four small files — no HTML layout, no JS, no plumbing:
-
-| File | Contains |
-|---|---|
-| `lessons/<slug>/crate/src/lib.rs` | the physics: a model + ONE `draw(params, prims, readouts)` function + `lessons_common::lesson!(draw)` + the claims as `#[cfg(test)]` |
-| `public/lessons/<slug>/lesson.json` | everything else as data: title/lede, views (world boxes), sliders, readouts, styles, legend, claims, try-this, hub card |
-| `public/lessons/<slug>/notes.html` | the prose |
-| `public/lessons/<slug>/index.html` | a 21-line stub |
-
-`lessons-common` generates the uniform wasm ABI; `public/js/runtime.js`
-(the one JS file, written once) builds the whole page from the manifest,
-generates the controls, owns the clock, and paints the primitive buffer;
-`tools/gen-index.py` regenerates the hub from the manifests, so the hub
-cannot forget or misdescribe a lesson. `tools/build-wasm.sh` stages the
-binaries. Legacy JS examples (`public/examples/`, `public/js/lab.js`)
-stand until their ports land.
-
-## The classroom
-
-The site doubles as a course: `public/classroom/` holds the unit guide
-(objectives + predict-then-check exercises per lesson, answers behind
-`<details>`) and the authoring guide, which walks through the live
-`lessons/projectile/` template — deliberately the smallest lesson in the
-lab — and ends with a student shipping their own.
+Physics demos drift toward *looking* right rather than *being* right.
+Every page here is built the other way round: derive the relationship,
+check it numerically (closed forms only — nothing is stepped in the
+browser), then draw it — and put any approximation's error **on
+screen**, with a control that breaks it on purpose. Where a shortcut
+would have been invisible, it is documented instead of taken. τ is the
+circle constant throughout.
 
 ## For students: run the tests, then break them
 
-Everything this site claims is an assertion you can execute — and the
-best way to learn from it is to make one fail on purpose.
-
-**Setup (once).** The Rust lessons build against garust as a *sibling
-checkout* — clone both, side by side:
+The Rust lessons build against [garust](https://github.com/westerngazoo/garust)
+as a *sibling checkout* — clone both, side by side:
 
 ```sh
 git clone https://github.com/westerngazoo/garust
@@ -78,65 +45,42 @@ git clone https://github.com/westerngazoo/physics-lab
 cd physics-lab
 ```
 
-**Level 1 — no toolchain:** the deployed pages themselves show the
-claims live (the H staircase, the action excess, the two-paths-differ-by
-readout at 1e-16).
+1. **No toolchain:** the deployed pages' readouts are the claims, live.
+2. **Python only:** `python3 checks/run.py` — the independent second
+   implementation, zero dependencies.
+3. **The real thing:** `cargo test --workspace` — the exact code the
+   pages run.
+4. **Break it.** Open a lesson's claims (say
+   `lessons/three-mechanics/crate/src/lib.rs`, claim C4), change
+   `e * e` to `e`, and watch physics disagree with you. Then rebuild
+   the browser side (`sh tools/build-wasm.sh`), serve `public/`, and
+   see *your* physics live. A claim failing under your hand is the
+   framework working.
 
-**Level 2 — Python only, zero deps:**
+CI runs all of it — Python, `cargo test`, clippy, and the wasm build —
+on every push (`.github/workflows/checks.yml`).
 
-```sh
-python3 checks/run.py
+## What a new lesson costs
+
+Four small files, no HTML layout, no JavaScript — the framework
+(`lessons-common` + the one shared `public/js/runtime.js`) does the
+rest, and the hub regenerates itself:
+
+```
+lessons/<slug>/crate/src/lib.rs      model + ONE draw() + claims as tests
+public/lessons/<slug>/lesson.json    the whole page as data
+public/lessons/<slug>/notes.html     the prose
+public/lessons/<slug>/index.html     a 21-line stub
 ```
 
-**Level 3 — the real thing:** run the exact code the pages run:
+Full walkthrough (with the real template source embedded):
+[the authoring guide](https://goosethropic-physics.gustavo-delgadillo.workers.dev/classroom/authoring.html).
 
-```sh
-cargo test --workspace
-```
-
-**Level 4 — break it.** Open
-`lessons/three-mechanics/crate/src/lib.rs`, find claim C4, and change
-`e * e` to `e` — then run the tests and watch physics disagree with
-you. Or edit the model itself (make the bounce keep energy, tilt
-gravity), rebuild the browser version with `sh tools/build-wasm.sh`,
-serve `public/`, and watch your physics live. The claims failing is the
-framework working: every page is falsifiable, including by you.
-
-CI runs all of it on every push (`.github/workflows/checks.yml`), so
-the badge is the claims being re-proven in public.
-
-## Checking it yourself
-
-**The examples** — serve the site and click around; there is no build step:
+## Local
 
 ```sh
 cd public && python3 -m http.server 8000
 ```
-
-**The physics** — every quantitative claim the pages make is asserted in
-`checks/`, in plain Python with no dependencies. Exit 0 means every claim
-holds:
-
-```sh
-python3 checks/run.py
-```
-
-- `checks/optics.py` — the five converging cases and the diverging family;
-  every principal-ray construction (lens *and* mirror) passes through the
-  solver's image point across a grid of distances and focal lengths.
-- `checks/bouncing_ball.py` — the geometric series really sums to
-  `T = √(2h₀/g)·(1+e)/(1−e)`; apex heights contain no `g`; and a 2 kHz
-  fixed-step integrator measurably steals energy — the reason the page
-  solves bounce times instead of stepping them.
-- `checks/wave.py` — the sine transform round-trips exactly; eigenmode
-  evolution matches an independent Verlet integration to ~1e-9; energy is
-  constant; the lattice cutoff descends to 2/π of `c` and never below; the
-  pluck's energy-weighted speed climbs with N.
-
-The page scripts port this math by hand (JS mirrors Python), so the checks
-guard the *model*; the browser is still the test bench for the *pages* —
-the shared mapping in `public/js/lab.js` additionally throws at load if a
-diagram's axes ever disagree on scale.
 
 ## Deploy
 
@@ -144,6 +88,7 @@ diagram's axes ever disagree on scale.
 npx wrangler deploy
 ```
 
-The custom domain is attached once, either in the Cloudflare dashboard
-(Workers → `goosethropic-physics` → Settings → Domains & Routes) or by
-uncommenting the `routes` block in `wrangler.toml`.
+Cloudflare Workers Static Assets; `public/_headers` carries the strict
+CSP (`script-src 'self' 'wasm-unsafe-eval'` — everything first-party,
+fonts self-hosted, no telemetry). The custom domain attaches once in
+the Cloudflare dashboard.

@@ -1,6 +1,10 @@
 # RFC-001 — From demo pile to learning framework
 
-- **Status:** Proposal — awaiting owner review. Nothing here is built.
+- **Status:** Decision record. The framework this proposed is built and
+  live; the **current-state reference is [ARCHITECTURE.md](ARCHITECTURE.md)**.
+  This file remains the history of what was decided, by whom, and why —
+  including the landed-stage notes below — and is not edited to match
+  reality; ARCHITECTURE.md is.
 - **Owner:** Gustavo Delgadillo (westerngazoo)
 - **Scope:** physics-lab's architecture, its pedagogic structure, and its
   seams with motoreel/garust/goosethropic.
