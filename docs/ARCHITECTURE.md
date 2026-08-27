@@ -7,7 +7,8 @@ and are not repeated. When they disagree, this file is stale: fix it.
 For implementation mechanics — memory layout, the calling convention,
 what the `lesson!` macro expands to, the runtime's order of operations,
 measured limits and failure modes — see
-[ENGINEERING.md](ENGINEERING.md).
+[ENGINEERING.md](ENGINEERING.md); for the object model and the
+abstraction decisions behind it, [DESIGN.md](DESIGN.md).
 
 ---
 

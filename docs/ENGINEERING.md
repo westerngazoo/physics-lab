@@ -7,7 +7,10 @@ expansion, the runtime's exact order of operations, measured limits,
 failure modes, and extension recipes.
 
 Every number in this document was measured on the shipped artifacts,
-not estimated. Where something is unverified it says so.
+not estimated. Where something is unverified it says so. For the
+type-level view — what abstractions exist across the ecosystem, which
+were deliberately refused, and the seams ranked by how strongly they
+are enforced — see [DESIGN.md](DESIGN.md).
 
 ---
 
