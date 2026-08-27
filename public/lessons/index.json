@@ -1,6 +1,14 @@
 {
  "lessons": [
   {
+   "href": "lessons/projectile/index.html",
+   "topic": "mechanics",
+   "wasm": true,
+   "title": "Projectile Range",
+   "card": "The smallest lesson in the lab, on purpose — and the worked example the authoring guide dissects line by line. Range peaks at τ/8; complementary angles tie.",
+   "claim": "R = v²·sin(2θ)/g, maximized at θ = τ/8; the drawn shape is independent of v and g by construction."
+  },
+  {
    "href": "lessons/three-mechanics/index.html",
    "topic": "mechanics",
    "wasm": true,

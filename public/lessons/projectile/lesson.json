@@ -1,0 +1,157 @@
+{
+  "slug": "projectile",
+  "title": "Projectile Range",
+  "topic": "mechanics",
+  "eyebrow": "Goosethropic Physics · Mechanics · the authoring template",
+  "lede": "The smallest lesson in the lab, on purpose: a launch at speed v and angle θ, everything closed form. It exists twice — once as physics, and once as the worked example the <a href='../../classroom/authoring.html'>authoring guide</a> walks through line by line. The trajectory is drawn in natural units v²/g, which is why changing v or g never changes the shape — only the numbers.",
+  "views": [
+    {
+      "world": {
+        "x0": -0.075,
+        "x1": 1.125,
+        "y0": -0.06,
+        "y1": 0.54
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 500
+      },
+      "wide": true,
+      "title": "The flight, in natural units",
+      "law": "y = x·tan θ − g x²/(2 v² cos² θ)"
+    }
+  ],
+  "params": {
+    "theta": {
+      "label": "Launch angle θ",
+      "min": 0.01,
+      "max": 0.24,
+      "step": 0.001,
+      "value": 0.1,
+      "unit": "τ",
+      "digits": 3,
+      "scale": 6.283185307179586
+    },
+    "v": {
+      "label": "Launch speed v",
+      "min": 1,
+      "max": 4,
+      "step": 0.05,
+      "value": 2.0,
+      "unit": "m/s",
+      "digits": 2
+    },
+    "g": {
+      "label": "Gravity g",
+      "min": 1.62,
+      "max": 24.79,
+      "step": 0.01,
+      "value": 9.81,
+      "unit": "m/s²",
+      "digits": 2
+    }
+  },
+  "sweep": {
+    "param": "theta",
+    "rate": 0.02,
+    "label": "Sweep the angle"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "θ",
+      "fmt": "turns3"
+    },
+    {
+      "slot": 1,
+      "label": "Range",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 2,
+      "label": "Apex height",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 3,
+      "label": "Flight time",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 4,
+      "label": "% of best range",
+      "fmt": "fix3",
+      "hero": true
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash-dim",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 2.5
+    },
+    {
+      "var": "--gold",
+      "width": 3
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "the flight"
+    },
+    {
+      "style": 2,
+      "label": "apex"
+    },
+    {
+      "style": 3,
+      "label": "launch direction / range tick"
+    }
+  ],
+  "claims": [
+    {
+      "id": "P1",
+      "text": "The drawn curve lands exactly where the range formula says.",
+      "test": "p1_curve_lands_on_the_range"
+    },
+    {
+      "id": "P2",
+      "text": "Range is maximized at θ = τ/8 and nowhere else.",
+      "test": "p2_range_maxes_at_tau_over_eight"
+    },
+    {
+      "id": "P3",
+      "text": "Complementary angles share a range: R(θ) = R(τ/4 − θ).",
+      "test": "p3_complementary_angles_share_a_range"
+    },
+    {
+      "id": "P4",
+      "text": "The drawn apex sits at v²sin²θ/2g.",
+      "test": "p4_apex_matches"
+    },
+    {
+      "id": "P5",
+      "text": "The drawn shape is structurally independent of v and g.",
+      "test": "p5_shape_ignores_v_and_g"
+    }
+  ],
+  "tryThis": [
+    "Sweep the angle and watch % of best range: it touches 100 exactly once. Where, and why is it τ/8 and not τ/4?",
+    "Find two angles with the same range readout — then check their sum. P3 says it is always τ/4.",
+    "Slide v and g around while the sweep runs: the numbers churn, the shape never moves. What combination of v and g IS the shape? (It isn't any — that is P5.)",
+    "Moon vs Jupiter at fixed θ: how do range and flight time each scale with g?"
+  ],
+  "notes": "notes.html",
+  "footer": "the authoring template — its full source is walked through in the classroom guide · angles in turns of τ",
+  "card": "The smallest lesson in the lab, on purpose — and the worked example the authoring guide dissects line by line. Range peaks at τ/8; complementary angles tie.",
+  "cardClaim": "R = v²·sin(2θ)/g, maximized at θ = τ/8; the drawn shape is independent of v and g by construction."
+}

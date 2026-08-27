@@ -56,6 +56,14 @@ cannot forget or misdescribe a lesson. `tools/build-wasm.sh` stages the
 binaries. Legacy JS examples (`public/examples/`, `public/js/lab.js`)
 stand until their ports land.
 
+## The classroom
+
+The site doubles as a course: `public/classroom/` holds the unit guide
+(objectives + predict-then-check exercises per lesson, answers behind
+`<details>`) and the authoring guide, which walks through the live
+`lessons/projectile/` template — deliberately the smallest lesson in the
+lab — and ends with a student shipping their own.
+
 ## For students: run the tests, then break them
 
 Everything this site claims is an assertion you can execute — and the

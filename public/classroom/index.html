@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Classroom — Goosethropic Physics</title>
+<meta name="description" content="A claim-first physics course over the interactive lab: units, objectives, and exercises for mechanics, waves, optics, and geometric algebra — every answer checkable against the pages' own tests." />
+<link rel="icon" href="../assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../css/tokens.css" />
+<link rel="stylesheet" href="../css/fonts.css" />
+<link rel="stylesheet" href="../css/lesson.css" />
+<style>
+.ls h2.unit { font-family: var(--display); font-weight: 700; font-size: 24px; text-transform: uppercase;
+  letter-spacing: .02em; margin: 10px 0 0; color: var(--bone); }
+.ls .obj { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--gold); margin: 4px 0 0; }
+.ls ol.ex { margin: 8px 0 0; padding-left: 22px; }
+.ls ol.ex li { font-family: var(--body); color: var(--steel-dim); font-size: 15px; line-height: 1.65;
+  margin-bottom: 12px; }
+.ls details { margin-top: 5px; }
+.ls summary { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ash); cursor: pointer; }
+.ls details p { color: var(--steel-dim); font-size: 14px; margin: 6px 0 0; }
+.ls .method { border-left: 3px solid var(--red); padding-left: 14px; }
+.ls a.lesson-link { color: var(--red-hot); }
+</style>
+</head>
+<body>
+<div class="ls">
+  <header>
+    <div class="eyebrow">Goosethropic Physics &middot; The Classroom</div>
+    <h1>A claim-first course</h1>
+    <p class="lede">Every lesson in this lab states falsifiable claims and lets you check them. This page turns the lab into a course: what to learn in each unit, exercises whose answers you can <em>earn</em> on the pages, and &mdash; for the last rung of each &mdash; the tests that hold the claims to account. Predict first, then move the slider. The order below is a suggestion; the physics does not mind.</p>
+  </header>
+
+  <div class="panel method">
+    <p class="note"><b>The method, once.</b> For every lesson: read its claims box; play until the claims stop being surprising; use the dissection steps where they exist; then verify &mdash; the readouts are live claims, <code>python3 checks/run.py</code> is the independent implementation, and <code>cargo test</code> runs the very crates the pages run. The final exercise of every unit is to <b>break a claim on purpose</b> and watch physics disagree with you. Setup for the tooling rungs is two clones, side by side &mdash; see the <a href="https://github.com/westerngazoo/physics-lab#for-students-run-the-tests-then-break-them">README ladder</a>.</p>
+  </div>
+
+  <div class="panel">
+    <h2 class="unit">Unit M1 &middot; Falling &amp; bouncing</h2>
+    <p class="obj">Infinitely Many Bounces &middot; objectives: restitution as a speed fraction &middot; energy goes as speed squared &middot; a convergent geometric series of bounces</p>
+    <ol class="ex">
+      <li>Set <code>h&#8320; = 3</code>, <code>e = 0.6</code>. <b>Predict the third apex height before looking</b>, then check.
+        <details><summary>Answer</summary><p><code>h&#8323; = e&#8310;&middot;h&#8320; = 0.6&#8310;&middot;3 = 0.140&nbsp;m</code>. If you predicted <code>e&sup3;</code> instead of <code>e&#8310;</code>, you conflated speed with energy &mdash; the most common miss in this unit.</p></details></li>
+      <li>Find, by algebra first and slider second, the <code>e</code> that makes a 4&nbsp;m drop rest at exactly 10&nbsp;s on Earth.
+        <details><summary>Answer</summary><p>Solve <code>&radic;(2h&#8320;/g)&middot;(1+e)/(1&minus;e) = 10</code> &rarr; <code>(1+e)/(1&minus;e) = 11.07</code> &rarr; <code>e &asymp; 0.834</code>.</p></details></li>
+      <li>On the Moon slider, which readouts change and which are invariant? State the rule before touching it.
+        <details><summary>Answer</summary><p>All <em>times</em> scale as <code>1/&radic;g</code>; every apex height is invariant &mdash; <code>h&#8345; = e&sup2;&#8345;h&#8320;</code> has no g in it.</p></details></li>
+    </ol>
+
+    <h2 class="unit">Unit M2 &middot; One fall, three mechanics</h2>
+    <p class="obj">One Fall, Three Mechanics &middot; objectives: F = ma, &delta;S = 0 and Hamiltonian flow as one motion &middot; conservation and exactly where it ends</p>
+    <ol class="ex">
+      <li>Pause anywhere in flight. From the <b>H readout alone</b>, predict the next apex height, then scrub to it.
+        <details><summary>Answer</summary><p>At the apex all of H is potential: <code>h = H/g</code> (unit mass).</p></details></li>
+      <li>Read H just after two successive bounces and recover <code>e</code> from the pair.
+        <details><summary>Answer</summary><p><code>e = &radic;(H&#8345;&#8330;&#8321;/H&#8345;)</code> &mdash; the staircase is a measurement instrument.</p></details></li>
+      <li>Why is the action curve symmetric in <code>&epsilon;</code>? What would an asymmetric curve tell you about the flown path?
+        <details><summary>Answer</summary><p>The linear term of S(&epsilon;) is the Euler&ndash;Lagrange expression integrated against the perturbation; it vanishes <em>because</em> the flown path obeys Newton. An asymmetric (linear) term would mean the reference path was not a true trajectory.</p></details></li>
+      <li><b>Break it (Rust rung):</b> in claim C4, change <code>e * e</code> to <code>e</code>. Predict the failing test and the measured ratio it will print, then run <code>cargo test -p lesson-three-mechanics</code>.</li>
+    </ol>
+
+    <h2 class="unit">Unit M3 &middot; The projectile (and the template)</h2>
+    <p class="obj">Projectile Range &middot; objectives: the &tau;/8 maximum &middot; complementary angles &middot; natural units and scale invariance</p>
+    <ol class="ex">
+      <li>Two angles give range 70% of best. Find both on the slider; verify their sum is &tau;/4 (claim P3), then prove it from <code>sin(2&theta;)</code>.</li>
+      <li>Fix &theta;. How must range and flight time each scale when g quadruples? Predict, then use the slider.
+        <details><summary>Answer</summary><p>Both go as 1/g at fixed v: range <code>v&sup2;sin2&theta;/g</code>, time <code>2v&thinsp;sin&theta;/g</code>. (Apex too.)</p></details></li>
+      <li>After the authoring guide: add a claim P6 asserting the flight time formula against a sampled crossing, and make it pass.</li>
+    </ol>
+
+    <h2 class="unit">Unit W1 &middot; Waves from Newton</h2>
+    <p class="obj">Deriving the Wave Equation &middot; objectives: second difference as curvature &middot; the sin&rarr;tan budget &middot; dispersion and the continuum limit &middot; superposition</p>
+    <ol class="ex">
+      <li>Pluck at 30%. Predict when the left-going pulse reaches the wall at <code>c = 1.5</code>, then scrub to it.
+        <details><summary>Answer</summary><p>Distance 3 at speed 1.5 &rarr; <code>t = 2.0&nbsp;s</code>.</p></details></li>
+      <li>Using step 2's error readout, find the amplitude where tan-for-sin crosses 5%. Then derive the small-slope law <code>error &asymp; slope&sup2;/2</code> and check it explains your number.</li>
+      <li>Pluck dead centre and go to step 3: one bead never feels a net pull. Which, and what symmetry protects it?
+        <details><summary>Answer</summary><p>The centre bead: its two neighbours mirror each other, so the second difference vanishes there for every symmetric mode the pluck excites.</p></details></li>
+      <li>At N = 5, describe what trails the main pulse and why raising N &mdash; which never fixes the lattice cutoff (claim W4) &mdash; still cleans it up.
+        <details><summary>Answer</summary><p>Dispersion: short-wavelength modes lag (their speed pins at 4/&tau; of c). A smooth pluck puts ever less energy into them as N grows &mdash; that is exactly what the fidelity readout measures.</p></details></li>
+    </ol>
+
+    <h2 class="unit">Unit GA1 &middot; Two mirrors, one rotor</h2>
+    <p class="obj">Two Mirrors Make a Rotation &middot; objectives: reflection as a sandwich &middot; rotors as reflection pairs &middot; angle doubling &middot; independence from the rotated vector</p>
+    <ol class="ex">
+      <li>Predict the mirror separation that turns v by exactly one third of a turn, then set it.
+        <details><summary>Answer</summary><p>&Delta; = 1/6&nbsp;&tau; &mdash; half the rotation, always.</p></details></li>
+      <li>Beyond &Delta; = 0.25&nbsp;&tau; the readout <code>&#10216;R&#10217;&#8320;</code> goes negative. What does a negative scalar part mean for the rotor, and does the rotation care?
+        <details><summary>Answer</summary><p><code>&#10216;R&#10217;&#8320; = cos&Delta;</code> &lt; 0 past a quarter turn; R and &minus;R implement the same rotation (the double cover) &mdash; the motion is oblivious.</p></details></li>
+      <li>Thought experiment the page can't do yet: add a <em>third</em> mirror. Is the composite a rotation? What single operation must it be, and why does the count's parity decide?
+        <details><summary>Answer</summary><p>Odd count &rarr; orientation reverses &rarr; it is a reflection (about some line), never a rotation. Parity of reflections is the deepest invariant in the unit.</p></details></li>
+      <li><b>Break it:</b> in C3, flip the expected sign of the e&#8321;&#8322; component and predict the exact failure grid before running the tests.</li>
+    </ol>
+
+    <h2 class="unit">Unit O1 &middot; Images, real and virtual</h2>
+    <p class="obj">Real or Virtual &middot; objectives: the five converging cases &middot; the sign of f as the true category &middot; where real images can be caught</p>
+    <ol class="ex">
+      <li>With <code>f = 2</code>, find the object distance where the image is real and exactly life-size, for the lens and for the concave mirror. Compare.
+        <details><summary>Answer</summary><p><code>d&#8338; = 2f = 4</code> in both &mdash; same equation, same case structure; only the side the image lands on differs.</p></details></li>
+      <li>Why can a convex security mirror never lie about orientation? Answer from the case table, not the picture.</li>
+      <li>Sweep through <code>d&#8338; = f</code> slowly and describe what happens to the image on <em>both</em> sides of the crossing.</li>
+    </ol>
+  </div>
+
+  <div class="panel">
+    <p class="note"><b>For instructors.</b> Every exercise above is anchored to a claim with a named test, so grading can be mechanical where you want it: a student's "break it" homework is a diff plus the failing test's output. The lab re-proves all claims in public CI on every push; fork the repo and your students' pull requests get the same treatment. To assign <em>new</em> exercises, add <code>tryThis</code> entries to a lesson's manifest &mdash; or have students build whole lessons: that is the <a href="authoring.html">authoring guide</a>.</p>
+  </div>
+
+  <footer><a href="../index.html">&larr; Physics lab</a> &middot; <a href="authoring.html">write a lesson &rarr;</a></footer>
+</div>
+</body>
+</html>

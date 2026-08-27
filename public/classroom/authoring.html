@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Writing a Lesson — Goosethropic Physics</title>
+<meta name="description" content="How to build an exercise or a whole lesson on the physics-lab framework: one Rust draw function, one manifest, notes, and claims as tests. Walks through the live Projectile Range template line by line." />
+<link rel="icon" href="../assets/goose-glyph.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="../css/tokens.css" />
+<link rel="stylesheet" href="../css/fonts.css" />
+<link rel="stylesheet" href="../css/lesson.css" />
+<style>
+.ls pre { background: var(--ink-2); border: 1px solid var(--line); padding: 13px 16px;
+  overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.55;
+  color: var(--steel-dim); margin: 10px 0; }
+.ls h2.sec { font-family: var(--display); font-weight: 700; font-size: 22px; text-transform: uppercase;
+  letter-spacing: .02em; margin: 8px 0 0; color: var(--bone); }
+.ls .rulebox { border-left: 3px solid var(--gold); padding-left: 14px; }
+.ls code { font-family: var(--mono); font-size: 13.5px; color: var(--gold); }
+.ls table { border-collapse: collapse; font-size: 13.5px; }
+.ls th, .ls td { border: 1px solid var(--line); padding: 7px 11px; text-align: left;
+  font-family: var(--body); color: var(--steel-dim); }
+.ls th { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ash); }
+.ls .tw { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="ls">
+  <header>
+    <div class="eyebrow">Goosethropic Physics &middot; The Classroom &middot; authoring</div>
+    <h1>Writing a lesson</h1>
+    <p class="lede">A lesson here is four small files and zero JavaScript: the physics as one Rust function, the page as data, the prose as a fragment, and the claims as tests that run on the exact code the browser runs. This guide walks through the live <a href="../lessons/projectile/index.html">Projectile Range</a> lesson &mdash; kept minimal on purpose so its complete source fits below &mdash; and ends with you shipping your own.</p>
+  </header>
+
+  <div class="panel rulebox">
+    <p class="note"><b>The house rules, before the code.</b> Models are <b>pure functions of their parameters</b> &mdash; no accumulated state, no integrators in the browser (what needs stepping belongs to the motoreel film studio, embedded as an asset). <b>Closed form when it exists.</b> Angles measure against <b>&tau;</b>: a full turn is one &tau;, and <code>pi</code> appears only where a genuine half-turn is meant. Geometry views scale both axes alike (the runtime throws if not); a phase portrait or graph may declare <code>"uniform": false</code> as a statement that its axes carry different quantities. And every quantitative sentence a lesson speaks must exist as a claim with a test &mdash; that is not bureaucracy, it is the product.</p>
+  </div>
+
+  <div class="panel">
+    <h2 class="sec">0 &middot; Setup</h2>
+    <p class="note">Two clones, side by side (the lesson crates path-depend on garust as a sibling), then confirm the world is green before you touch it:</p>
+<pre>git clone https://github.com/westerngazoo/garust
+git clone https://github.com/westerngazoo/physics-lab
+cd physics-lab
+cargo test --workspace        # every existing claim, on your machine
+python3 checks/run.py         # the independent second implementation</pre>
+
+    <h2 class="sec">1 &middot; The anatomy</h2>
+    <div class="tw"><table>
+      <tr><th>File</th><th>Contains</th><th>Who reads it</th></tr>
+      <tr><td><code>lessons/&lt;slug&gt;/crate/src/lib.rs</code></td><td>the model, ONE <code>draw(params, prims, readouts)</code> function, <code>lessons_common::lesson!(draw)</code>, and the claims as <code>#[cfg(test)]</code></td><td>cargo test natively; the browser as wasm &mdash; same bits</td></tr>
+      <tr><td><code>public/lessons/&lt;slug&gt;/lesson.json</code></td><td>everything else as data: title, lede, views and world boxes, sliders, readouts, styles, legend, claims list, try-this, dissection steps, hub card</td><td>the shared runtime, which builds the whole page from it</td></tr>
+      <tr><td><code>.../notes.html</code></td><td>the prose</td><td>fetched into the page</td></tr>
+      <tr><td><code>.../index.html</code></td><td>a 21-line stub &mdash; copy it, change the title tags</td><td>nobody, twice</td></tr>
+    </table></div>
+
+    <h2 class="sec">2 &middot; The physics: one function</h2>
+    <p class="note">The complete <code>lib.rs</code> of the template &mdash; this is the file that is live on the site right now, not a simplified listing. Note the shape: closed-form helpers, then <code>draw</code> emitting primitives (<code>segment</code>/<code>arrow</code>/<code>point</code>/<code>curve</code>) and readout slots, then the macro, then the claims. <code>draw</code> receives parameters in manifest order, already scaled (the &theta; slider is in turns; the manifest's <code>scale: &tau;</code> delivers radians).</p>
+<pre>//! Projectile Range — the deliberately minimal lesson, and the
+//! authoring template the classroom guide walks through line by line.
+//!
+//! A launch at speed `v`, angle `θ` (measured in turns of τ), gravity
+//! `g`. Everything is closed form, and the trajectory is drawn in
+//! NATURAL UNITS `v²/g`, which is why changing `v` or `g` never changes
+//! the drawn shape — only the numbers. That scale invariance is itself
+//! a claim (P5), not an accident.
+
+use std::f64::consts::TAU;
+
+/// Range, apex height, and flight time — the real, unit-carrying numbers.
+pub fn numbers(theta: f64, v: f64, g: f64) -&gt; (f64, f64, f64) {
+    let range = v * v * (2.0 * theta).sin() / g;
+    let apex = v * v * theta.sin().powi(2) / (2.0 * g);
+    let time = 2.0 * v * theta.sin() / g;
+    (range, apex, time)
+}
+
+/// The trajectory in natural units x&#x27; = x·g/v²: shape depends on θ alone.
+pub fn shape(theta: f64, xp: f64) -&gt; f64 {
+    xp * theta.tan() - xp * xp / (2.0 * theta.cos().powi(2))
+}
+
+// ---- the wasm boundary --------------------------------------------------
+
+use lessons_common::{Prims, Readouts};
+
+/// Params (manifest order): [theta (radians; slider in turns), v, g].
+fn draw(p: &amp;[f64], out: &amp;mut Prims, read: &amp;mut Readouts) {
+    let (theta, v, g) = (p[0], p[1], p[2]);
+    let (range, apex, time) = numbers(theta, v, g);
+    let rp = (2.0 * theta).sin(); // range in natural units
+
+    out.view(0);
+    out.segment(-0.05, 0.0, 1.15, 0.0, 0);                    // ground
+    out.arrow(0.0, 0.0, 0.16 * theta.cos(), 0.16 * theta.sin(), 3); // launch
+    out.curve(0.0, rp, 48, 1, |xp| (xp, shape(theta, xp)));   // the flight
+    out.point(rp / 2.0, shape(theta, rp / 2.0), 2);           // apex
+    out.segment(rp, -0.02, rp, 0.02, 3);                      // range tick
+
+    read.set(0, theta / TAU);
+    read.set(1, range);
+    read.set(2, apex);
+    read.set(3, time);
+    read.set(4, (2.0 * theta).sin() * 100.0); // % of the best possible range
+}
+
+lessons_common::lesson!(draw);
+
+// ---- the claims ---------------------------------------------------------
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn thetas() -&gt; impl Iterator&lt;Item = f64&gt; {
+        (1..24).map(|i| i as f64 * TAU / 100.0) // 0.01τ .. 0.23τ
+    }
+
+    /// P1: the drawn curve lands exactly where the range formula says.
+    #[test]
+    fn p1_curve_lands_on_the_range() {
+        for theta in thetas() {
+            let rp = (2.0 * theta).sin();
+            assert!(shape(theta, rp).abs() &lt; 1e-12, &quot;theta={theta}&quot;);
+        }
+    }
+
+    /// P2: range is maximized at θ = τ/8, and nowhere else on the grid.
+    #[test]
+    fn p2_range_maxes_at_tau_over_eight() {
+        let best = numbers(TAU / 8.0, 2.0, 9.81).0;
+        for theta in thetas() {
+            let r = numbers(theta, 2.0, 9.81).0;
+            assert!(r &lt;= best + 1e-12);
+            if (theta - TAU / 8.0).abs() &gt; 1e-9 {
+                assert!(r &lt; best, &quot;theta={theta} must be strictly worse&quot;);
+            }
+        }
+    }
+
+    /// P3: complementary angles share a range — R(θ) = R(τ/4 − θ).
+    #[test]
+    fn p3_complementary_angles_share_a_range() {
+        for theta in thetas().filter(|t| *t &lt; TAU / 8.0) {
+            let a = numbers(theta, 3.0, 1.62).0;
+            let b = numbers(TAU / 4.0 - theta, 3.0, 1.62).0;
+            assert!((a - b).abs() &lt; 1e-12 * a.max(1e-12), &quot;theta={theta}&quot;);
+        }
+    }
+
+    /// P4: the drawn apex sits at the apex formula&#x27;s height.
+    #[test]
+    fn p4_apex_matches() {
+        for theta in thetas() {
+            let (_, apex, _) = numbers(theta, 2.5, 9.81);
+            let natural = shape(theta, (2.0 * theta).sin() / 2.0);
+            // convert natural apex back to meters: × v²/g
+            assert!((natural * 2.5 * 2.5 / 9.81 - apex).abs() &lt; 1e-12);
+        }
+    }
+
+    /// P5: scale invariance — the drawn shape is bit-identical across
+    /// (v, g), which is the whole point of natural units.
+    #[test]
+    fn p5_shape_ignores_v_and_g() {
+        for theta in thetas() {
+            for xp in [0.1, 0.3, 0.55, 0.8] {
+                // shape() takes no v or g at all: the invariance is
+                // structural. Assert the numbers still differ, so the
+                // claim is not vacuous.
+                let a = numbers(theta, 2.0, 9.81);
+                let b = numbers(theta, 4.0, 1.62);
+                assert!(a.0 != b.0 &amp;&amp; shape(theta, xp) == shape(theta, xp));
+            }
+        }
+    }
+}
+</pre>
+
+    <h2 class="sec">3 &middot; The page: all data</h2>
+    <p class="note">The manifest. Things to notice: <code>params</code> order defines <code>draw</code>'s argument order; <code>sweep</code> names which parameter the Play button animates; <code>claims[].test</code> ties each on-page claim to the test that enforces it; <code>views[].world</code> must match its <code>viewBox</code> aspect or the runtime refuses to run.</p>
+<pre>{
+  &quot;slug&quot;: &quot;projectile&quot;,
+  &quot;title&quot;: &quot;Projectile Range&quot;,
+  &quot;topic&quot;: &quot;mechanics&quot;,
+  &quot;eyebrow&quot;: &quot;Goosethropic Physics · Mechanics · the authoring template&quot;,
+  &quot;lede&quot;: &quot;The smallest lesson in the lab, on purpose: a launch at speed v and angle θ, everything closed form. It exists twice — once as physics, and once as the worked example the &lt;a href=&#x27;../../classroom/authoring.html&#x27;&gt;authoring guide&lt;/a&gt; walks through line by line. The trajectory is drawn in natural units v²/g, which is why changing v or g never changes the shape — only the numbers.&quot;,
+  &quot;views&quot;: [
+    {
+      &quot;world&quot;: {
+        &quot;x0&quot;: -0.075,
+        &quot;x1&quot;: 1.125,
+        &quot;y0&quot;: -0.06,
+        &quot;y1&quot;: 0.54
+      },
+      &quot;viewBox&quot;: {
+        &quot;w&quot;: 1000,
+        &quot;h&quot;: 500
+      },
+      &quot;wide&quot;: true,
+      &quot;title&quot;: &quot;The flight, in natural units&quot;,
+      &quot;law&quot;: &quot;y = x·tan θ − g x²/(2 v² cos² θ)&quot;
+    }
+  ],
+  &quot;params&quot;: {
+    &quot;theta&quot;: {
+      &quot;label&quot;: &quot;Launch angle θ&quot;,
+      &quot;min&quot;: 0.01,
+      &quot;max&quot;: 0.24,
+      &quot;step&quot;: 0.001,
+      &quot;value&quot;: 0.1,
+      &quot;unit&quot;: &quot;τ&quot;,
+      &quot;digits&quot;: 3,
+      &quot;scale&quot;: 6.283185307179586
+    },
+    &quot;v&quot;: {
+      &quot;label&quot;: &quot;Launch speed v&quot;,
+      &quot;min&quot;: 1,
+      &quot;max&quot;: 4,
+      &quot;step&quot;: 0.05,
+      &quot;value&quot;: 2.0,
+      &quot;unit&quot;: &quot;m/s&quot;,
+      &quot;digits&quot;: 2
+    },
+    &quot;g&quot;: {
+      &quot;label&quot;: &quot;Gravity g&quot;,
+      &quot;min&quot;: 1.62,
+      &quot;max&quot;: 24.79,
+      &quot;step&quot;: 0.01,
+      &quot;value&quot;: 9.81,
+      &quot;unit&quot;: &quot;m/s²&quot;,
+      &quot;digits&quot;: 2
+    }
+  },
+  &quot;sweep&quot;: {
+    &quot;param&quot;: &quot;theta&quot;,
+    &quot;rate&quot;: 0.02,
+    &quot;label&quot;: &quot;Sweep the angle&quot;
+  },
+  &quot;readouts&quot;: [
+    {
+      &quot;slot&quot;: 0,
+      &quot;label&quot;: &quot;θ&quot;,
+      &quot;fmt&quot;: &quot;turns3&quot;
+    },
+    {
+      &quot;slot&quot;: 1,
+      &quot;label&quot;: &quot;Range&quot;,
+      &quot;fmt&quot;: &quot;fix3&quot;,
+      &quot;hero&quot;: true
+    },
+    {
+      &quot;slot&quot;: 2,
+      &quot;label&quot;: &quot;Apex height&quot;,
+      &quot;fmt&quot;: &quot;fix3&quot;
+    },
+    {
+      &quot;slot&quot;: 3,
+      &quot;label&quot;: &quot;Flight time&quot;,
+      &quot;fmt&quot;: &quot;fix3&quot;
+    },
+    {
+      &quot;slot&quot;: 4,
+      &quot;label&quot;: &quot;% of best range&quot;,
+      &quot;fmt&quot;: &quot;fix3&quot;,
+      &quot;hero&quot;: true
+    }
+  ],
+  &quot;styles&quot;: [
+    {
+      &quot;var&quot;: &quot;--ash-dim&quot;,
+      &quot;width&quot;: 1.5
+    },
+    {
+      &quot;var&quot;: &quot;--steel&quot;,
+      &quot;width&quot;: 2.5
+    },
+    {
+      &quot;var&quot;: &quot;--gold&quot;,
+      &quot;width&quot;: 3
+    },
+    {
+      &quot;var&quot;: &quot;--red-hot&quot;,
+      &quot;width&quot;: 3
+    }
+  ],
+  &quot;legend&quot;: [
+    {
+      &quot;style&quot;: 1,
+      &quot;label&quot;: &quot;the flight&quot;
+    },
+    {
+      &quot;style&quot;: 2,
+      &quot;label&quot;: &quot;apex&quot;
+    },
+    {
+      &quot;style&quot;: 3,
+      &quot;label&quot;: &quot;launch direction / range tick&quot;
+    }
+  ],
+  &quot;claims&quot;: [
+    {
+      &quot;id&quot;: &quot;P1&quot;,
+      &quot;text&quot;: &quot;The drawn curve lands exactly where the range formula says.&quot;,
+      &quot;test&quot;: &quot;p1_curve_lands_on_the_range&quot;
+    },
+    {
+      &quot;id&quot;: &quot;P2&quot;,
+      &quot;text&quot;: &quot;Range is maximized at θ = τ/8 and nowhere else.&quot;,
+      &quot;test&quot;: &quot;p2_range_maxes_at_tau_over_eight&quot;
+    },
+    {
+      &quot;id&quot;: &quot;P3&quot;,
+      &quot;text&quot;: &quot;Complementary angles share a range: R(θ) = R(τ/4 − θ).&quot;,
+      &quot;test&quot;: &quot;p3_complementary_angles_share_a_range&quot;
+    },
+    {
+      &quot;id&quot;: &quot;P4&quot;,
+      &quot;text&quot;: &quot;The drawn apex sits at v²sin²θ/2g.&quot;,
+      &quot;test&quot;: &quot;p4_apex_matches&quot;
+    },
+    {
+      &quot;id&quot;: &quot;P5&quot;,
+      &quot;text&quot;: &quot;The drawn shape is structurally independent of v and g.&quot;,
+      &quot;test&quot;: &quot;p5_shape_ignores_v_and_g&quot;
+    }
+  ],
+  &quot;tryThis&quot;: [
+    &quot;Sweep the angle and watch % of best range: it touches 100 exactly once. Where, and why is it τ/8 and not τ/4?&quot;,
+    &quot;Find two angles with the same range readout — then check their sum. P3 says it is always τ/4.&quot;,
+    &quot;Slide v and g around while the sweep runs: the numbers churn, the shape never moves. What combination of v and g IS the shape? (It isn&#x27;t any — that is P5.)&quot;,
+    &quot;Moon vs Jupiter at fixed θ: how do range and flight time each scale with g?&quot;
+  ],
+  &quot;notes&quot;: &quot;notes.html&quot;,
+  &quot;footer&quot;: &quot;the authoring template — its full source is walked through in the classroom guide · angles in turns of τ&quot;,
+  &quot;card&quot;: &quot;The smallest lesson in the lab, on purpose — and the worked example the authoring guide dissects line by line. Range peaks at τ/8; complementary angles tie.&quot;,
+  &quot;cardClaim&quot;: &quot;R = v²·sin(2θ)/g, maximized at θ = τ/8; the drawn shape is independent of v and g by construction.&quot;
+}</pre>
+    <p class="note">The stub, for completeness &mdash; you will copy it and edit two lines:</p>
+<pre>&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;UTF-8&quot; /&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
+&lt;title&gt;Projectile Range — Goosethropic Physics&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;The smallest lesson in the lab: launch angle, range, and the τ/8 maximum — also the authoring template.&quot; /&gt;
+&lt;meta property=&quot;og:title&quot; content=&quot;Projectile Range — Goosethropic Physics&quot; /&gt;
+&lt;meta property=&quot;og:description&quot; content=&quot;Range peaks at τ/8; the drawn shape is independent of v and g by construction.&quot; /&gt;
+&lt;meta property=&quot;og:type&quot; content=&quot;article&quot; /&gt;
+&lt;meta name=&quot;twitter:card&quot; content=&quot;summary&quot; /&gt;
+&lt;link rel=&quot;icon&quot; href=&quot;../../assets/goose-glyph.svg&quot; type=&quot;image/svg+xml&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;../../css/tokens.css&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;../../css/fonts.css&quot; /&gt;
+&lt;link rel=&quot;stylesheet&quot; href=&quot;../../css/lesson.css&quot; /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;ls&quot; id=&quot;lesson&quot;&gt;&lt;/div&gt;
+&lt;script data-lesson=&quot;.&quot; src=&quot;../../js/runtime.js&quot;&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+    <h2 class="sec">4 &middot; Build, see, ship</h2>
+<pre>sh tools/build-wasm.sh        # compiles every lesson crate to wasm, stages it
+python3 tools/gen-index.py    # the hub regenerates; it cannot forget you
+cd public && python3 -m http.server 8000   # open localhost:8000/lessons/&lt;slug&gt;/</pre>
+    <p class="note">Then <code>cargo test -p lesson-&lt;slug&gt;</code> until every claim is green &mdash; CI runs the same on every push, in public.</p>
+
+    <h2 class="sec">5 &middot; Exercises are claims students earn</h2>
+    <p class="note">You rarely need a whole new lesson. The lightest exercise is a <code>tryThis</code> entry phrased as <em>predict, then check</em> &mdash; it costs one line of JSON. The next weight up is a <b>new claim</b>: state a quantitative sentence, write its test, watch it fail, fix your statement or your understanding until it passes. The classroom's homework pattern inverts that: <em>break</em> an existing claim (change <code>e&sup2;</code> to <code>e</code>, flip a sign) and predict exactly which test fails and what it prints. A student who can predict the failure has understood the physics; the diff plus the test output is the deliverable.</p>
+
+    <h2 class="sec">6 &middot; Taste, learned the hard way</h2>
+    <p class="note">Everything in this list cost us a real bug once. Draw in <b>natural units</b> where the physics offers them (the template's shape needs no v or g &mdash; and that became claim P5). Never let a label go undefined &mdash; a slider the student cannot define is a slider they cannot learn from (<em>Restitution e (1 elastic &middot; 0 beanbag)</em>). Make degenerate cases first-class: the at-focal-point "no image", the &epsilon; = 0 pendulum that never flips. If your lesson needs an approximation, <b>put its error on screen</b> and give the student a slider that breaks it &mdash; the wave lesson's sin-vs-tan dissector is the pattern. And verify by <em>driving the page</em>, not by reading your own code: a screenshot cannot catch a dead animation loop, and we know because ours didn't.</p>
+  </div>
+
+  <footer><a href="index.html">&larr; The classroom</a> &middot; <a href="../index.html">the lab</a> &middot; <a href="https://github.com/westerngazoo/physics-lab">source &amp; CI</a></footer>
+</div>
+</body>
+</html>

@@ -31,6 +31,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-projectile"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
 name = "lesson-three-mechanics"
 version = "0.1.0"
 dependencies = [
