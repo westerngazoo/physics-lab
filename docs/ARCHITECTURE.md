@@ -4,6 +4,10 @@ The current-state reference for physics-lab. This document describes
 **what is**, normatively; the *decisions* that got here — including
 three owner-review rounds — live in [RFC-001](RFC-001-lesson-framework.md)
 and are not repeated. When they disagree, this file is stale: fix it.
+For implementation mechanics — memory layout, the calling convention,
+what the `lesson!` macro expands to, the runtime's order of operations,
+measured limits and failure modes — see
+[ENGINEERING.md](ENGINEERING.md).
 
 ---
 

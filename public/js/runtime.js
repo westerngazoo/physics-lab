@@ -295,8 +295,27 @@ function fatal(title, detail) {
   }
 
   // ---- the frame: params into wasm memory, prims back --------------------
+  // draw() runs from listeners and rAF, i.e. OUTSIDE the startup try
+  // block, so it guards itself: a wasm trap (e.g. a lesson overflowing
+  // PRIM_CAP) must reach the page, not just the console. The instance
+  // survives a trap -- state_at rewrites from index 0 -- so we disarm
+  // the clock and let the reader retry by moving a control.
   const keys = Object.keys(lesson.params);
+  let drawFailed = false;
   function draw() {
+    try { drawUnguarded(); drawFailed = false; }
+    catch (e) {
+      if (!drawFailed) {
+        drawFailed = true;
+        sweep = false;
+        fatal("A frame failed inside the lesson's WebAssembly: " + e,
+              "Params at failure: " + JSON.stringify(state) +
+              "\nA RuntimeError here usually means the lesson exceeded " +
+              "PRIM_CAP (8192 f64s) or panicked in draw().");
+      }
+    }
+  }
+  function drawUnguarded() {
     const pv = new Float64Array(wasm.memory.buffer, wasm.params_ptr(), keys.length);
     keys.forEach((k, i) => { pv[i] = state[k] * (lesson.params[k].scale ?? 1); });
     const n = wasm.state_at(keys.length);

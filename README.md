@@ -20,6 +20,7 @@ writing a new lesson is one function and one manifest.
 | **an instructor** | the Classroom's instructor note — claims map to named tests, so "break-it" homework grades as a diff + a failing test's output | fork; CI re-proves every claim on your students' pushes |
 | **a lesson author** | [Writing a Lesson](https://goosethropic-physics.gustavo-delgadillo.workers.dev/classroom/authoring.html) — walks the live minimal template line by line | `sh tools/build-wasm.sh` · `python3 tools/gen-index.py` |
 | **a maintainer** | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — the stack, the wasm ABI, the manifest schema, the invariants and the bugs that bought them | see §8 Toolchain there (including the Homebrew/rustup landmine) |
+| **modifying the framework itself** | [docs/ENGINEERING.md](docs/ENGINEERING.md) — memory layout, calling convention, macro expansion, the runtime phase by phase, measured limits and failure modes, extension recipes | `cargo test --workspace` · `cargo clippy --workspace --all-targets -- -D warnings` |
 
 Decision history — how the architecture got this way, through three
 owner-review rounds — is [docs/RFC-001](docs/RFC-001-lesson-framework.md).
