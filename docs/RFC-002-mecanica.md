@@ -166,14 +166,22 @@ pub fn peak<L: Lift>(lift: &L) -> (f64, f64);
 pub fn zero_crossing<L: Lift>(lift: &L, lo: f64, hi: f64) -> Option<f64>;
 ```
 
-Three implementors (squat, kickback, hip-thrust/RDL) and three algorithms
-written once over one method. That clears rule 1 and pays the rent: `work`,
-`peak` and `zero_crossing` stop being per-episode code.
+Three implementors — `patada::Patada`, `gluteo::Rumano`, `gluteo::HipThrust` —
+and three algorithms written once over one method. That clears rule 1 and pays
+the rent: `work`, `peak` and `zero_crossing` stop being per-episode code.
 
 Nothing else becomes a trait. Each movement is a plain struct with public
-fields — the knobs — and its own `posture()` returning joint coordinates. Per
+fields — the knobs — and its own `postura()` returning joint coordinates. Per
 `DESIGN.md`, a shared "posture" type would be an abstraction describing one
 struct literal.
+
+**The squat deliberately does not implement `Lift`** *(amended during
+implementation)*. Both squat reels are static comparisons of one posture, and
+no published model validates a descent kinematic. Fabricating one so the struct
+could satisfy a trait would be the "looks right rather than is right" failure
+this repo exists to prevent — and it would put invented physics behind a claim
+test, which is worse than having no test. A depth axis is a v2 change with its
+own claims. The trait still has three implementors without it.
 
 ### 3.3 Two invariants worth stating in code
 
@@ -332,8 +340,16 @@ bar horizontal offset from midfoot (0–0.12 m).
 From reels 14, 15, 16 and 20 — four reels, one model, and the strongest
 interactive story in the corpus because every knob is already modelled.
 
-**Knobs:** torso angle (40–90°), strap position (0.46–0.85 m from hip),
-pulley height (0.05–0.45 m), start angle (−45–0°), load.
+**Knobs:** movement range as start/end angle (−45–90°), strap position
+(0.46–0.85 m from hip), pulley height (0.05–0.45 m), load.
+
+*Amended during implementation:* torso angle is **not** a model input. In the
+reels it decides how much range is available — bent to 90° the hip travels 90°,
+standing it has ~40° of hyperextension left — but no published model derives
+range *from* torso angle, and the two data points (90°→90°, 0°→40°) admit
+infinitely many laws. The range is therefore exposed directly, with the two
+published settings as named presets, rather than fitting a line through two
+points and calling it physics.
 
 **Readouts:** τ at the current angle (hero), work over the range, peak τ,
 the zero-crossing angle.
@@ -347,8 +363,32 @@ the zero-crossing angle.
   claim and should be tested as one
 - `C5` `zero_crossing` finds the sign change near −32° and `tau` is negative
   beyond it
-- `C6` work computed in degrees differs from radians by exactly 180/π — the
-  guard for §3.3
+- `C6` starting 30° early adds 29% of work
+- `C7` the published 165.5 J is reproduced
+- `C8` **the peak is at 8.6°, not at the vertical** — see §6.4
+
+### 6.4 A defect the claims found immediately
+
+Writing C8 as "the peak is at the start" made it fail. The peak is **125.1 N·m
+at 8.6°**, not 123.2 N·m at ψ = 0: torque *rises* through the first 8.6° of hip
+extension and falls afterwards.
+
+123.2 N·m is the torque **at ψ = 0** — this model gives 123.4, the difference
+being the reels' hard-coded 147 N tension against 15 × 9.81 = 147.15. So the
+published figure is the starting torque presented as the peak, and reel 20's
+line *"arrancas en el pico y de ahí baja"* is wrong in its first half.
+
+The headline is unharmed: 8.6° still falls inside the standing range, so "el
+pico es idéntico" between torso angles holds, and that claim (C2) passed on its
+own. But the number and the sentence are both off by a little, and the house
+rule in `fisicobuenfisico`'s README is that a label disagreeing with the
+calculation is a bug rather than narrative licence.
+
+This is the argument for the crate, made in under an hour: the reels are
+verified at the frames that shipped, and this error sits between two rendered
+frames where nothing looked wrong. It is also OQ-5 answering itself —
+transcribe, then let the claims decide, and treat the disagreement as a
+correction worth publishing.
 
 ### 6.3 `gluteo` — hip thrust vs Romanian deadlift
 
@@ -547,7 +587,13 @@ not this RFC's.
 | 2026-08-31 | v1 is sagittal-only; bench deferred to v2 | Bench is frontal-plane; including it doubles the caveat surface at launch for one lesson. |
 | 2026-08-31 | One new primitive (polygon), not three | The area fill is a lost *argument*; text and discs are conveniences the readout panel and polygons already cover. |
 | 2026-08-31 | Muscle model is geometry-only | Length and moment arm are determinate; force distribution is not (§7.3). Consistent with fitAI R-0045 AC5. |
+| 2026-08-31 | The squat does not implement `Lift` | Both squat reels are static posture comparisons; no published model validates a descent kinematic, and inventing one to satisfy a trait would put fabricated physics behind a claim test. Found during implementation. |
+| 2026-08-31 | Kickback range is an input, not derived from torso angle | Two data points admit infinitely many laws; fitting one and calling it physics is the failure mode this repo is built against. Found during implementation. |
 
 ## Changelog
 
 - _2026-08-31 — created (Discussing)._
+- _2026-08-31 — amended after implementing the crate: the squat does not
+  implement `Lift` (§3.2); the kickback's range is an input rather than a
+  function of torso angle (§6.2); §6.4 records the peak-location defect the
+  claims found in reel 20. Crate is green — 29 claims, clippy clean._
