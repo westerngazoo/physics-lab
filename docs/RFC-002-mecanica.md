@@ -556,6 +556,86 @@ proposed in the `guion` RFC.
 That is a change to R-0045's dependency line, and it is the fitAI owner's call,
 not this RFC's.
 
+### 9.1 Prior art: a Japanese deadlift coordination tool
+
+Owner-supplied, 2026-09-02. Worth recording because it is close enough to be
+instructive and different enough to be clarifying.
+
+It is a *task-constrained sagittal inverse-**kinematics*** model
+(矢状面の準静的な課題拘束付き逆運動学モデル): foot position and weight height
+are held equal across two panels, and it compares how hip, knee, lumbar,
+thoracic and cervical segments arrange themselves to satisfy that constraint.
+Its metrics are heights, displacements and joint angles.
+
+**It reports no forces at all** — no N·m, no joules. That is the load-bearing
+difference. This RFC's model is inverse *statics*: what the load demands of a
+joint. The two are complementary halves, and the contrast makes one thing
+explicit that §7.3 only implies:
+
+> A multi-segment spine is cheap in a kinematic model and expensive in a
+> kinetic one. Modelling lumbar / thoracic / cervical links to compare
+> *postures* commits to nothing. Attaching a *moment* to a lumbar segment
+> invokes R-0045 OQ-3 — an L5/S1 approximation and its stated error. Their
+> spine is free because they never put a newton on it. Ours would not be.
+
+Three practices worth adopting:
+
+1. **Assumptions as persistent chips**, not prose — the tool shows
+   足底固定 (feet fixed), 骨長一定 (bone lengths constant),
+   重り高さを課題拘束 (weight height as task constraint) as a standing row.
+   §8.1 asks for the same thing and should specify chips.
+2. **Task constraints as the comparison device.** Hold two quantities equal
+   and vary only the strategy. Sharper than showing two exercises side by
+   side, and the honest form of R-0045 AC8's deltas.
+3. **Label the comparison as a hypothesis.** It marks the second panel
+   検証用の協調仮説 ("a coordination hypothesis for verification") and its
+   strength slider 模式値 ("schematic value"). A variant must never read as a
+   measurement.
+
+### 9.2 The capture template, and why it is the calibration seam
+
+Owner proposal: rather than accepting an uploaded clip, have the app drive
+recording behind a framing template. Recorded here because it changes what the
+video half costs, and because it has a consequence for this crate's shape.
+
+**Pose gives angles for free and lengths not at all.** Every model in
+`mecanica` needs absolute metres — `femur_m`, `torso_m`, `strap_m` — because
+`τ = F·d` is dimensional. A keypoint series alone yields a posture that no
+newton-metre can be attached to. R-0044 AC7 left calibration as an open seam;
+an app-driven capture is what closes it.
+
+The cheapest scale reference is already in frame: a competition plate is
+**450 mm**. One detected disc gives the pixel→metre scale with no measuring
+tape and no user input. (To be verified against the plate standards actually
+common in the target market before it is relied on.)
+
+It also shrinks R-0044's refusal surface. That machinery exists because the
+pipeline accepts arbitrary uploads; when the app drives capture, most refusal
+cases become *prevented* — "move back, your feet are cut off" — rather than
+detected after the fact.
+
+**It does not remove refusal**, and the spec must not claim it does:
+
+- A template can enforce framing, and the gyroscope can enforce that the phone
+  is vertical. Neither can enforce that the camera is *perpendicular* to the
+  bar path, and a 20° azimuth error still reads as a legal squat.
+- Silhouette overlays have a known failure mode: people match the outline by
+  moving *themselves*, distorting the stance being measured. The guide must
+  constrain the phone, not the lifter.
+- Keypoint confidence still collapses on poor lighting, baggy clothing and
+  occlusion, none of which framing fixes.
+
+**Consequence for this crate.** If video ever feeds these models, they must
+accept a **measured** posture, not only a computed one — today
+`Sentadilla::tau_hip` calls `self.postura()`, folding "solve posture from
+knobs" and "compute torque from posture" into one step. Splitting them is the
+`Model × Source` separation from the `guion` RFC.
+
+It is **not** being built now: `DESIGN.md` rule 1 refuses surface without a
+second implementor, and there is exactly one source today. It is recorded so
+v1 does not foreclose it, and so the split is a refactor rather than a
+redesign when the second source arrives.
+
 ---
 
 ## 10. Open questions
@@ -571,6 +651,9 @@ not this RFC's.
 - **OQ-4.** `PRIM_CAP` is 8192 f64. A figure plus two shaded curves plus axes
   should fit comfortably, but the kickback lesson draws two figures — worth
   measuring before it traps at runtime.
+- **OQ-6.** Is the 450 mm plate a safe scale reference in Mexico and LATAM,
+  where bumper and standard plates vary? A wrong scale silently scales every
+  torque, which is the worst failure mode available — it looks plausible.
 - **OQ-5.** Do the reels' constants get re-derived or transcribed? Transcribing
   imports any error; re-deriving risks contradicting published videos. Proposal:
   transcribe, then let the claims decide, and treat a disagreement as a
@@ -593,6 +676,10 @@ not this RFC's.
 ## Changelog
 
 - _2026-08-31 — created (Discussing)._
+- _2026-09-02 — §9.1 records the Japanese coordination tool as prior art (a
+  kinematic model, where ours is kinetic — and why that makes its spine cheap
+  and ours expensive); §9.2 records the capture template as the calibration
+  seam, with the limits it does not remove._
 - _2026-08-31 — amended after implementing the crate: the squat does not
   implement `Lift` (§3.2); the kickback's range is an input rather than a
   function of torso angle (§6.2); §6.4 records the peak-location defect the
