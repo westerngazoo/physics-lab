@@ -62,3 +62,7 @@ dependencies = [
 [[package]]
 name = "lessons-common"
 version = "0.1.0"
+
+[[package]]
+name = "mecanica"
+version = "0.1.0"
