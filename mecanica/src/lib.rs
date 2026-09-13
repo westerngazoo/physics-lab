@@ -17,6 +17,7 @@
 #![forbid(unsafe_code)]
 
 pub mod gluteo;
+pub mod maquina_humana;
 pub mod patada;
 pub mod sentadilla;
 

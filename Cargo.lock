@@ -66,3 +66,6 @@ version = "0.1.0"
 [[package]]
 name = "mecanica"
 version = "0.1.0"
+dependencies = [
+ "garust",
+]
