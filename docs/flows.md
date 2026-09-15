@@ -1,6 +1,6 @@
 # Flujos — physics-lab
 
-## Flujo principal
+## Flujo principal (Mermaid)
 
 ```mermaid
 flowchart TB
@@ -16,21 +16,53 @@ BROWSER --> STUDENT[Student view]
 ## Descripción paso a paso
 
 1. **Author** — Write lib.rs + lesson.json + notes.html → build-wasm.sh.
-1. **Student** — runtime reads lesson.json → WASM params → paint primitives.
-1. **Verify** — Claim in Rust test = browser = Python cross-check.
-1. **Deploy** — wrangler deploy → physics.goosethropic.systems.
+2. **Student** — runtime reads lesson.json → WASM params → paint primitives.
+3. **Verify** — Claim in Rust test = browser = Python cross-check.
+4. **Deploy** — wrangler deploy → physics.goosethropic.systems.
 
-## Diagrama PlantUML
+## Secuencia (PlantUML)
 
-Equivalente PlantUML del flujo principal (misma topología que el diagrama Mermaid):
+Fuente: [`diagrams/flow-sequence.puml`](./diagrams/flow-sequence.puml)
 
 ```plantuml
 @startuml
-title physics-lab — flujo principal
-note as N1
-Ver flows.md Mermaid para detalle;
-exportar con herramientas mermaid→plantuml si se prefiere editar en PlantUML.
-end note
+title physics-lab — secuencia principal
+
+participant "Author" as Author0
+participant "Student" as Student1
+participant "Verify" as Verify2
+participant "Deploy" as Deploy3
+
+Author0 -> Student1: runtime reads lesson.json → WASM params → paint primitives.
+Student1 -> Verify2: Claim in Rust test = browser = Python cross-check.
+Verify2 -> Deploy3: wrangler deploy → physics.goosethropic.systems.
+
+@enduml
+```
+
+## Componentes / estados (PlantUML)
+
+Fuente: [`diagrams/flow-architecture.puml`](./diagrams/flow-architecture.puml)
+
+```plantuml
+@startuml
+title physics-lab — flujo de componentes
+start
+:RUSTLesson;
+:WASMwasm32;
+:RUST;
+:CARGOcargo;
+:PYchecks/run.py;
+:WASM;
+:BROWSERruntime.js;
+:CARGO;
+:CICI;
+:PY;
+:CI;
+:BROWSER;
+:STUDENTStudent;
+stop
+
 @enduml
 ```
 

@@ -4,6 +4,12 @@
 name = "goosethropic-physics"
 compatibility_date = "2026-06-13"
 
+# Top-level on purpose: in TOML a key after [assets] belongs to that table, so
+# a routes block placed below would be read as assets.routes and silently ignored.
+routes = [
+  { pattern = "physics.goosethropic.systems", custom_domain = true }
+]
+
 [assets]
 directory = "./public"
 
@@ -11,6 +17,3 @@ directory = "./public"
 # (Workers > goosethropic-physics > Settings > Domains & Routes) or by
 # uncommenting the route below and running `wrangler deploy`. Requires the
 # goosethropic.systems zone to be in the same account.
-# routes = [
-#   { pattern = "physics.goosethropic.systems", custom_domain = true }
-# ]

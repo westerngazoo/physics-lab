@@ -9,8 +9,9 @@ Claim-first interactive physics classroom — WASM lessons
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Arquitectura detallada (documento canónico) |
 | [architecture-overview.md](./architecture-overview.md) | Resumen con mapa de módulos y diagrama |
 | [code-walkthrough.md](./code-walkthrough.md) | Recorrido por el código fuente |
-| [flows.md](./flows.md) | Flujos de datos y control (diagramas) |
+| [flows.md](./flows.md) | Flujos Mermaid + PlantUML |
 | [design-philosophy.md](./design-philosophy.md) | Principios de diseño y decisiones |
+| [diagrams/](./diagrams/) | Fuentes `.puml` exportables |
 
 ## Stack
 

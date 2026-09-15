@@ -69,3 +69,12 @@ version = "0.1.0"
 dependencies = [
  "garust",
 ]
+
+[[package]]
+name = "oraculos"
+version = "0.1.0"
+dependencies = [
+ "garust",
+ "garust-core",
+ "mecanica",
+]

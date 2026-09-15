@@ -1,0 +1,19 @@
+@startuml
+title physics-lab — flujo de componentes
+start
+:RUSTLesson;
+:WASMwasm32;
+:RUST;
+:CARGOcargo;
+:PYchecks/run.py;
+:WASM;
+:BROWSERruntime.js;
+:CARGO;
+:CICI;
+:PY;
+:CI;
+:BROWSER;
+:STUDENTStudent;
+stop
+
+@enduml

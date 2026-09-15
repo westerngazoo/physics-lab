@@ -1,0 +1,13 @@
+@startuml
+title physics-lab — secuencia principal
+
+participant "Author" as Author0
+participant "Student" as Student1
+participant "Verify" as Verify2
+participant "Deploy" as Deploy3
+
+Author0 -> Student1: runtime reads lesson.json → WASM params → paint primitives.
+Student1 -> Verify2: Claim in Rust test = browser = Python cross-check.
+Verify2 -> Deploy3: wrangler deploy → physics.goosethropic.systems.
+
+@enduml
