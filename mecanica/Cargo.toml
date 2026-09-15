@@ -2,7 +2,10 @@
 name = "mecanica"
 version = "0.1.0"
 edition = "2021"
-description = "Closed-form gym biomechanics: joint torque through a lift. Pure, no dependencies."
+description = "Gym biomechanics: joint torque through a lift, in closed form and on the kernel."
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+# El mecanismo vive en el kernel (R-0001 Q1). Se consume; no se copia:
+# dos implementaciones de "dónde está el codo" es donde se esconde un signo.
+garust = { path = "../../garust" }
