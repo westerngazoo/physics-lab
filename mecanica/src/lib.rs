@@ -16,9 +16,14 @@
 
 #![forbid(unsafe_code)]
 
+pub mod curl;
 pub mod gluteo;
+pub mod jalon;
 pub mod maquina_humana;
+/// La palanca compartida: brazo de momento y momento de una carga.
+pub mod palanca;
 pub mod patada;
+pub mod press;
 pub mod sentadilla;
 
 /// Standard gravity, m/s².
