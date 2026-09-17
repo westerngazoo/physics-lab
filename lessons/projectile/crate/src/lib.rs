@@ -26,7 +26,32 @@ pub fn shape(theta: f64, xp: f64) -> f64 {
 
 use lessons_common::{Prims, Readouts};
 
-/// Params (manifest order): [theta (radians; slider in turns), v, g].
+/// The primary entry point for drawing the lesson.
+///
+/// # Interfacing & Framework Abstractions
+///
+/// This framework does not use Rust traits (e.g. there is no `Draw` trait to implement).
+/// Instead, the interface is purely data-driven: the lesson crate registers this `draw`
+/// function with the `lessons_common::lesson!` macro, which generates the uniform WebAssembly
+/// C-ABI exports (`params_ptr`, `prims_ptr`, `readouts_ptr`, `state_at`) expected by the
+/// JavaScript runtime.
+///
+/// # Parameters
+///
+/// * `p`: A slice of `f64` representing the input parameters, passed **in manifest order**
+///   as declared under `params` in `lesson.json`. Values are pre-multiplied by their
+///   manifest `scale` factor. Here, `p[0]` is `theta` (scaled by `TAU` to deliver radians),
+///   `p[1]` is `v` (launch speed), and `p[2]` is `g` (gravity).
+/// * `out`: A mutable reference to a `Prims` buffer writer, which provides helper methods
+///   (`view`, `segment`, `arrow`, `curve`, `point`) to write drawing records into the flat
+///   primitive buffer shared with the JS runtime.
+/// * `read`: A mutable reference to a `Readouts` writer used to set numerical readout slots
+///   by index (0 to 7) to be displayed on the page as defined in `lesson.json`.
+///
+/// # The Purity Contract
+///
+/// This function must be completely pure and stateless: no random number generation, no clock
+/// access, and no internal state. It is run on every frame update from the current parameters.
 fn draw(p: &[f64], out: &mut Prims, read: &mut Readouts) {
     let (theta, v, g) = (p[0], p[1], p[2]);
     let (range, apex, time) = numbers(theta, v, g);

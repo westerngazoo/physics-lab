@@ -20,8 +20,11 @@ this repo lacks is a reason to draw a human body.
 
 This RFC proposes:
 
-1. **A `mecanica` crate** — closed-form gym biomechanics, zero dependencies,
-   one trait with one method and three shared algorithms over it.
+1. **A `mecanica` crate** — closed-form gym biomechanics: one trait with one
+   method and three shared algorithms over it. *(Amended 2026-09-13: this read
+   "zero dependencies". `maquina_humana` now consumes `garust::twolink`, on the
+   grounds that two implementations of "where the elbow is" is where a sign
+   error hides. It still builds for `wasm32-unknown-unknown`.)*
 2. **Exactly one new drawing primitive** — a filled polygon. Not three.
 3. **An FBF theme** — a `tokens.css` override and a heat ramp declared as
    styles. No Rust changes, no framework changes.
@@ -130,8 +133,11 @@ integral; one hand-rolls a root find; none are tested. Three lessons written
 the same way would reproduce the same defect, and fitAI R-0045 AC15 needs the
 same functions again in `fitai-core`.
 
-The crate is pure Rust with **zero dependencies** — no `garust`, no `std`
-requirement beyond `f64` math — so moving it later costs a path change.
+The crate is pure Rust with **one dependency, `garust`** — the kernel this
+repo already builds on — and no I/O, no clock, no state. *(Amended 2026-09-13:
+this read "zero dependencies — no `garust`". `maquina_humana` took the
+two-link solve from the kernel rather than copying it. Verified still building
+for `wasm32-unknown-unknown`, which `checks.yml` requires of every member.)*
 
 ### 3.2 The one abstraction, and why it pays rent
 

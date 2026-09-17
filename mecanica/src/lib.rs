@@ -17,11 +17,54 @@
 #![forbid(unsafe_code)]
 
 pub mod gluteo;
+pub mod maquina_humana;
 pub mod patada;
 pub mod sentadilla;
 
 /// Standard gravity, m/s².
 pub const G: f64 = 9.81;
+
+/// Progress along a lift's own range: `0` at the start of the declared
+/// range, `1` at its end.
+///
+/// Two lifts sweep different angular ranges, so comparing them needs a
+/// shared axis. This is that axis. It is presentation, not physics —
+/// hence a free function rather than a trait method — but it belongs
+/// here and not inside one exercise's module: nothing about it is about
+/// glutes, and a comparison layer that has to reach into `gluteo` to
+/// compare a curl is a layering mistake.
+pub fn tau_at_progress<L: Lift + ?Sized>(lift: &L, s: f64) -> f64 {
+    let (a, b) = lift.range();
+    lift.tau(a + (b - a) * s)
+}
+
+/// Where two lifts' curves cross on the shared progress axis, if at all.
+///
+/// Bisection on the difference, so it finds **one** crossing; a pair with
+/// several would need a different question asked of it. Returns `None`
+/// when the difference does not change sign, which is the common case and
+/// not an error: most pairs simply do not cross.
+pub fn crossing_progress<A, B>(a: &A, b: &B) -> Option<f64>
+where
+    A: Lift + ?Sized,
+    B: Lift + ?Sized,
+{
+    let diff = |s: f64| tau_at_progress(a, s) - tau_at_progress(b, s);
+    let (mut lo, mut hi) = (0.0_f64, 1.0_f64);
+    if diff(lo).is_sign_positive() == diff(hi).is_sign_positive() {
+        return None;
+    }
+    let rising = diff(lo) < 0.0;
+    for _ in 0..BISECTION_ITERS {
+        let mid = (lo + hi) / 2.0;
+        if (diff(mid) < 0.0) == rising {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    Some((lo + hi) / 2.0)
+}
 
 /// Midpoint samples for the work integral.
 const WORK_SAMPLES: usize = 900;
@@ -46,7 +89,15 @@ pub trait Lift {
     /// and a rider would read assistance as load.
     fn tau(&self, phi: f64) -> f64;
 
-    /// The movement's angular range, radians, as `(from, to)`.
+    /// The movement's angular range, radians, as `(from, to)` **in the
+    /// direction the repetition travels**.
+    ///
+    /// The order is not decoration: [`tau_at_progress`] builds the
+    /// shared comparison axis from it. A lift that declares its range
+    /// backwards reads as running in reverse against every other one,
+    /// and nothing about the numbers looks wrong — the curve is simply
+    /// mirrored. `gluteo` declared `(0, bottom)` for exactly as long as
+    /// its progress helper lived inside that module and compensated.
     fn range(&self) -> (f64, f64);
 }
 
@@ -66,10 +117,17 @@ pub fn work<L: Lift + ?Sized>(lift: &L, a: f64, b: f64) -> f64 {
         * step
 }
 
-/// [`work`] over the lift's whole declared range.
+/// [`work`] over the lift's whole declared range, **ordered**.
+///
+/// `range()` is `(from, to)` in the direction the repetition travels, and
+/// some lifts travel toward a smaller angle — a hip extension ends at
+/// zero flexion. Integrating `from → to` there would return the work with
+/// a minus sign, which is a true statement about the external torque and
+/// a useless one about the repetition. The interval is what is being
+/// asked for, so it is integrated in order.
 pub fn work_over_range<L: Lift + ?Sized>(lift: &L) -> f64 {
     let (a, b) = lift.range();
-    work(lift, a, b)
+    work(lift, a.min(b), a.max(b))
 }
 
 /// The largest resisting torque and where it occurs, as `(phi, tau)`.
@@ -136,6 +194,56 @@ pub fn heat_bucket(t: f64, buckets: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
+
+    /// The progress axis starts where the repetition starts.
+    ///
+    /// This is the claim that would have caught a real defect: the helper
+    /// used to live inside `gluteo`, where it compensated for that
+    /// module declaring its range backwards. Promoted to the root and
+    /// applied to a lift that declares its range honestly, the
+    /// compensation silently mirrored the curve. Nothing about the
+    /// numbers looks wrong when that happens — which is why it is a
+    /// claim and not a comment.
+    #[test]
+    fn progress_starts_where_the_repetition_starts() {
+        /// A lift whose range runs the other way, to cover both signs.
+        struct Sube;
+        impl Lift for Sube {
+            fn tau(&self, phi: f64) -> f64 {
+                phi
+            }
+            fn range(&self) -> (f64, f64) {
+                (0.0, 1.0)
+            }
+        }
+        let baja = gluteo::HipThrust {
+            load_kg: 100.0,
+            femur_m: 0.46,
+            bottom_rad: 40.0_f64.to_radians(),
+        };
+        for lift in [&Sube as &dyn Lift, &baja as &dyn Lift] {
+            let (from, to) = lift.range();
+            assert!(
+                (tau_at_progress(lift, 0.0) - lift.tau(from)).abs() < 1e-12,
+                "s=0 must be the start of the range"
+            );
+            assert!(
+                (tau_at_progress(lift, 1.0) - lift.tau(to)).abs() < 1e-12,
+                "s=1 must be the end of the range"
+            );
+        }
+    }
+
+    /// Work over a range does not change sign because the angle decreases.
+    #[test]
+    fn work_over_range_is_orientation_free() {
+        let ht = gluteo::HipThrust {
+            load_kg: 100.0,
+            femur_m: 0.46,
+            bottom_rad: 40.0_f64.to_radians(),
+        };
+        assert!(work_over_range(&ht) > 0.0, "a repetition costs joules");
+    }
     use super::*;
     use std::f64::consts::PI;
 

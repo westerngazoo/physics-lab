@@ -38,8 +38,10 @@ impl Lift for Rumano {
     fn tau(&self, phi: f64) -> f64 {
         self.load_kg * G * self.torso_m * phi.sin()
     }
+    /// From the stretch to standing: that is the direction the rep goes,
+    /// and `range()` is documented as `(from, to)`.
     fn range(&self) -> (f64, f64) {
-        (0.0, self.bottom_rad)
+        (self.bottom_rad, 0.0)
     }
 }
 
@@ -48,51 +50,16 @@ impl Lift for HipThrust {
     fn tau(&self, phi: f64) -> f64 {
         self.load_kg * G * self.femur_m * phi.cos()
     }
+    /// From the stretch to lockout: the direction the rep goes.
     fn range(&self) -> (f64, f64) {
-        (0.0, self.bottom_rad)
+        (self.bottom_rad, 0.0)
     }
-}
-
-/// Torque at normalized progress: `0` stretched (bottom), `1` contracted.
-///
-/// The two lifts sweep different angular ranges, so a shared graph needs
-/// a shared axis. This is that axis, and it is presentation, not physics
-/// — hence a free function rather than a trait method.
-pub fn tau_at_progress<L: Lift + ?Sized>(lift: &L, s: f64) -> f64 {
-    let (top, bottom) = lift.range();
-    lift.tau(bottom + (top - bottom) * s)
-}
-
-/// Where two lifts' curves cross on the normalized axis, if they do.
-///
-/// Bisection on the difference, so it finds one crossing; the pair this
-/// module exists for has exactly one (see the claims).
-pub fn crossing_progress<A, B>(a: &A, b: &B) -> Option<f64>
-where
-    A: Lift + ?Sized,
-    B: Lift + ?Sized,
-{
-    let diff = |s: f64| tau_at_progress(a, s) - tau_at_progress(b, s);
-    let (mut lo, mut hi) = (0.0_f64, 1.0_f64);
-    if diff(lo).is_sign_positive() == diff(hi).is_sign_positive() {
-        return None;
-    }
-    let rising = diff(lo) < 0.0;
-    for _ in 0..crate::BISECTION_ITERS {
-        let mid = (lo + hi) / 2.0;
-        if (diff(mid) < 0.0) == rising {
-            lo = mid;
-        } else {
-            hi = mid;
-        }
-    }
-    Some((lo + hi) / 2.0)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{peak, work_over_range};
+    use crate::{crossing_progress, peak, tau_at_progress, work_over_range};
 
     /// Reel 08's published setup: 100 kg on both.
     fn rdl() -> Rumano {

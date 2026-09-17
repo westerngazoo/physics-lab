@@ -1,0 +1,11 @@
+[package]
+name = "oraculos"
+version = "0.1.0"
+edition = "2021"
+description = "Oráculos: la física comprobada contra respuestas de FUERA del motor"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+garust = { path = "../../garust", features = ["physics"] }
+garust-core = { path = "../../garust/crates/garust-core" }
+mecanica = { path = "../mecanica" }
