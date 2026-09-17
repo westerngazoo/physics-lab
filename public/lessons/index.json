@@ -1,6 +1,14 @@
 {
  "lessons": [
   {
+   "href": "lessons/plano-inclinado/index.html",
+   "topic": "mechanics",
+   "wasm": true,
+   "title": "El plano inclinado",
+   "card": "El diagrama de cuerpo libre canónico: peso, normal y fricción, con el largo de cada flecha a escala de su magnitud.",
+   "claim": "Se suelta cuando tan θ = μ, y eso no depende de la masa."
+  },
+  {
    "href": "lessons/projectile/index.html",
    "topic": "mechanics",
    "wasm": true,
