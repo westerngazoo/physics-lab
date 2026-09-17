@@ -1,0 +1,173 @@
+{
+  "slug": "plano-inclinado",
+  "title": "El plano inclinado",
+  "topic": "mechanics",
+  "eyebrow": "Goosethropic Physics · Mecánica · diagramas de cuerpo libre",
+  "lede": "El diagrama de cuerpo libre canónico, y el ejemplo trabajado de <code>lessons_common::dcl</code>. Aquí ninguna flecha se dibuja a mano: la lección entrega las tres fuerzas ya calculadas y el diagrama se encarga de que su <b>largo</b> signifique su magnitud y su <b>color</b> su tensión. Mueve μ y mira el ángulo crítico: el bloque se suelta en el mismo punto con 5 kg y con 500.",
+  "labels": [
+    "P",
+    "N",
+    "fr",
+    "R"
+  ],
+  "views": [
+    {
+      "world": {
+        "x0": -1.05,
+        "x1": 0.75,
+        "y0": -1.05,
+        "y1": 0.75
+      },
+      "viewBox": {
+        "w": 900,
+        "h": 900
+      },
+      "wide": true,
+      "title": "Las fuerzas sobre el bloque",
+      "law": "N = m·g·cos θ · fr ≤ μ·N · se suelta cuando tan θ = μ"
+    }
+  ],
+  "params": {
+    "theta": {
+      "label": "Ángulo del plano θ",
+      "min": 0,
+      "max": 50,
+      "step": 0.5,
+      "value": 20,
+      "unit": "°",
+      "digits": 1,
+      "scale": 0.017453292519943295
+    },
+    "masa": {
+      "label": "Masa del bloque",
+      "min": 1,
+      "max": 200,
+      "step": 1,
+      "value": 5,
+      "unit": "kg",
+      "digits": 0
+    },
+    "mu": {
+      "label": "Fricción μ",
+      "min": 0.0,
+      "max": 1.2,
+      "step": 0.01,
+      "value": 0.4,
+      "digits": 2
+    }
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "Normal N",
+      "fmt": "fix1",
+      "unit": "N"
+    },
+    {
+      "slot": 1,
+      "label": "Fricción fr",
+      "fmt": "fix1",
+      "unit": "N"
+    },
+    {
+      "slot": 2,
+      "label": "Fuerza neta",
+      "fmt": "fix1",
+      "unit": "N",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "Aceleración",
+      "fmt": "fix2",
+      "unit": "m/s²"
+    },
+    {
+      "slot": 4,
+      "label": "Se suelta a",
+      "fmt": "fix1",
+      "unit": "°"
+    },
+    {
+      "slot": 5,
+      "label": "¿Desliza?",
+      "fmt": "fix0"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash-dim",
+      "width": 2,
+      "size": 20
+    },
+    {
+      "var": "--steel",
+      "width": 3,
+      "size": 22
+    },
+    {
+      "var": "--gold",
+      "width": 3.5,
+      "size": 22
+    },
+    {
+      "var": "--red",
+      "width": 4,
+      "size": 22
+    },
+    {
+      "var": "--red-hot",
+      "width": 4.5,
+      "size": 24
+    }
+  ],
+  "legend": [
+    {
+      "style": 0,
+      "label": "el plano y el bloque"
+    },
+    {
+      "style": 1,
+      "label": "fuerza chica"
+    },
+    {
+      "style": 4,
+      "label": "fuerza grande"
+    }
+  ],
+  "claims": [
+    {
+      "id": "P1",
+      "text": "En reposo las tres fuerzas se cancelan exactamente.",
+      "test": "p1_en_reposo_las_tres_se_cancelan"
+    },
+    {
+      "id": "P2",
+      "text": "El ángulo en que el bloque se suelta no depende de la masa.",
+      "test": "p2_el_angulo_critico_no_depende_de_la_masa"
+    },
+    {
+      "id": "P3",
+      "text": "Sin fricción la aceleración es g·sen θ, exacto.",
+      "test": "p3_sin_friccion_es_g_por_seno"
+    },
+    {
+      "id": "P4",
+      "text": "Con el plano vertical la normal vale cero.",
+      "test": "p4_la_normal_muere_en_la_vertical"
+    },
+    {
+      "id": "P5",
+      "text": "La resultante aparece en el dibujo sólo cuando el bloque desliza.",
+      "test": "p5_la_resultante_aparece_solo_al_deslizar"
+    }
+  ],
+  "tryThis": [
+    "Sube la masa de 5 a 200 kg y mira el ángulo crítico: no se mueve. Las flechas crecen todas juntas, y por eso el bloque se suelta igual.",
+    "Pon μ = 0 y busca el ángulo donde la aceleración vale la mitad de g. P3 dice que es donde sen θ = 0.5.",
+    "Sube θ despacio hasta que aparezca la cuarta flecha. Ése es el instante en que la fricción llegó a su tope."
+  ],
+  "card": "El diagrama de cuerpo libre canónico: peso, normal y fricción, con el largo de cada flecha a escala de su magnitud.",
+  "cardClaim": "Se suelta cuando tan θ = μ, y eso no depende de la masa.",
+  "footer": "ejemplo trabajado de la capa de diagramas de cuerpo libre · ángulos en grados"
+}

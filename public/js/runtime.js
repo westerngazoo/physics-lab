@@ -288,6 +288,30 @@ function fatal(title, detail) {
             fill: css(st) }));
         }
         i += 6;
+      } else if (tag === 4 || tag === 5) {
+        // Texto. La lección manda CUÁL y DÓNDE; la página manda qué dice.
+        // Por eso el buffer sigue siendo de puros f64 y aun así se puede
+        // escribir «ángulo», «tensión» o «30°»: las cadenas viven en
+        // lesson.json, en UTF-8, y aquí las pinta una fuente de verdad.
+        const st = tag === 4 ? buf[i + 4] : buf[i + 5];
+        const s = styles[st | 0];
+        const t = el("text", {
+          x: sx(buf[i + 1]), y: sy(buf[i + 2]),
+          fill: css(st), "font-size": s.size ?? 20,
+          "font-family": "var(--mono, ui-monospace, monospace)",
+          "text-anchor": "middle", "dominant-baseline": "middle",
+          "paint-order": "stroke", stroke: "var(--paper, #f4efe3)",
+          "stroke-width": 4, "stroke-linejoin": "round"
+        });
+        if (tag === 4) {
+          const labels = lesson.labels || [];
+          t.textContent = labels[buf[i + 3] | 0] ?? "";
+          i += 5;
+        } else {
+          t.textContent = buf[i + 3].toFixed(buf[i + 4] | 0);
+          i += 6;
+        }
+        view.scene.appendChild(t);
       } else {
         throw new Error("runtime: unknown prim tag " + tag);
       }
