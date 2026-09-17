@@ -1,0 +1,8 @@
+[package]
+name = "mecanica"
+version = "0.1.0"
+edition = "2021"
+description = "Closed-form gym biomechanics: joint torque through a lift. Pure, no dependencies."
+license = "MIT OR Apache-2.0"
+
+[dependencies]
