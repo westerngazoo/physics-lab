@@ -1,6 +1,14 @@
 {
  "lessons": [
   {
+   "href": "lessons/derivada/index.html",
+   "topic": "calculus",
+   "wasm": true,
+   "title": "La derivada como pendiente",
+   "card": "De la secante a la tangente: la derivada como el límite de una pendiente, y cuánto le falta a la secante para llegar.",
+   "claim": "El error de la secante dividido entre h converge a |f″(a)|/2."
+  },
+  {
    "href": "lessons/plano-inclinado/index.html",
    "topic": "mechanics",
    "wasm": true,
@@ -15,6 +23,14 @@
    "title": "Projectile Range",
    "card": "The smallest lesson in the lab, on purpose — and the worked example the authoring guide dissects line by line. Range peaks at τ/8; complementary angles tie.",
    "claim": "R = v²·sin(2θ)/g, maximized at θ = τ/8; the drawn shape is independent of v and g by construction."
+  },
+  {
+   "href": "lessons/riemann/index.html",
+   "topic": "calculus",
+   "wasm": true,
+   "title": "Sumas de Riemann",
+   "card": "El área como límite de rectángulos, y por qué medir la altura en el punto medio converge un orden más rápido.",
+   "claim": "El punto medio falla como 1/n²; la izquierda y la derecha, como 1/n."
   },
   {
    "href": "lessons/three-mechanics/index.html",
