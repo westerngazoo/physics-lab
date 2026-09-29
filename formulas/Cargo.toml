@@ -1,0 +1,11 @@
+[package]
+name = "formulas"
+version = "0.1.0"
+edition = "2021"
+description = "Lo que el lector escribe: fórmulas analizadas, nunca ejecutadas, con derivadas exactas"
+license = "MIT OR Apache-2.0"
+
+# Sin dependencias, a propósito: esto corre dentro de cada lección que
+# acepte texto, en wasm32, y es la única pieza del lab que recibe
+# entrada arbitraria de un desconocido.
+[dependencies]

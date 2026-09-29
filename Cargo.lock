@@ -3,6 +3,10 @@
 version = 4
 
 [[package]]
+name = "formulas"
+version = "0.1.0"
+
+[[package]]
 name = "garust"
 version = "0.1.0"
 dependencies = [
@@ -28,6 +32,22 @@ version = "0.1.0"
 dependencies = [
  "garust-core",
  "garust-geo",
+]
+
+[[package]]
+name = "lesson-derivada"
+version = "0.1.0"
+dependencies = [
+ "formulas",
+ "garust",
+ "lessons-common",
+]
+
+[[package]]
+name = "lesson-plano-inclinado"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
 ]
 
 [[package]]

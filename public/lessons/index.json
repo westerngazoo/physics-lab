@@ -1,6 +1,14 @@
 {
  "lessons": [
   {
+   "href": "lessons/derivada/index.html",
+   "topic": "cálculo",
+   "wasm": true,
+   "title": "La derivada es una velocidad",
+   "card": "Escribe x(t) como en Desmos y un coche se mueve con eso. La pendiente de la tangente ES la velocidad; la secante es la definición, con su error en pantalla — y un piso de redondeo que la rompe.",
+   "claim": "v = dx/dt exacta por diferenciación automática; la secante converge con orden 1 (adelante) y 2 (centrada), hasta Δt ≈ 10⁻⁸."
+  },
+  {
    "href": "lessons/plano-inclinado/index.html",
    "topic": "mechanics",
    "wasm": true,

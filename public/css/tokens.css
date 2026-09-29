@@ -21,6 +21,9 @@
   --red-dim: rgba(224, 50, 42, 0.16);
   --gold: #e9b23f;
   --gold-dim: rgba(233, 178, 63, 0.16);
+  /* the stage surface: the painter knocks text halos out to it, so a
+     label crossing a line stays legible instead of wearing a cream rim */
+  --paper: var(--ink-2);
 
   /* type — self-hosted, see fonts.css */
   --display: 'Saira Condensed', sans-serif;

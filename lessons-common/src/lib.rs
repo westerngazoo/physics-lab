@@ -13,6 +13,18 @@
 //! lesson. Uniform ABI, zero per-lesson plumbing, and `cargo test`
 //! exercises the same `draw` the browser calls.
 //!
+//! A lesson that reads what the student TYPES (a formula, Desmos-style)
+//! declares itself with `lesson!(draw, texto)` and also receives the
+//! text, plus a [`Diagnosticos`] writer to report where it stopped
+//! making sense:
+//!
+//! ```ignore
+//! fn draw(p: &[f64], texto: &str, out: &mut Prims, read: &mut Readouts, diag: &mut Diagnosticos) { ... }
+//! lessons_common::lesson!(draw, texto);
+//! ```
+//!
+//! The text is parsed by the `formulas` crate, never executed.
+//!
 //! Prim records (motoreel's vocabulary as a convention):
 //!   [0, x, y, style]                 point
 //!   [1, x1, y1, x2, y2, style]       segment
@@ -35,6 +47,68 @@ pub const PRIM_CAP: usize = 8192;
 pub const READ_SLOTS: usize = 8;
 /// Maximum parameters a lesson can declare.
 pub const PARAM_CAP: usize = 16;
+
+// ---- el texto: la única entrada que no es un número ----------------------
+//
+// Una lección declarada con `lesson!(draw, texto)` recibe, además de los
+// parámetros, lo que el lector escribió en las cajas de fórmula de la
+// página: UTF-8, un renglón por caja, separados por '\n'. Es la misma
+// regla que para los rótulos, al revés: el texto ENTRA a la lección como
+// bytes que ella analiza (con `formulas`), y lo que SALE hacia la página
+// siguen siendo sólo f64 — códigos y columnas, nunca cadenas.
+
+/// Capacidad del buffer de texto, en bytes UTF-8.
+pub const TEXT_CAP: usize = 2048;
+/// Renglones de diagnóstico: uno por caja de fórmula.
+pub const DIAG_SLOTS: usize = 8;
+/// f64 por renglón de diagnóstico: `[código, columna, máscara]`.
+pub const DIAG_ANCHO: usize = 3;
+
+/// El prefijo UTF-8 válido de `bytes`.
+///
+/// La página escribe UTF-8 bien formado, pero la lección no se fía: si
+/// el buffer llegara cortado a media letra (una `τ` partida en su primer
+/// byte), se lee hasta la última letra entera en vez de tirar todo.
+#[must_use]
+pub fn texto_valido(bytes: &[u8]) -> &str {
+    match core::str::from_utf8(bytes) {
+        Ok(s) => s,
+        Err(e) => core::str::from_utf8(&bytes[..e.valid_up_to()]).unwrap_or_default(),
+    }
+}
+
+/// Lo que la lección le dice a la página sobre cada caja de fórmula.
+///
+/// Por renglón, `[código, columna, máscara]`: código 0 es "se leyó bien";
+/// cualquier otro es un `formulas::Codigo`, con la columna (en
+/// caracteres, desde 1) donde mirar. La máscara dice qué PARÁMETROS (bit
+/// k = el k-ésimo del manifiesto) nombra la fórmula — con eso la página
+/// muestra el deslizador de `a` sólo cuando alguien escribió una `a`.
+pub struct Diagnosticos<'a> {
+    buf: &'a mut [f64],
+}
+
+impl<'a> Diagnosticos<'a> {
+    /// Toma el buffer y lo deja en cero: cada cuadro empieza sin errores.
+    pub fn new(buf: &'a mut [f64]) -> Self {
+        buf.fill(0.0);
+        Diagnosticos { buf }
+    }
+    /// El renglón `linea` no se pudo leer.
+    pub fn error(&mut self, linea: usize, codigo: u8, columna: usize) {
+        self.pon(linea, [f64::from(codigo), columna as f64, 0.0]);
+    }
+    /// El renglón `linea` se leyó bien y nombra los parámetros `mascara`.
+    pub fn ok(&mut self, linea: usize, mascara: u64) {
+        self.pon(linea, [0.0, 0.0, mascara as f64]);
+    }
+    fn pon(&mut self, linea: usize, rec: [f64; DIAG_ANCHO]) {
+        let i = linea * DIAG_ANCHO;
+        if let Some(dst) = self.buf.get_mut(i..i + DIAG_ANCHO) {
+            dst.copy_from_slice(&rec);
+        }
+    }
+}
 
 pub mod dcl;
 
@@ -166,9 +240,104 @@ impl<'a> Readouts<'a> {
 }
 
 /// Generate the wasm boundary for a lesson `draw` function.
+///
+/// Two shapes, one ABI:
+///
+/// - `lesson!(draw)` — `fn draw(p: &[f64], out: &mut Prims, read: &mut Readouts)`.
+///   Every lesson before formulas; its expansion is unchanged.
+/// - `lesson!(draw, texto)` — the same exports PLUS the text surface
+///   (`text_ptr`, `text_cap`, `set_text_len`, `diag_ptr`), for a lesson
+///   that reads what the student types:
+///   `fn draw(p: &[f64], texto: &str, out: &mut Prims, read: &mut Readouts, diag: &mut Diagnosticos)`.
+///
+/// `state_at(n_params)` keeps its signature in both, so a host that only
+/// knows the closed-form ABI (guion's `WasmLesson`) still drives either.
 #[macro_export]
 macro_rules! lesson {
     ($draw:path) => {
+        $crate::__lesson_buffers!();
+
+        /// Recompute everything from the current params. Pure over them.
+        ///
+        /// # Safety
+        /// Single-threaded wasm; the statics have exactly this writer.
+        #[no_mangle]
+        pub extern "C" fn state_at(n_params: usize) -> usize {
+            unsafe {
+                let all: &[f64; $crate::PARAM_CAP] = &*core::ptr::addr_of!(LESSON_PARAMS);
+                let p = &all[..n_params];
+                let mut prims = $crate::Prims::new(&mut *core::ptr::addr_of_mut!(LESSON_PRIMS));
+                let mut read = $crate::Readouts::new(&mut *core::ptr::addr_of_mut!(LESSON_READ));
+                $draw(p, &mut prims, &mut read);
+                prims.len()
+            }
+        }
+    };
+    ($draw:path, texto) => {
+        $crate::__lesson_buffers!();
+
+        static mut LESSON_TEXT: [u8; $crate::TEXT_CAP] = [0; $crate::TEXT_CAP];
+        static mut LESSON_TEXT_LEN: usize = 0;
+        static mut LESSON_DIAG: [f64; $crate::DIAG_SLOTS * $crate::DIAG_ANCHO] =
+            [0.0; $crate::DIAG_SLOTS * $crate::DIAG_ANCHO];
+
+        /// Where the runtime writes the student's text, UTF-8.
+        #[no_mangle]
+        pub extern "C" fn text_ptr() -> *mut u8 {
+            core::ptr::addr_of_mut!(LESSON_TEXT) as *mut u8
+        }
+        /// How many bytes fit — the page asks instead of hard-coding it.
+        #[no_mangle]
+        pub extern "C" fn text_cap() -> usize {
+            $crate::TEXT_CAP
+        }
+        /// How many of them the runtime wrote. Clamped: a lying host
+        /// cannot make the lesson read past its buffer.
+        ///
+        /// # Safety
+        /// Single-threaded wasm; the static has exactly this writer.
+        #[no_mangle]
+        pub extern "C" fn set_text_len(n: usize) {
+            unsafe {
+                *core::ptr::addr_of_mut!(LESSON_TEXT_LEN) = n.min($crate::TEXT_CAP);
+            }
+        }
+        /// Per-line diagnostics, `[code, column, mask]` × `DIAG_SLOTS`.
+        #[no_mangle]
+        pub extern "C" fn diag_ptr() -> *const f64 {
+            core::ptr::addr_of!(LESSON_DIAG) as *const f64
+        }
+        /// Recompute everything from the current params AND text. Pure
+        /// over both: the same numbers and the same words give the same
+        /// buffers, bit for bit.
+        ///
+        /// # Safety
+        /// Single-threaded wasm; the statics have exactly this writer.
+        #[no_mangle]
+        pub extern "C" fn state_at(n_params: usize) -> usize {
+            unsafe {
+                let all: &[f64; $crate::PARAM_CAP] = &*core::ptr::addr_of!(LESSON_PARAMS);
+                let p = &all[..n_params.min($crate::PARAM_CAP)];
+                let bytes: &[u8; $crate::TEXT_CAP] = &*core::ptr::addr_of!(LESSON_TEXT);
+                let len = (*core::ptr::addr_of!(LESSON_TEXT_LEN)).min($crate::TEXT_CAP);
+                let texto = $crate::texto_valido(&bytes[..len]);
+                let mut prims = $crate::Prims::new(&mut *core::ptr::addr_of_mut!(LESSON_PRIMS));
+                let mut read = $crate::Readouts::new(&mut *core::ptr::addr_of_mut!(LESSON_READ));
+                let mut diag =
+                    $crate::Diagnosticos::new(&mut *core::ptr::addr_of_mut!(LESSON_DIAG));
+                $draw(p, texto, &mut prims, &mut read, &mut diag);
+                prims.len()
+            }
+        }
+    };
+}
+
+/// The three buffers and pointer exports every lesson shares, generated
+/// ONCE here so the two `lesson!` shapes cannot drift apart.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __lesson_buffers {
+    () => {
         static mut LESSON_PARAMS: [f64; $crate::PARAM_CAP] = [0.0; $crate::PARAM_CAP];
         static mut LESSON_PRIMS: [f64; $crate::PRIM_CAP] = [0.0; $crate::PRIM_CAP];
         static mut LESSON_READ: [f64; $crate::READ_SLOTS] = [0.0; $crate::READ_SLOTS];
@@ -188,20 +357,56 @@ macro_rules! lesson {
         pub extern "C" fn readouts_ptr() -> *const f64 {
             core::ptr::addr_of!(LESSON_READ) as *const f64
         }
-        /// Recompute everything from the current params. Pure over them.
-        ///
-        /// # Safety
-        /// Single-threaded wasm; the statics have exactly this writer.
-        #[no_mangle]
-        pub extern "C" fn state_at(n_params: usize) -> usize {
-            unsafe {
-                let all: &[f64; $crate::PARAM_CAP] = &*core::ptr::addr_of!(LESSON_PARAMS);
-                let p = &all[..n_params];
-                let mut prims = $crate::Prims::new(&mut *core::ptr::addr_of_mut!(LESSON_PRIMS));
-                let mut read = $crate::Readouts::new(&mut *core::ptr::addr_of_mut!(LESSON_READ));
-                $draw(p, &mut prims, &mut read);
-                prims.len()
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // El brazo de texto, expandido de verdad y manejado como lo maneja
+    // la página: escribir bytes, fijar el largo, llamar a state_at, leer.
+    fn eco(p: &[f64], texto: &str, out: &mut Prims, read: &mut Readouts, diag: &mut Diagnosticos) {
+        read.set(0, p.len() as f64);
+        read.set(1, texto.chars().count() as f64);
+        out.point(0.0, 0.0, 0);
+        for (i, linea) in texto.split('\n').enumerate() {
+            if linea.contains('#') {
+                diag.error(i, 2, linea.find('#').unwrap_or(0) + 1);
+            } else {
+                diag.ok(i, 0b101);
             }
         }
-    };
+    }
+    lesson!(eco, texto);
+
+    fn escribe(s: &[u8]) {
+        let cap = text_cap();
+        let dst = unsafe { core::slice::from_raw_parts_mut(text_ptr(), cap) };
+        dst[..s.len()].copy_from_slice(s);
+        set_text_len(s.len());
+    }
+
+    #[test]
+    fn el_texto_cruza_el_abi_y_los_diagnosticos_regresan() {
+        escribe("tτ\nuno#".as_bytes());
+        let n = state_at(3);
+        assert_eq!(n, 4); // un punto
+        let read = unsafe { core::slice::from_raw_parts(readouts_ptr(), READ_SLOTS) };
+        assert_eq!(read[0], 3.0);
+        assert_eq!(read[1], 7.0); // "tτ\nuno#": 7 caracteres, no 8 bytes
+        let d = unsafe { core::slice::from_raw_parts(diag_ptr(), DIAG_SLOTS * DIAG_ANCHO) };
+        assert_eq!(&d[0..3], &[0.0, 0.0, 5.0]);
+        assert_eq!(&d[3..6], &[2.0, 4.0, 0.0]);
+        // Un largo mentiroso se recorta a la capacidad, no lee de más.
+        set_text_len(usize::MAX);
+        let _ = state_at(0);
+    }
+
+    #[test]
+    fn texto_cortado_a_media_letra() {
+        let b = "tτ".as_bytes(); // [0x74, 0xCF, 0x84]
+        assert_eq!(texto_valido(&b[..2]), "t");
+        assert_eq!(texto_valido(b), "tτ");
+    }
 }

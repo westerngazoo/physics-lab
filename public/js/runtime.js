@@ -13,8 +13,25 @@
  *   state_at(n) -> len       recompute; pure over the params
  *   prims_ptr(), readouts_ptr()
  *
+ * Text (RFC-003), only for lessons built with lesson!(draw, texto) and a
+ * manifest that declares "expresiones":
+ *   text_ptr(), text_cap(), set_text_len(n)   the student's formulas, UTF-8,
+ *                                             one line per box
+ *   diag_ptr() -> f64*                        per line [code, column, mask]
+ * The page writes what the student types; the LESSON parses it (Rust,
+ * crate formulas -- never eval) and answers with numbers only. The
+ * messages for the codes live in MENSAJES_FORMULA below, and a cargo
+ * test compares them with the Rust table so the two cannot drift.
+ *
+ * The port (RFC-003): window.physicsLab lets another program read the
+ * inputs, set them, and hear every frame -- the studio's recorder
+ * (js/estudio.js, loaded only with ?estudio in the URL), a headless
+ * renderer, a test. Every frame is a pure function of the inputs, so
+ * recording inputs is recording the lesson.
+ *
  * Prim records: [0,x,y,st] point · [1,x1,y1,x2,y2,st] segment ·
- * [2,n,pts...,st] polyline · [3,...] arrow · [9,view] view switch.
+ * [2,n,pts...,st] polyline · [3,...] arrow · [4,x,y,label,st] label ·
+ * [5,x,y,value,decimals,st] number · [9,view] view switch.
  * Geometry views must scale both axes alike (the skew guard throws); a
  * view may declare "uniform": false only where its axes carry different
  * quantities (a phase portrait, a graph) -- a statement, not an escape.
@@ -31,6 +48,23 @@ function fatal(title, detail) {
     (detail ? "\n\n" + detail : "");
   document.body.prepend(d);
 }
+
+/* formulas::Codigo -> what the page says. Keep each line exactly
+ * `N: "message",` -- formulas' test la_pagina_tiene_los_mismos_mensajes
+ * reads this file and compares every line with Codigo::mensaje. */
+const MENSAJES_FORMULA = {
+  1: "escribe una fórmula",
+  2: "ese carácter no es parte de una fórmula",
+  3: "no conozco ese nombre",
+  4: "este paréntesis nunca se cierra",
+  5: "este paréntesis cierra algo que nadie abrió",
+  6: "aquí falta un valor",
+  7: "las funciones llevan paréntesis: sin(t)",
+  8: "ese número está mal escrito",
+  9: "número pegado: ¿quisiste ^ o ·?",
+  10: "demasiados paréntesis anidados",
+  11: "el decimal va con punto: 0.5",
+};
 
 (async function () {
   const NS = "http://www.w3.org/2000/svg";
@@ -87,6 +121,45 @@ function fatal(title, detail) {
         (cl.test ? " <span class='ctest'>" + cl.test + "</span>" : "")));
     }
     root.append(c);
+  }
+
+  // ---- formula boxes (RFC-003): what the student writes -------------------
+  const exprs = lesson.expresiones || [];
+  const hasText = exprs.length > 0;
+  if (hasText && !wasm.text_ptr) {
+    throw new Error("runtime: lesson.json declares \"expresiones\" but lesson.wasm " +
+      "exports no text_ptr -- build the lesson with lesson!(draw, texto)");
+  }
+  if (exprs.length > 8) {   // lessons-common DIAG_SLOTS: one diagnostics line per box
+    throw new Error("runtime: at most 8 \"expresiones\" (DIAG_SLOTS), got " + exprs.length);
+  }
+  const exprInputs = [], diagEls = [];
+  if (hasText) {
+    const box = h("div", "panel exprs");
+    exprs.forEach((ex, i) => {
+      const row = h("div", "expr");
+      const lab = h("label", "k", ex.etiqueta);
+      lab.htmlFor = "e-" + i;
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.id = "e-" + i;
+      inp.className = "fx";
+      inp.value = ex.valor || "";
+      inp.placeholder = ex.placeholder || "";
+      inp.spellcheck = false;
+      inp.autocomplete = "off";
+      inp.setAttribute("autocapitalize", "off");
+      const dg = h("pre", "diag");
+      dg.id = "d-" + i;
+      dg.setAttribute("aria-live", "polite");
+      inp.setAttribute("aria-describedby", dg.id);
+      inp.addEventListener("input", () => { textDirty = true; draw(); });
+      row.append(lab, inp, dg);
+      box.append(row);
+      exprInputs.push(inp);
+      diagEls.push(dg);
+    });
+    root.append(box);
   }
 
   const stages = h("div", "stages");
@@ -192,11 +265,16 @@ function fatal(title, detail) {
   }));
 
   // ---- controls generated from the manifest ------------------------------
+  // widget "hidden": no slider (e.g. the stepper's param).
+  // widget "auto":   shown only while some formula names it -- write an
+  //                  `a` and its slider appears, Desmos-style (RFC-003).
   const state = {};
+  const ctl = {};
+  const autos = [];
   const updaters = [];
-  for (const [key, p] of Object.entries(lesson.params)) {
+  Object.entries(lesson.params).forEach(([key, p], idx) => {
     state[key] = p.value;
-    if (p.widget === "hidden") continue;   // e.g. the stepper's parameter
+    if (p.widget === "hidden") return;
     const wrap = document.createElement("div");
     const lab = document.createElement("label");
     lab.className = "k";
@@ -207,6 +285,7 @@ function fatal(title, detail) {
     input.id = "p-" + key;
     input.min = p.min; input.max = p.max; input.step = p.step; input.value = p.value;
     const out = lab.querySelector("span");
+    ctl[key] = { input, out, p };
     const upd = () => {
       state[key] = +input.value;
       out.textContent = (+input.value).toFixed(p.digits ?? 2) + (p.unit ? " " + p.unit : "");
@@ -214,23 +293,45 @@ function fatal(title, detail) {
     };
     input.addEventListener("input", () => { if (sweep) stopSweep(); upd(); });
     wrap.append(lab, input);
+    if (p.widget === "auto") {
+      wrap.hidden = true;
+      autos.push({ bit: 1 << idx, wrap });
+    }
     ctlBox.appendChild(wrap);
     updaters.push(upd);
+  });
+  // A control shows what `state` holds -- for changes that did not come
+  // from its own slider (the sweep, the port).
+  function showValue(key) {
+    const c = ctl[key];
+    if (!c) return;
+    c.input.value = state[key];
+    c.out.textContent = (+state[key]).toFixed(c.p.digits ?? 2) + (c.p.unit ? " " + c.p.unit : "");
   }
 
   // ---- readouts generated from the manifest ------------------------------
-  const roEls = [];
-  for (const r of lesson.readouts) {
-    const d = h("div", "num" + (r.hero ? " hero" : ""),
-      "<dt>" + r.label + "</dt><dd>&mdash;</dd>");
-    roBox.appendChild(d);
-    roEls.push({ slot: r.slot, fmt: r.fmt, el: d.querySelector("dd") });
-  }
+  // An unknown fmt is a load-time error, not a silent fix3: a readout
+  // that cannot say what its manifest asked for is a page that lies.
   const FMT = {
     turns3: v => v.toFixed(3) + " τ",
+    fix0: v => v.toFixed(0),
+    fix1: v => v.toFixed(1),
+    fix2: v => v.toFixed(2),
     fix3: v => v.toFixed(3),
     sci: v => (v === 0 ? "0" : v.toExponential(1)),
   };
+  const roEls = [];
+  for (const r of lesson.readouts) {
+    const f = FMT[r.fmt ?? "fix3"];
+    if (!f) {
+      throw new Error("runtime: readout \"" + r.label + "\" asks for fmt \"" + r.fmt +
+        "\"; known: " + Object.keys(FMT).join(", "));
+    }
+    const d = h("div", "num" + (r.hero ? " hero" : ""),
+      "<dt>" + r.label + "</dt><dd>&mdash;</dd>");
+    roBox.appendChild(d);
+    roEls.push({ slot: r.slot, f, unit: r.unit, el: d.querySelector("dd") });
+  }
 
   // ---- painting ----------------------------------------------------------
   const styles = lesson.styles;
@@ -318,6 +419,54 @@ function fatal(title, detail) {
     }
   }
 
+  // ---- text: formulas into wasm memory, diagnostics back -----------------
+  const enc = new TextEncoder();
+  const DIAG_ANCHO = 3;
+  let textDirty = hasText;
+  const lastDiag = [], lastMask = [];
+  function writeText() {
+    let bytes = enc.encode(exprInputs.map(i => i.value).join("\n"));
+    const cap = wasm.text_cap();
+    // Past the cap the lesson reads the longest whole-letter prefix.
+    if (bytes.length > cap) bytes = bytes.subarray(0, cap);
+    new Uint8Array(wasm.memory.buffer, wasm.text_ptr(), bytes.length).set(bytes);
+    wasm.set_text_len(bytes.length);
+  }
+  function readDiag() {
+    const dg = new Float64Array(wasm.memory.buffer, wasm.diag_ptr(),
+      exprInputs.length * DIAG_ANCHO);
+    exprInputs.forEach((inp, i) => {
+      const code = dg[i * DIAG_ANCHO], col = dg[i * DIAG_ANCHO + 1];
+      // A caret under the column, compiler-style. Not n−1 spaces: glyphs
+      // like − or τ fall outside the self-hosted font subsets and render
+      // in a fallback font of another width. The same prefix, invisible,
+      // is exactly as wide as the visible one, whatever font draws it.
+      const prefix = code ? [...inp.value].slice(0, Math.max(0, col - 1)).join("") : "";
+      const msg = code ? "^ " + (MENSAJES_FORMULA[code] ?? "error " + code) : "";
+      if (msg + "\u0000" + prefix !== lastDiag[i]) {
+        lastDiag[i] = msg + "\u0000" + prefix;
+        diagEls[i].replaceChildren();
+        if (code) {
+          const pad = document.createElement("span");
+          pad.className = "pad";
+          pad.textContent = prefix;
+          diagEls[i].append(pad, msg);
+          inp.setAttribute("aria-invalid", "true");
+        } else {
+          inp.removeAttribute("aria-invalid");
+        }
+      }
+      // Half-typed formulas keep their last good mask: a slider must not
+      // blink out while its letter is being typed around.
+      if (!code) lastMask[i] = dg[i * DIAG_ANCHO + 2];
+    });
+    const mask = lastMask.reduce((m, v) => m | (v ?? 0), 0);
+    for (const a of autos) {
+      const show = (mask & a.bit) !== 0;
+      if (a.wrap.hidden === show) a.wrap.hidden = !show;
+    }
+  }
+
   // ---- the frame: params into wasm memory, prims back --------------------
   // draw() runs from listeners and rAF, i.e. OUTSIDE the startup try
   // block, so it guards itself: a wasm trap (e.g. a lesson overflowing
@@ -325,6 +474,7 @@ function fatal(title, detail) {
   // survives a trap -- state_at rewrites from index 0 -- so we disarm
   // the clock and let the reader retry by moving a control.
   const keys = Object.keys(lesson.params);
+  const listeners = [];
   let drawFailed = false;
   function draw() {
     try { drawUnguarded(); drawFailed = false; }
@@ -334,18 +484,35 @@ function fatal(title, detail) {
         sweep = false;
         fatal("A frame failed inside the lesson's WebAssembly: " + e,
               "Params at failure: " + JSON.stringify(state) +
+              (hasText ? "\nFormulas: " + JSON.stringify(exprInputs.map(i => i.value)) : "") +
               "\nA RuntimeError here usually means the lesson exceeded " +
               "PRIM_CAP (8192 f64s) or panicked in draw().");
+      }
+      return;
+    }
+    // Port clients run OUTSIDE that guard: a broken recorder is reported
+    // as itself, not blamed on the lesson's WebAssembly -- and detached,
+    // so it cannot fail again on every frame.
+    for (const f of listeners.slice()) {
+      try { f(); }
+      catch (e) {
+        listeners.splice(listeners.indexOf(f), 1);
+        fatal("A client of window.physicsLab failed and was detached: " + e);
       }
     }
   }
   function drawUnguarded() {
+    if (textDirty) { writeText(); textDirty = false; }
     const pv = new Float64Array(wasm.memory.buffer, wasm.params_ptr(), keys.length);
     keys.forEach((k, i) => { pv[i] = state[k] * (lesson.params[k].scale ?? 1); });
     const n = wasm.state_at(keys.length);
     paint(new Float64Array(wasm.memory.buffer, wasm.prims_ptr(), n), n);
     const rd = new Float64Array(wasm.memory.buffer, wasm.readouts_ptr(), 8);
-    for (const r of roEls) r.el.textContent = (FMT[r.fmt] || FMT.fix3)(rd[r.slot]);
+    for (const r of roEls) {
+      const v = rd[r.slot];
+      r.el.textContent = Number.isFinite(v) ? r.f(v) + (r.unit ? " " + r.unit : "") : "—";
+    }
+    if (hasText) readDiag();
   }
 
   // ---- sweep clock -------------------------------------------------------
@@ -373,10 +540,7 @@ function fatal(title, detail) {
         const span = p.max - p.min;
         v = p.min + ((v - p.min) % span + span) % span;
         state[sw.param] = v;
-        const input = document.getElementById("p-" + sw.param);
-        input.value = v;
-        document.getElementById("p-" + sw.param + "lab").textContent =
-          v.toFixed(p.digits ?? 2) + (p.unit ? " " + p.unit : "");
+        showValue(sw.param);
         draw();
       }
       requestAnimationFrame(tick);
@@ -405,8 +569,47 @@ function fatal(title, detail) {
     show();
   }
 
+  // ---- the port: inputs out, inputs in, every frame announced ------------
+  // An input state is {p: [values in manifest order], x: [formula texts]}.
+  // aplica() sets it and draws synchronously, so frame(state) is a pure
+  // function a recorder can replay at any instant, at any frame rate.
+  window.physicsLab = Object.freeze({
+    version: 1,
+    leccion: lesson.slug,
+    params: Object.freeze(keys.slice()),
+    expresiones: exprInputs.length,
+    estado() {
+      return { p: keys.map(k => state[k]), x: exprInputs.map(i => i.value) };
+    },
+    aplica(s) {
+      if (s && Array.isArray(s.p)) {
+        keys.forEach((k, i) => {
+          if (typeof s.p[i] === "number") { state[k] = s.p[i]; showValue(k); }
+        });
+      }
+      if (s && Array.isArray(s.x)) {
+        exprInputs.forEach((inp, i) => {
+          if (typeof s.x[i] === "string" && inp.value !== s.x[i]) {
+            inp.value = s.x[i];
+            textDirty = true;
+          }
+        });
+      }
+      draw();
+      return !drawFailed;
+    },
+    alCuadro(f) { listeners.push(f); },
+    detenerReloj() { if (sweep) stopSweep(); },
+  });
+
   for (const f of updaters) f();
   draw();
+  if (new URLSearchParams(location.search).has("estudio")) {
+    // The studio is a client of the port, not part of the lesson: a
+    // student's page never downloads it.
+    import("./estudio.js").then(m => m.monta(window.physicsLab, bar)).catch(e =>
+      fatal("The studio (js/estudio.js) failed to load: " + e));
+  }
   } catch (e) {
     fatal("The lesson loaded but failed while starting: " + e,
           e && e.stack ? String(e.stack).split("\n").slice(0, 3).join("\n") : "");
