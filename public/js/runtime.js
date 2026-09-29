@@ -284,7 +284,9 @@ const MENSAJES_FORMULA = {
     input.type = "range";
     input.id = "p-" + key;
     input.min = p.min; input.max = p.max; input.step = p.step; input.value = p.value;
-    const out = lab.querySelector("span");
+    // By class, not "the first span": a label may carry its own spans
+    // (math marked class='m'), and the value must not overwrite them.
+    const out = lab.querySelector(".val");
     ctl[key] = { input, out, p };
     const upd = () => {
       state[key] = +input.value;
