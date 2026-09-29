@@ -7,6 +7,7 @@ Claim-first interactive physics classroom — WASM lessons
 | Documento | Descripción |
 |-----------|-------------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Arquitectura detallada (documento canónico) |
+| [RFC-003-estudio.md](./RFC-003-estudio.md) | El estudio: fórmulas tipo Desmos, tomas grabables, el lab en Akademos (propuesta + rebanada construida) |
 | [architecture-overview.md](./architecture-overview.md) | Resumen con mapa de módulos y diagrama |
 | [code-walkthrough.md](./code-walkthrough.md) | Recorrido por el código fuente |
 | [flows.md](./flows.md) | Flujos Mermaid + PlantUML |

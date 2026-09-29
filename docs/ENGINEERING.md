@@ -17,13 +17,18 @@ are enforced — see [DESIGN.md](DESIGN.md).
 ## 1. Repository layout
 
 ```
-Cargo.toml                     workspace: lessons-common + every lessons/*/crate
-lessons-common/src/lib.rs      137 lines: the ABI macro + Prims/Readouts writers
+Cargo.toml                     workspace: lessons-common, formulas, mecanica,
+                               oraculos + every lessons/*/crate
+lessons-common/src/lib.rs      the ABI macro (two arms, one buffer generator)
+                               + Prims/Readouts/Diagnosticos writers
+formulas/src/                  lexico → sintaxis → RPN; jet.rs (exact
+                               derivatives); no dependencies
 lessons/<slug>/crate/          one crate per lesson (cdylib + rlib)
   Cargo.toml                   deps: lessons-common, optionally garust
   src/lib.rs                   model + draw() + lesson!() + #[cfg(test)] claims
 public/
-  js/runtime.js                371 lines: the whole browser half
+  js/runtime.js                ~610 lines: the whole browser half, plus the port
+  js/estudio.js                ~215 lines: take recorder; loaded only with ?estudio
   js/hub.js                    28 lines: renders hub cards from lessons/index.json
   js/lab.js                    legacy, used only by public/examples/*
   css/{tokens,fonts,lesson}.css  brand tokens · @font-face · framework page styles
@@ -75,7 +80,8 @@ Measured artifact sizes (release, as shipped):
 | projectile | 33 024 | no garust; smallest real lesson |
 | three-mechanics | 37 637 | no garust (scalar mechanics) |
 | two-mirrors | 39 346 | links garust `Vga2` |
-| wave-equation | 45 449 | largest: mode tables + dissector |
+| wave-equation | 45 449 | mode tables + dissector |
+| derivada | 128 725 (59 292 gzip-9) | reads formulas: carries libm (every function a student can type), `core`'s float parser and dlmalloc; lesson + `formulas` logic are the minority. Built with rustc 1.94.1 |
 
 Most of the floor is Rust core/fmt machinery, not lesson logic; a
 second garust-linking lesson costs far less than the first.
@@ -109,6 +115,9 @@ allocations, so their addresses are fixed for the module's lifetime:
 | `LESSON_PARAMS` | `PARAM_CAP = 16` f64 | JS writes, Rust reads |
 | `LESSON_PRIMS` | `PRIM_CAP = 8192` f64 | Rust writes, JS reads |
 | `LESSON_READ` | `READ_SLOTS = 8` f64 | Rust writes, JS reads |
+| `LESSON_TEXT` *(text arm)* | `TEXT_CAP = 2048` u8 | JS writes, Rust reads (UTF-8) |
+| `LESSON_TEXT_LEN` *(text arm)* | one `usize` | JS sets via `set_text_len`, clamped |
+| `LESSON_DIAG` *(text arm)* | `DIAG_SLOTS × 3 = 24` f64 | Rust writes, JS reads |
 
 ## 4. The calling convention
 
@@ -121,6 +130,15 @@ Per frame, exactly:
    written to the prim buffer.
 3. JS creates a view over `prims_ptr()` of exactly that length and
    paints it, then a view over `readouts_ptr()` of `READ_SLOTS`.
+
+A text-arm lesson adds, around those three steps: **before** step 1, and
+only when a formula box was edited, JS encodes the boxes (joined by
+`\n`), truncates to `text_cap()`, copies them to `text_ptr()` and calls
+`set_text_len(n)` — the bytes persist in the static buffer, so an idle
+frame writes nothing. **After** step 3, JS reads `diag_ptr()` (three f64
+per box) to place the caret and show or hide `"auto"` sliders. The purity
+contract extends to the text: `state_at` is a pure function of the
+params AND the text.
 
 **The purity contract:** `state_at` must be a pure function of the
 parameter values. No accumulated state, no clock reads, no randomness.
@@ -161,6 +179,16 @@ back-patches its point count after writing the points — the only
 non-linear write in the framework. `curve(t0, t1, n, style, f)` samples
 `f` at `n+1` points; it is the workhorse and keeps trajectory code out
 of lessons.
+
+The text arm (`lesson!(draw, texto)`) shares the three buffers and the
+pointer exports through one hidden generator, `__lesson_buffers!`, so the
+two shapes cannot drift; its `state_at` additionally reads
+`texto_valido(&LESSON_TEXT[..len])` (the longest whole-character prefix,
+should a host cut a letter in half) and hands `draw` a zeroed
+`Diagnosticos`. Refactoring the closed-form arm onto that generator left
+every existing lesson's prim and readout buffers **bit-identical over
+1 347 parameter combinations**; the binaries moved by exactly four data
+bytes, each +74: panic `Location` line numbers.
 
 **`Readouts`** is a thin `set(slot, value)` over the 8 slots. Slots are
 addressed by index from the manifest, so **renumbering readouts in
@@ -221,6 +249,11 @@ Probed with a purpose-built overflow wasm through the real ABI:
 | missing/invalid manifest or wasm | alert strip naming the error | fix and reload |
 | skewed view aspect | throws during scaffold → alert strip | fix the world box or declare `uniform:false` |
 | CSP without `wasm-unsafe-eval` | instantiate throws; strip says so | fix `_headers` |
+| a formula that does not parse | **not a failure**: code + column in `LESSON_DIAG`, a caret under the box, readouts `—` | keep typing |
+| a formula nested past 40 levels | `DemasiadoProfunda` diagnostic — never a native stack overflow (which would trap) | simplify it |
+| `set_text_len` larger than the buffer | clamped to `TEXT_CAP` | — |
+| manifest declares `expresiones`, wasm has no `text_ptr` | throws at load → alert strip | build with `lesson!(draw, texto)` |
+| unknown readout `fmt` | throws at load → alert strip (before: silent `fix3`) | use `fix0..fix3`, `turns3`, `sci` |
 
 Measured worst-case prim usage, sweeping each lesson's full parameter
 grid (5 values per axis, all combinations) through the real ABI:
@@ -270,6 +303,16 @@ means every quantitative claim on the site held on a clean machine.
 5. **`draw` must not read a clock** — time arrives as a parameter. A
    `Date.now()` equivalent inside Rust would break scrub-safety and
    every golden-style test.
+6. **The formula message table lives twice** — `formulas::Codigo::mensaje`
+   and `MENSAJES_FORMULA` in `runtime.js` — on purpose (strings do not
+   cross the ABI). `formulas`' test `la_pagina_tiene_los_mismos_mensajes`
+   reads `runtime.js` and fails on any drift; keep each JS line exactly
+   `N: "message",`.
+7. **Native tests and the browser run different libms** — the platform's
+   natively, `compiler_builtins`' musl port in wasm. Transcendentals can
+   differ in the last ulp, so claims use tolerances. To reproduce a
+   browser frame *bit for bit* off-browser, run the same `.wasm` (guion
+   does, with `wasmi`), not the native rlib.
 
 ## 10. Extension recipes
 
@@ -297,3 +340,7 @@ into `draw` as an ordinary parameter.
   markup strings, leaving JS as a ~80-line pipe (RFC-001).
 - *Legacy retirement*: `public/examples/*` and `public/js/lab.js` die
   with the optics and bouncing-ball ports.
+- *A pinned toolchain*: with rustc 1.94.1 none of the five committed
+  pre-formulas binaries rebuilds byte-identical; a `rust-toolchain.toml`
+  would make "deployable from a bare checkout" also verifiable from one.
+- *A canvas sink* beside the SVG painter, for dense scenes (RFC-003 §4.4).

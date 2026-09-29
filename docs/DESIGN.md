@@ -262,6 +262,53 @@ throws on an unknown style rather than drawing something wrong.
 
 ---
 
+### The formula layer (RFC-003)
+
+The framework crate gained exactly one type and one function for text:
+
+```rust
+pub struct Diagnosticos<'a> { buf: &'a mut [f64] }   // [code, column, mask] per line
+pub fn texto_valido(bytes: &[u8]) -> &str             // longest whole-character prefix
+```
+
+and the parser lives in its own crate, `formulas`, whose object model is
+small and deliberately uneven:
+
+```rust
+pub struct Formula { ops: Vec<Op> }          // PRIVATE: an encapsulated invariant
+pub struct Jet { pub v, pub d1, pub d2 }     // public: a bundle, any triple is valid
+pub enum Codigo { Vacia = 1, … Coma = 11 }   // closed, #[repr(u8)]: its numbers are ABI
+pub enum Funcion { Sin, Cos, … }             // closed: each one needs φ, φ′, φ″
+enum Op { Num, Var, Negativo, Suma, … }      // private: RPN, never seen outside
+pub fn compila(src: &str, vars: &[&str]) -> Result<Formula, Error>
+```
+
+`Formula` is the `Motor` of this crate: its meaning is a promise — the
+program never pops an empty stack, never exceeds `PILA_MAX`, and ends with
+exactly one value — established by the only constructor (`compila`
+checks it, as a second lock behind the parser) and relied on by `jet`,
+which can therefore index its fixed stack without asking. `Jet` is the
+opposite case, like `Multivector::coeffs`: any `(v, d1, d2)` is a
+legitimate jet, so its fields are public. `Codigo` is a closed enum for
+the reason `Shape` is: adding an error means the compiler drags the
+change through `mensaje`, and a test drags it through `runtime.js`.
+
+Refused here, and why:
+
+- **An `eval` of any kind, or a JS parser** — the one input the lab takes
+  from strangers is exactly where the lab must not execute anything. It
+  would also have split the grammar across two languages (Akademos'
+  `cas.js` already shows the cost).
+- **Symbolic differentiation** — a derivative the reader can *read*
+  needs a simplifier, and a simplifier is a second program with its own
+  bugs. Automatic differentiation gives the exact number with no algebra
+  to get wrong.
+- **The secant as the reference derivative** — it is the definition the
+  lesson teaches; measuring it against itself would hide its error, which
+  the page exists to show.
+- **Strings from wasm to the page** — errors leave as `(code, column)`;
+  the page owns the words. Same rule as `labels`, the other direction.
+
 ## 4. The seams, ranked by strength
 
 The system's real interfaces, strongest guarantee first:
@@ -273,8 +320,10 @@ The system's real interfaces, strongest guarantee first:
 | `Shape`/`Prim2` vocabulary | closed enums + exhaustive matches | compile error when extended |
 | `FrameSink` | a one-method trait | compile error |
 | lesson `draw` signature | the `lesson!` macro | compile error |
+| formula error codes ↔ page messages | `formulas` test reads `runtime.js` | CI failure |
 | **prim record layout** | shared convention (Rust writer ↔ JS painter) | runtime throw on unknown tag |
-| **manifest ↔ `draw` param order** | convention only | **silent misbehavior** |
+| readout `fmt` names | runtime table | throw at load (was: silent `fix3`) |
+| **manifest ↔ `draw` param order** | convention only (`derivada` alone cross-checks its own in a test) | **silent misbehavior** |
 | **readout slot numbers** | convention only | **silent mislabeling** |
 
 The line between rows 5 and 6 is where Rust stops and the browser

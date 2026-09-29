@@ -25,6 +25,10 @@ writing a new lesson is one function and one manifest.
 
 Decision history — how the architecture got this way, through three
 owner-review rounds — is [docs/RFC-001](docs/RFC-001-lesson-framework.md).
+What comes next — formulas the student writes (Desmos-style), lessons
+recorded as *takes* for video, and the lab inside Akademos — is
+[docs/RFC-003](docs/RFC-003-estudio.md), with its first slice built:
+[*La derivada es una velocidad*](public/lessons/derivada/).
 
 ## The rule for these pages
 

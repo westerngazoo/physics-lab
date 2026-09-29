@@ -3,7 +3,9 @@
 The current-state reference for physics-lab. This document describes
 **what is**, normatively; the *decisions* that got here — including
 three owner-review rounds — live in [RFC-001](RFC-001-lesson-framework.md)
-and are not repeated. When they disagree, this file is stale: fix it.
+(the framework), [RFC-002](RFC-002-mecanica.md) (mecanica) and
+[RFC-003](RFC-003-estudio.md) (formulas, takes, the studio), and are not
+repeated. When they disagree, this file is stale: fix it.
 For implementation mechanics — memory layout, the calling convention,
 what the `lesson!` macro expands to, the runtime's order of operations,
 measured limits and failure modes — see
@@ -43,9 +45,16 @@ public/js/runtime.js                  THE one JS file, written once
 public/lessons/<slug>/lesson.wasm     the physics (committed binary)
         │  = lessons/<slug>/crate: a model + ONE draw() + claims-as-tests
 lessons-common                        the framework's Rust half:
-        │  lesson! macro (generates the whole ABI), Prims/Readouts writers
+        │  lesson! macro (generates the whole ABI), Prims/Readouts writers,
+        │  Diagnosticos (the text arm), dcl (free-body diagrams)
+formulas                              what the student TYPES: parsed, never
+        │  executed; exact derivatives by automatic differentiation
 garust (sibling checkout)             where a lesson's math is geometric
 ```
+
+Beside the runtime, `public/js/estudio.js` — the studio's take recorder —
+is a *client* of the runtime's port (§5.1) and is downloaded only when the
+URL carries `?estudio`.
 
 Everything above the ABI is data or the shared runtime; everything
 below it is Rust that `cargo test` runs natively — the same bits the
@@ -67,6 +76,25 @@ Capacities (in `lessons-common`): `PRIM_CAP = 8192` f64s,
 `READ_SLOTS = 8`, `PARAM_CAP = 16`. No allocator exports, no
 wasm-bindgen, no imports: a lesson wasm instantiates with `{}`.
 
+### The text arm — `lesson!(draw, texto)`
+
+A lesson that reads what the student types adds four exports; the four
+above are unchanged (so a host that only knows them — guion's
+`WasmLesson` — still drives it):
+
+| Export | Meaning |
+|---|---|
+| `text_ptr() -> *mut u8` | the runtime writes the formula boxes here, UTF-8, one line per box, `\n`-separated |
+| `text_cap() -> usize` | `TEXT_CAP = 2048` bytes — asked, not hard-coded |
+| `set_text_len(n)` | how many bytes were written; clamped to `TEXT_CAP` |
+| `diag_ptr() -> *const f64` | `DIAG_SLOTS = 8` lines × `[code, column, mask]` |
+
+`draw` then reads `fn draw(p, texto: &str, out, read, diag: &mut Diagnosticos)`.
+Code 0 is "read fine"; any other is a `formulas::Codigo` with its column
+(characters, from 1). The mask says which **params** (bit k = the k-th in
+the manifest) the formula names — that is what `"widget": "auto"` shows.
+Text goes IN as bytes the lesson parses; what comes OUT is still f64s.
+
 ### The primitive records
 
 Flat f64 records, motoreel's drawing vocabulary as a convention:
@@ -77,11 +105,13 @@ Flat f64 records, motoreel's drawing vocabulary as a convention:
 | segment | `[1, x1, y1, x2, y2, style]` |
 | polyline | `[2, n, x0, y0, …, x(n-1), y(n-1), style]` |
 | arrow | `[3, x1, y1, x2, y2, style]` (runtime draws the head) |
+| label | `[4, x, y, labelIndex, style]` — the text is `lesson.labels[labelIndex]` |
+| number | `[5, x, y, value, decimals, style]` — a live number, formatted by the page |
 | view switch | `[9, viewIndex]` — routes subsequent records |
 
 Coordinates are world units of the *current view*. `style` indexes the
 manifest's `styles` array. The `Prims` writer (`view/point/segment/
-arrow/polyline/curve`) is the only sanctioned producer; `curve(t0, t1,
+arrow/polyline/curve/label/numero`) is the only sanctioned producer; `curve(t0, t1,
 n, style, f)` is the workhorse for trajectories, graphs and level sets.
 
 ## 4. `lesson.json` — the manifest schema
@@ -93,10 +123,12 @@ Everything a page is, as data. Fields marked ○ are optional.
 | `slug`, `title`, `topic` | identity; `topic` shows on the hub card |
 | ○ `eyebrow`, `lede` | header strip and intro paragraph (HTML allowed in `lede`) |
 | `views[]` | one per stage: `world {x0,x1,y0,y1}`, `viewBox {w,h}`, ○ `wide` (span the grid), ○ `title`/`law` (stage header), ○ `uniform: false` — permitted **only** where axes carry different quantities (phase portrait, graph); geometry views must scale both axes alike or the runtime throws at load |
-| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param) |
+| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param) or `"auto"` (shown only while some formula names it) |
+| ○ `expresiones[]` | formula boxes, `{etiqueta, valor, ○placeholder}`, at most 8; requires a wasm built with `lesson!(draw, texto)` or the page refuses to start |
+| ○ `labels[]` | the strings `[4]` label records point into (UTF-8, so `ángulo` and `30°` work) |
 | ○ `sweep` | `{param, rate, label}` — the Play button animates that param, wrapping over its range |
-| `readouts[]` | `{slot, label, fmt, ○hero}`; `fmt ∈ fix3 | turns3 | sci` |
-| `styles[]` | `{var, ○width, ○dash}` — `var` is a tokens.css custom property |
+| `readouts[]` | `{slot, label, fmt, ○unit, ○hero}`; `fmt ∈ fix0 | fix1 | fix2 | fix3 | turns3 | sci` — an unknown `fmt` **throws at load**; a non-finite value reads `—` |
+| `styles[]` | `{var, ○width, ○dash, ○size}` — `var` is a tokens.css custom property; `size` is the text size for `[4]`/`[5]` |
 | ○ `legend[]` | `{style, label}` swatch rows |
 | ○ `claims[]` | `{id, text, ○test}` — rendered up top; `test` names the cargo test enforcing it, tying the page to CI |
 | ○ `steps[]` + `stepParam` | derivation stepper: `{title, html}` panels; the named (hidden) param carries the current step into `draw` for per-step highlights |
@@ -106,13 +138,29 @@ Everything a page is, as data. Fields marked ○ are optional.
 
 ## 5. The runtime (`public/js/runtime.js`)
 
-The one JS file, ~430 lines, written once. Responsibilities, in page
+The one JS file, ~610 lines, written once. Responsibilities, in page
 order: fail loudly (visible alert strip; `file://` refused with the
 serve command), load manifest + notes + wasm, build the scaffold
-(header → claims → stages → stepper → transport bar → legend → notes →
-try-this → footer), generate controls and readouts, enforce the
-per-view scale guard, run the sweep clock, and per frame: params →
-wasm memory → `state_at` → paint the prim buffer.
+(header → claims → formula boxes → stages → stepper → transport bar →
+legend → notes → try-this → footer), generate controls and readouts,
+enforce the per-view scale guard, run the sweep clock, and per frame:
+(text, only when edited) + params → wasm memory → `state_at` → paint the
+prim buffer → readouts → diagnostics (a caret under the column, and the
+auto sliders) → frame listeners.
+
+### 5.1 The port
+
+`window.physicsLab` lets another program drive a lesson without touching
+its wasm: `estado()` → `{p: [values, manifest order], x: [formula texts]}`,
+`aplica(estado)` (sets and draws synchronously; returns whether the frame
+succeeded), `alCuadro(f)` (called after every frame), `detenerReloj()`.
+Every frame is a pure function of that state, so a recorder that keeps the
+state over time has kept the lesson: `js/estudio.js` records **takes**
+(`physics-lab/toma@1`: the full state at t = 0, then only what changed and
+when, plus narration marks; the state at τ is a zero-order hold) stamped
+with the SHA-256 of the `lesson.wasm` that played them, and replays them —
+in real time, or instant by instant through
+`window.physicsLabEstudio.cuadro(t)` for an offline renderer.
 
 Why JS exists at all: the browser exposes DOM/events/fetch/rAF to
 JavaScript only — this is the syscall shim, not an application layer.
@@ -193,12 +241,28 @@ structure) because prose-only rules rot:
    with a control that breaks them on purpose.
 9. **Docs embed real source or none** (authoring guide) — listings
    drift; shipped files cannot.
+10. **Text is parsed, never executed** (`formulas`) — and no input can
+    trap the page: nesting and the evaluator's stack are bounded, and a
+    deterministic fuzz in CI draws thousands of random formulas through
+    the real `draw` asserting no panic, no overflow, no non-finite coordinate.
+11. **A manifest can no longer ask for what the page cannot show** — an
+    unknown readout `fmt` throws at load. Before, `fix1` and `unit` were
+    dropped in silence and *El plano inclinado* read `46.092` where it
+    asked for `46.1 N`.
+12. **Case carries meaning** — values with units and math marked
+    `class='m'` are exempt from the uppercase label style: `s` is not
+    `S` (siemens), `x` is not `X`.
 
 ## 10. Adding things
 
 - **A lesson**: follow `public/classroom/authoring.html` (crate + manifest
   + notes + stub, then `build-wasm.sh` + `gen-index.py`). The hub and CI
   pick it up unaided.
+- **A lesson the student writes into**: depend on `formulas`, declare
+  `lesson!(draw, texto)`, compile each line with `formulas::compila`
+  against the lesson's variable names, report through `Diagnosticos`,
+  and add `expresiones` to the manifest. `lessons/derivada` is the worked
+  example.
 - **A runtime capability**: only if it's data-drivable from the
   manifest and useful to ≥2 lessons; it's written once and never
   per-lesson. Everything else belongs lesson-side in Rust.
