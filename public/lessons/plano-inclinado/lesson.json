@@ -91,7 +91,7 @@
     {
       "slot": 5,
       "label": "¿Desliza?",
-      "fmt": "fix0"
+      "fmt": "bool"
     }
   ],
   "styles": [
