@@ -96,7 +96,7 @@
   ],
   "styles": [
     {
-      "var": "--ash-dim",
+      "var": "--ash",
       "width": 2,
       "size": 20
     },
@@ -111,7 +111,7 @@
       "size": 22
     },
     {
-      "var": "--red",
+      "var": "--red-hot",
       "width": 4,
       "size": 22
     },

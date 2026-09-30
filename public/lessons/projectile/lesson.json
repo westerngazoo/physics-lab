@@ -87,7 +87,7 @@
   ],
   "styles": [
     {
-      "var": "--ash-dim",
+      "var": "--ash",
       "width": 1.5
     },
     {
