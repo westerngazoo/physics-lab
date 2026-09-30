@@ -23,12 +23,17 @@
   ],
   "params": {
     "fun": {
-      "label": "Función (0: x²/2 · 1: sen x · 2: x³/3 − x)",
+      "label": "Función",
       "min": 0,
       "max": 2,
       "step": 1,
       "value": 2,
-      "digits": 0
+      "digits": 0,
+      "choices": [
+        "x²/2",
+        "sen x",
+        "x³/3 − x"
+      ]
     },
     "a": {
       "label": "Punto a",

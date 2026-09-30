@@ -23,20 +23,30 @@
   ],
   "params": {
     "fun": {
-      "label": "Función (0: x²/4 · 1: sen x · 2: √x)",
+      "label": "Función",
       "min": 0,
       "max": 2,
       "step": 1,
       "value": 0,
-      "digits": 0
+      "digits": 0,
+      "choices": [
+        "x²/4",
+        "sen x",
+        "√x"
+      ]
     },
     "regla": {
-      "label": "Regla (0: izquierda · 1: derecha · 2: punto medio)",
+      "label": "Regla",
       "min": 0,
       "max": 2,
       "step": 1,
       "value": 0,
-      "digits": 0
+      "digits": 0,
+      "choices": [
+        "izquierda",
+        "derecha",
+        "punto medio"
+      ]
     },
     "n": {
       "label": "Rectángulos n",
