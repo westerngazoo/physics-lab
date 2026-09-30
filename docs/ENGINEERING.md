@@ -72,7 +72,7 @@ Measured artifact sizes (release, as shipped):
 
 | Lesson | bytes | notes |
 |---|---|---|
-| projectile | 33 024 | no garust; smallest real lesson |
+| projectile | 34 447 | no garust; the minimal template. Built with rustc 1.98, which alone accounts for the growth: its previous source gives the same 34 447 there, and 33 024 with the older toolchain the other rows were built with |
 | three-mechanics | 37 637 | no garust (scalar mechanics) |
 | two-mirrors | 39 346 | links garust `Vga2` |
 | wave-equation | 45 449 | largest: mode tables + dissector |
