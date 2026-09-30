@@ -93,9 +93,9 @@ Everything a page is, as data. Fields marked ○ are optional.
 | `slug`, `title`, `topic` | identity; `topic` shows on the hub card |
 | ○ `eyebrow`, `lede` | header strip and intro paragraph (HTML allowed in `lede`) |
 | `views[]` | one per stage: `world {x0,x1,y0,y1}`, `viewBox {w,h}`, ○ `wide` (span the grid), ○ `title`/`law` (stage header), ○ `uniform: false` — permitted **only** where axes carry different quantities (phase portrait, graph); geometry views must scale both axes alike or the runtime throws at load |
-| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param) |
+| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param), ○ `choices` (a pick among a few options: one label per integer from `min` to `max`, in order; rendered as radios, and the lesson still receives the integer) |
 | ○ `sweep` | `{param, rate, label}` — the Play button animates that param, wrapping over its range |
-| `readouts[]` | `{slot, label, fmt, ○hero}`; `fmt ∈ fix3 | turns3 | sci` |
+| `readouts[]` | `{slot, label, fmt, ○unit, ○hero}`; `fmt ∈ fix0 | fix1 | fix2 | fix3 | turns3 | sci | bool` (`bool`: 0 reads «No», anything else «Sí»/«Yes» by the page's `lang`, and ignores `unit`); unknown → `fix3` |
 | `styles[]` | `{var, ○width, ○dash}` — `var` is a tokens.css custom property |
 | ○ `legend[]` | `{style, label}` swatch rows |
 | ○ `claims[]` | `{id, text, ○test}` — rendered up top; `test` names the cargo test enforcing it, tying the page to CI |

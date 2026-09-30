@@ -185,11 +185,15 @@ sharpest remaining foot-gun; see §10 for the proposed fix.
    with `mx = viewBox.w/(x1−x0)`, `my = viewBox.h/(y1−y0)`. If
    `|mx−my| > 1e-9·max(mx,my)` and the view has not declared
    `uniform:false`, the runtime **throws at load** (§9 invariant 1).
-5. **Controls**: one range input per non-hidden param; `input` events
-   stop the sweep and redraw.
+5. **Controls**: one range input per non-hidden param, or, for a param
+   with `choices`, one radio per integer from `min` to `max` (the
+   runtime throws at load if the labels do not cover that range
+   exactly); `input`/`change` events stop the sweep and redraw.
 6. **Readouts**: one `<dd>` per manifest entry; formatters are
-   `fix3` (3 decimals), `turns3` (3 decimals + " τ"), `sci`
-   (exponential, exact 0 special-cased).
+   `fix0`…`fix3` (0–3 decimals), `turns3` (3 decimals + " τ"), `sci`
+   (exponential, exact 0 special-cased) and `bool` (0 → «No», anything
+   else → «Sí» or «Yes» by the page's `<html lang>`); a readout's
+   `unit`, if any, follows the number.
 7. **Stepper** (if `steps` present): prev/next buttons mutate the
    hidden `stepParam`, show the matching panel, and redraw — the step
    number reaches `draw` as an ordinary parameter, so per-step

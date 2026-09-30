@@ -28,7 +28,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
   border: 1px solid var(--line); box-shadow: 0 -8px 24px rgba(0,0,0,.45);
   padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
 .ls .bar #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 14px; align-items: end; }
-.ls .bar label.k { margin-bottom: 4px; font-size: 9px; }
+.ls .bar label.k, .ls .bar legend.k { margin-bottom: 4px; font-size: 9px; }
 .ls .bar button { padding: 8px 10px; }
 .ls .bar #readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 1px;
   background: var(--line); border: 1px solid var(--line); margin: 0; }
@@ -36,11 +36,21 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 .ls .bar .num dd { font-size: 14px; }
 @media (max-width: 900px) { .ls .bar { position: static; box-shadow: none; } }
 .ls #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 18px; align-items: end; }
-.ls label.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
+.ls label.k, .ls legend.k { display: block; font-family: var(--mono); font-size: 10px; font-weight: 500;
   letter-spacing: .16em; text-transform: uppercase; color: var(--ash); margin-bottom: 8px; }
 .ls .val { color: var(--bone); font-variant-numeric: tabular-nums; }
 .ls input[type=range] { width: 100%; accent-color: var(--red); cursor: pointer; height: 22px; margin: 0; }
 .ls input[type=range]:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+/* a param with `choices`: radios, not a number to decode. Option names can
+   hold math (x²/2, sen x), so they are never upper-cased. */
+.ls fieldset.choice { border: 0; margin: 0; padding: 0; min-width: 0; }
+.ls fieldset.choice legend { padding: 0; }
+.ls .opts { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.ls .opts label { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; cursor: pointer;
+  font-family: var(--mono); font-size: 12.5px; color: var(--steel-dim); text-transform: none; }
+.ls .opts input { accent-color: var(--red); margin: 0; cursor: pointer; }
+.ls .opts input:checked + span { color: var(--bone); }
+.ls .opts input:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 .ls .row { display: flex; gap: 8px; }
 .ls button { font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .1em;
   text-transform: uppercase; padding: 10px 16px; border: 1px solid var(--line);
