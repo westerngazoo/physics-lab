@@ -125,7 +125,7 @@ fn draw(p: &amp;[f64], out: &amp;mut Prims, read: &amp;mut Readouts) {
     out.point(rp / 2.0, forma(theta, rp / 2.0), 2);           // el punto más alto
     out.segment(rp, -0.02, rp, 0.02, 3);                      // la marca del alcance
 
-    read.set(0, theta.to_degrees());
+    read.set(0, theta.to_degrees()); // la página no la muestra: el deslizador ya dice θ
     read.set(1, alcance);
     read.set(2, altura);
     read.set(3, tiempo);
@@ -181,8 +181,7 @@ mod tests {
             }
         }
         let lee = lecturas(45.0, 2.0, 9.81);
-        assert!((lee[0] - 45.0).abs() &lt; 1e-12, &quot;la página lee θ = {}&quot;, lee[0]);
-        assert!((lee[4] - 100.0).abs() &lt; 1e-12, &quot;y marca {} %&quot;, lee[4]);
+        assert!((lee[4] - 100.0).abs() &lt; 1e-12, &quot;a 45° la página marca {} %&quot;, lee[4]);
     }
 
     /// P3: los ángulos complementarios tienen el mismo alcance:
@@ -235,14 +234,14 @@ mod tests {
   &quot;title&quot;: &quot;Tiro parabólico&quot;,
   &quot;topic&quot;: &quot;mechanics&quot;,
   &quot;eyebrow&quot;: &quot;Goosethropic Physics · Mecánica · la plantilla de autoría&quot;,
-  &quot;lede&quot;: &quot;La lección más pequeña del laboratorio, a propósito: un lanzamiento con rapidez v y ángulo θ, todo en forma cerrada. Existe dos veces: una como física y otra como el ejemplo trabajado que la &lt;a href=&#x27;../../classroom/authoring.html&#x27;&gt;guía de autoría&lt;/a&gt; recorre línea por línea. La trayectoria se dibuja en unidades naturales v²/g, y por eso cambiar v o g nunca cambia la forma: sólo los números.&quot;,
+  &quot;lede&quot;: &quot;Un lanzamiento con rapidez v y ángulo θ, sin aire que lo frene, y todo sale de fórmulas exactas: nada se simula paso a paso. Mueve el ángulo y mira tres números a la vez: hasta dónde llega (el alcance), qué tan alto sube y cuánto tarda en caer. La trayectoria se dibuja en unidades naturales, v²/g, y por eso cambiar v o g nunca cambia la forma: sólo los números.&quot;,
   &quot;views&quot;: [
     {
       &quot;world&quot;: {
-        &quot;x0&quot;: -0.075,
-        &quot;x1&quot;: 1.125,
-        &quot;y0&quot;: -0.06,
-        &quot;y1&quot;: 0.54
+        &quot;x0&quot;: -0.05,
+        &quot;x1&quot;: 1.05,
+        &quot;y0&quot;: -0.03,
+        &quot;y1&quot;: 0.52
       },
       &quot;viewBox&quot;: {
         &quot;w&quot;: 1000,
@@ -289,12 +288,6 @@ mod tests {
     &quot;label&quot;: &quot;Barre el ángulo&quot;
   },
   &quot;readouts&quot;: [
-    {
-      &quot;slot&quot;: 0,
-      &quot;label&quot;: &quot;θ&quot;,
-      &quot;fmt&quot;: &quot;fix1&quot;,
-      &quot;unit&quot;: &quot;°&quot;
-    },
     {
       &quot;slot&quot;: 1,
       &quot;label&quot;: &quot;Alcance&quot;,
@@ -388,7 +381,7 @@ mod tests {
     &quot;La Luna contra Júpiter, con θ fijo: ¿cómo cambian el alcance y el tiempo de vuelo con g?&quot;
   ],
   &quot;notes&quot;: &quot;notes.html&quot;,
-  &quot;footer&quot;: &quot;la plantilla de autoría — la guía del aula recorre su código completo · ángulos en grados&quot;,
+  &quot;footer&quot;: &quot;la plantilla de autoría: la &lt;a href=&#x27;../../classroom/authoring.html&#x27;&gt;guía de autoría&lt;/a&gt; (en inglés) recorre su código completo línea por línea, y &lt;code&gt;cargo test -p lesson-projectile&lt;/code&gt; corre P1–P5 sobre el mismo crate que corre esta página · ángulos en grados&quot;,
   &quot;card&quot;: &quot;La lección más pequeña del laboratorio, a propósito, y el ejemplo trabajado que la guía de autoría disecciona línea por línea. El alcance es máximo a 45°; los ángulos complementarios empatan.&quot;,
   &quot;cardClaim&quot;: &quot;R = v²·sen(2θ)/g, máximo a θ = 45°; la forma dibujada no depende de v ni de g, por construcción.&quot;
 }</pre>

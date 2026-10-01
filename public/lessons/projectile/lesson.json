@@ -3,14 +3,14 @@
   "title": "Tiro parabólico",
   "topic": "mechanics",
   "eyebrow": "Goosethropic Physics · Mecánica · la plantilla de autoría",
-  "lede": "La lección más pequeña del laboratorio, a propósito: un lanzamiento con rapidez v y ángulo θ, todo en forma cerrada. Existe dos veces: una como física y otra como el ejemplo trabajado que la <a href='../../classroom/authoring.html'>guía de autoría</a> recorre línea por línea. La trayectoria se dibuja en unidades naturales v²/g, y por eso cambiar v o g nunca cambia la forma: sólo los números.",
+  "lede": "Un lanzamiento con rapidez v y ángulo θ, sin aire que lo frene, y todo sale de fórmulas exactas: nada se simula paso a paso. Mueve el ángulo y mira tres números a la vez: hasta dónde llega (el alcance), qué tan alto sube y cuánto tarda en caer. La trayectoria se dibuja en unidades naturales, v²/g, y por eso cambiar v o g nunca cambia la forma: sólo los números.",
   "views": [
     {
       "world": {
-        "x0": -0.075,
-        "x1": 1.125,
-        "y0": -0.06,
-        "y1": 0.54
+        "x0": -0.05,
+        "x1": 1.05,
+        "y0": -0.03,
+        "y1": 0.52
       },
       "viewBox": {
         "w": 1000,
@@ -57,12 +57,6 @@
     "label": "Barre el ángulo"
   },
   "readouts": [
-    {
-      "slot": 0,
-      "label": "θ",
-      "fmt": "fix1",
-      "unit": "°"
-    },
     {
       "slot": 1,
       "label": "Alcance",
@@ -156,7 +150,7 @@
     "La Luna contra Júpiter, con θ fijo: ¿cómo cambian el alcance y el tiempo de vuelo con g?"
   ],
   "notes": "notes.html",
-  "footer": "la plantilla de autoría — la guía del aula recorre su código completo · ángulos en grados",
+  "footer": "la plantilla de autoría: la <a href='../../classroom/authoring.html'>guía de autoría</a> (en inglés) recorre su código completo línea por línea, y <code>cargo test -p lesson-projectile</code> corre P1–P5 sobre el mismo crate que corre esta página · ángulos en grados",
   "card": "La lección más pequeña del laboratorio, a propósito, y el ejemplo trabajado que la guía de autoría disecciona línea por línea. El alcance es máximo a 45°; los ángulos complementarios empatan.",
   "cardClaim": "R = v²·sen(2θ)/g, máximo a θ = 45°; la forma dibujada no depende de v ni de g, por construcción."
 }
