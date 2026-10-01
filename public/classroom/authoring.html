@@ -125,7 +125,7 @@ fn draw(p: &amp;[f64], out: &amp;mut Prims, read: &amp;mut Readouts) {
     out.point(rp / 2.0, forma(theta, rp / 2.0), 2);           // el punto más alto
     out.segment(rp, -0.02, rp, 0.02, 3);                      // la marca del alcance
 
-    read.set(0, theta.to_degrees());
+    read.set(0, theta.to_degrees()); // la página no la muestra: el deslizador ya dice θ
     read.set(1, alcance);
     read.set(2, altura);
     read.set(3, tiempo);
@@ -181,8 +181,7 @@ mod tests {
             }
         }
         let lee = lecturas(45.0, 2.0, 9.81);
-        assert!((lee[0] - 45.0).abs() &lt; 1e-12, &quot;la página lee θ = {}&quot;, lee[0]);
-        assert!((lee[4] - 100.0).abs() &lt; 1e-12, &quot;y marca {} %&quot;, lee[4]);
+        assert!((lee[4] - 100.0).abs() &lt; 1e-12, &quot;a 45° la página marca {} %&quot;, lee[4]);
     }
 
     /// P3: los ángulos complementarios tienen el mismo alcance:
@@ -289,12 +288,6 @@ mod tests {
     &quot;label&quot;: &quot;Barre el ángulo&quot;
   },
   &quot;readouts&quot;: [
-    {
-      &quot;slot&quot;: 0,
-      &quot;label&quot;: &quot;θ&quot;,
-      &quot;fmt&quot;: &quot;fix1&quot;,
-      &quot;unit&quot;: &quot;°&quot;
-    },
     {
       &quot;slot&quot;: 1,
       &quot;label&quot;: &quot;Alcance&quot;,

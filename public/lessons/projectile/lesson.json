@@ -58,12 +58,6 @@
   },
   "readouts": [
     {
-      "slot": 0,
-      "label": "θ",
-      "fmt": "fix1",
-      "unit": "°"
-    },
-    {
       "slot": 1,
       "label": "Alcance",
       "fmt": "fix3",
