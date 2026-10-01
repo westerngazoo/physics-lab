@@ -46,7 +46,7 @@ pub enum Regla {
 }
 
 impl Regla {
-    /// La que manda el deslizador (0, 1, 2), también si llega sin redondear.
+    /// La que manda la elección (0, 1, 2), también si llega sin redondear.
     pub fn de(p: f64) -> Regla {
         match p.round().clamp(0.0, 2.0) as usize {
             0 => Regla::Izquierda,

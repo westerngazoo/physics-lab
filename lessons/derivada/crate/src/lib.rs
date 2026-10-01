@@ -43,7 +43,7 @@ pub fn secante(k: usize, a: f64, h: f64) -> f64 {
     (f(k, a + h) - f(k, a)) / h
 }
 
-/// El índice de función que manda el deslizador (puede llegar no entero).
+/// El índice de función que manda la elección (puede llegar no entero).
 pub fn funcion(p: f64) -> usize {
     (p.round().clamp(0.0, 2.0)) as usize
 }
