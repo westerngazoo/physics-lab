@@ -31,7 +31,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-derivada"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
+name = "lesson-plano-inclinado"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
 name = "lesson-projectile"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
+name = "lesson-riemann"
 version = "0.1.0"
 dependencies = [
  "lessons-common",

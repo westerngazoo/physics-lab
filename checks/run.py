@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Run every physics check. Exit 0 means every claim the pages make holds."""
 import sys
-import bouncing_ball, optics, wave
+import bouncing_ball, calculo, optics, wave
 
 failed = False
-for mod in (optics, bouncing_ball, wave):
+for mod in (optics, bouncing_ball, wave, calculo):
     try:
         print("PASS  " + mod.run())
     except AssertionError as e:

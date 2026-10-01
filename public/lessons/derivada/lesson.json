@@ -1,0 +1,182 @@
+{
+  "slug": "derivada",
+  "title": "La derivada como pendiente",
+  "topic": "calculus",
+  "eyebrow": "Goosethropic Physics · Cálculo · de la secante a la tangente",
+  "lede": "La recta que pasa por <b>P</b> y <b>Q</b> tiene pendiente (f(a+h) − f(a))/h: eso es la derivada <i>antes</i> del límite. Achica <b>h</b> y mira la secante girar hasta pegarse a la tangente. Abajo, el error dividido entre h converge a un número que la gráfica no dibuja: la mitad de la curvatura.",
+  "views": [
+    {
+      "world": {
+        "x0": -3.0,
+        "x1": 3.0,
+        "y0": -2.1,
+        "y1": 2.1
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 700
+      },
+      "wide": true,
+      "title": "La función, la secante y la tangente",
+      "law": "f′(a) = lím h→0 (f(a+h) − f(a)) / h"
+    }
+  ],
+  "params": {
+    "fun": {
+      "label": "Función (0: x²/2 · 1: sen x · 2: x³/3 − x)",
+      "min": 0,
+      "max": 2,
+      "step": 1,
+      "value": 2,
+      "digits": 0
+    },
+    "a": {
+      "label": "Punto a",
+      "min": -2,
+      "max": 2,
+      "step": 0.01,
+      "value": 0.5,
+      "digits": 2
+    },
+    "h": {
+      "label": "Paso h",
+      "min": 0.01,
+      "max": 1.5,
+      "step": 0.01,
+      "value": 1.2,
+      "digits": 2
+    }
+  },
+  "sweep": {
+    "param": "h",
+    "rate": -0.35,
+    "label": "Achica h"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "a",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 1,
+      "label": "h",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 2,
+      "label": "Pendiente secante",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "f′(a) — tangente",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 4,
+      "label": "Error",
+      "fmt": "sci"
+    },
+    {
+      "slot": 5,
+      "label": "Error / h",
+      "fmt": "fix3"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash-dim",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 3
+    },
+    {
+      "var": "--gold",
+      "width": 2.5
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    },
+    {
+      "var": "--ash",
+      "width": 2,
+      "dash": true
+    },
+    {
+      "var": "--bone",
+      "width": 1,
+      "size": 22
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "la función"
+    },
+    {
+      "style": 2,
+      "label": "secante por P y Q"
+    },
+    {
+      "style": 3,
+      "label": "tangente en P"
+    }
+  ],
+  "labels": [
+    "f(x) = x²/2",
+    "f(x) = sen x",
+    "f(x) = x³/3 − x",
+    "P",
+    "Q",
+    "h",
+    "Δy"
+  ],
+  "claims": [
+    {
+      "id": "D1",
+      "text": "Para h pequeño (h ≤ ¼), el error baja cada vez que h se reduce a la mitad. Con h grande no tiene por qué: ver «Predice y comprueba».",
+      "test": "d1_la_secante_se_acerca_a_la_tangente"
+    },
+    {
+      "id": "D2",
+      "text": "Para x²/2 la secante tiene pendiente <b>a + h/2</b>, exactamente: el álgebra de la definición antes de tomar el límite.",
+      "test": "d2_la_secante_de_la_parabola_es_a_mas_h_medios"
+    },
+    {
+      "id": "D3",
+      "text": "El error se va como h: «error / h» tiende a |f″(a)|/2, la mitad de la curvatura.",
+      "test": "d3_el_error_sobre_h_tiende_a_la_mitad_de_f_segunda"
+    },
+    {
+      "id": "D4",
+      "text": "x³/3 − x tiene tangente horizontal justo en x = ±1.",
+      "test": "d4_la_cubica_se_aplana_en_mas_menos_uno"
+    },
+    {
+      "id": "D5",
+      "text": "La derivada de sen x es cos x, en todo punto.",
+      "test": "d5_la_derivada_del_seno_es_el_coseno"
+    }
+  ],
+  "tryThis": [
+    "Con x²/2, predice la pendiente secante para a = 1 y h = 1 <i>antes</i> de mover nada. Luego compruébala: D2 dice que es a + h/2.",
+    "Pulsa «Achica h» y mira «Error / h»: deja de moverse. ¿Qué número es, y por qué con x²/2 es siempre 0.5?",
+    "El error no siempre baja: con sen x, pon a = −0.5 y compara h = 1 con h = 0.5. ¿Por qué las dos secantes tienen la misma pendiente?",
+    "Con x³/3 − x, busca los dos puntos donde la tangente queda horizontal. ¿Qué pasa con la derivada ahí?",
+    "Con sen x, pon a = 0: ahí la curvatura es cero. ¿Qué le pasa a «Error / h» cuando achicas h? (Pista: el error ahora baja como h².)"
+  ],
+  "notes": "notes.html",
+  "footer": "lección de cálculo · la pendiente secante es la definición; f′ es la fórmula exacta con la que se compara",
+  "card": "De la secante a la tangente: la derivada como el límite de una pendiente, y cuánto le falta a la secante para llegar.",
+  "cardClaim": "El error de la secante dividido entre h converge a |f″(a)|/2."
+}
