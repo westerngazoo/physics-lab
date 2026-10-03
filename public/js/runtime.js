@@ -345,7 +345,7 @@ function fatal(title, detail) {
           fill: css(st), "font-size": s.size ?? 20,
           "font-family": "var(--mono, ui-monospace, monospace)",
           "text-anchor": "middle", "dominant-baseline": "middle",
-          "paint-order": "stroke", stroke: "var(--paper, #f4efe3)",
+          "paint-order": "stroke", stroke: "var(--paper, var(--ink-2, #0e0e11))",
           "stroke-width": 4, "stroke-linejoin": "round"
         });
         if (tag === 4) {
