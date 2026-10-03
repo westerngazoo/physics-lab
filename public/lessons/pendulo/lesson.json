@@ -1,0 +1,238 @@
+{
+  "slug": "pendulo",
+  "title": "El péndulo simple",
+  "topic": "mechanics",
+  "eyebrow": "Goosethropic Physics · Mecánica · oscilaciones",
+  "lede": "Una lenteja colgada de un hilo de largo L, soltada desde el reposo a un ángulo θ₀. Aquí se mueven dos péndulos a la vez: el <b>exacto</b>, en oro, y el <b>modelo de ángulos pequeños</b>, θ(t) = θ₀·cos(√(g/L)·t), en acero. Los dos salen de fórmulas exactas: nada se simula paso a paso. Suelta el péndulo con un ángulo chico y luego con uno grande, y mira cuándo dejan de ir juntos.",
+  "labels": [
+    "θ₀ (°)",
+    "T/T₀",
+    "t/T₀",
+    "θ/θ₀"
+  ],
+  "views": [
+    {
+      "world": {
+        "x0": -1.2,
+        "x1": 1.2,
+        "y0": -1.25,
+        "y1": 0.35
+      },
+      "viewBox": {
+        "w": 600,
+        "h": 400
+      },
+      "title": "El péndulo, en unidades de L",
+      "law": "L·θ̈ = −g·sen θ"
+    },
+    {
+      "world": {
+        "x0": -16,
+        "x1": 93,
+        "y0": 0.938,
+        "y1": 1.21
+      },
+      "viewBox": {
+        "w": 600,
+        "h": 400
+      },
+      "uniform": false,
+      "title": "El periodo contra el ángulo",
+      "law": "T/T₀ = 1 + θ₀²/16 + …"
+    },
+    {
+      "world": {
+        "x0": -0.4,
+        "x1": 5.15,
+        "y0": -1.6,
+        "y1": 1.35
+      },
+      "viewBox": {
+        "w": 1000,
+        "h": 400
+      },
+      "wide": true,
+      "uniform": false,
+      "title": "θ(t), exacto contra ángulos pequeños",
+      "law": "pequeños: θ = θ₀·cos(2π·t/T₀)"
+    }
+  ],
+  "params": {
+    "theta0": {
+      "label": "Ángulo inicial θ₀",
+      "min": 1,
+      "max": 80,
+      "step": 0.5,
+      "value": 10,
+      "unit": "°",
+      "digits": 1,
+      "scale": 0.017453292519943295
+    },
+    "L": {
+      "label": "Longitud L",
+      "min": 0.1,
+      "max": 3,
+      "step": 0.01,
+      "value": 1.0,
+      "unit": "m",
+      "digits": 2
+    },
+    "g": {
+      "label": "Gravedad g",
+      "min": 1.62,
+      "max": 24.79,
+      "step": 0.01,
+      "value": 9.81,
+      "unit": "m/s²",
+      "digits": 2
+    },
+    "t": {
+      "label": "Tiempo t, en periodos T₀",
+      "min": 0,
+      "max": 5,
+      "step": 0.01,
+      "value": 0,
+      "unit": "T₀",
+      "digits": 2
+    }
+  },
+  "sweep": {
+    "param": "t",
+    "rate": 0.4,
+    "label": "Suelta el péndulo"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "θ(t) exacto",
+      "fmt": "fix2",
+      "unit": "°",
+      "hero": true
+    },
+    {
+      "slot": 1,
+      "label": "θ(t) de ángulos pequeños",
+      "fmt": "fix2",
+      "unit": "°"
+    },
+    {
+      "slot": 2,
+      "label": "Periodo exacto T",
+      "fmt": "fix3",
+      "unit": "s",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "Periodo de ángulos pequeños T₀",
+      "fmt": "fix3",
+      "unit": "s"
+    },
+    {
+      "slot": 4,
+      "label": "Diferencia (T − T₀)/T₀",
+      "fmt": "fix3",
+      "unit": "%",
+      "hero": true
+    },
+    {
+      "slot": 5,
+      "label": "Tiempo t",
+      "fmt": "fix2",
+      "unit": "s"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash",
+      "width": 1.5
+    },
+    {
+      "var": "--ash",
+      "width": 1.5,
+      "dash": true
+    },
+    {
+      "var": "--gold",
+      "width": 3
+    },
+    {
+      "var": "--steel",
+      "width": 2.5,
+      "dash": true
+    },
+    {
+      "var": "--red-hot",
+      "width": 2
+    },
+    {
+      "var": "--steel-dim",
+      "size": 22
+    },
+    {
+      "var": "--steel-dim",
+      "size": 28
+    }
+  ],
+  "legend": [
+    {
+      "style": 2,
+      "label": "el péndulo exacto"
+    },
+    {
+      "style": 3,
+      "label": "el modelo de ángulos pequeños"
+    },
+    {
+      "style": 4,
+      "label": "el instante t / el θ₀ elegido"
+    },
+    {
+      "style": 1,
+      "label": "la vertical y el arco de la oscilación"
+    }
+  ],
+  "claims": [
+    {
+      "id": "P1",
+      "text": "El movimiento exacto que dibuja la página coincide con una integración numérica independiente, y el periodo medido en ella es el que marca la lectura.",
+      "test": "p1_coincide_con_una_integracion_independiente"
+    },
+    {
+      "id": "P2",
+      "text": "El periodo no depende de la masa: se cancela en m·L·θ̈ = −m·g·sen θ. Por eso no hay deslizador de masa.",
+      "test": "p2_el_periodo_no_depende_de_la_masa"
+    },
+    {
+      "id": "P3",
+      "text": "Con ángulos pequeños, el periodo exacto tiende a T₀ = 2π·√(L/g).",
+      "test": "p3_con_angulos_pequenos_tiende_a_t0"
+    },
+    {
+      "id": "P4",
+      "text": "El periodo crece con θ₀: T/T₀ = 1 + θ₀²/16 + 11θ₀⁴/3072 + …, con θ₀ en radianes.",
+      "test": "p4_el_periodo_crece_con_el_angulo"
+    },
+    {
+      "id": "P5",
+      "text": "Duplicar L multiplica el periodo por √2, a cualquier ángulo.",
+      "test": "p5_duplicar_l_multiplica_el_periodo_por_raiz_de_dos"
+    },
+    {
+      "id": "P6",
+      "text": "La energía se conserva: ½L²θ̇² + g·L·(1 − cos θ) vale lo mismo en todo el movimiento.",
+      "test": "p6_la_energia_se_conserva"
+    }
+  ],
+  "tryThis": [
+    "Predice y comprueba: con θ₀ = 5°, ¿cuántos periodos tardan en separarse las dos curvas de θ(t)? Suelta el péndulo y cuéntalos. Luego repite con θ₀ = 60°.",
+    "¿A qué ángulo el periodo exacto difiere un 1 % del de ángulos pequeños? Predícelo con los dos primeros términos de la serie, 1 + θ₀²/16 (θ₀ en radianes), y luego búscalo con el deslizador.",
+    "Si duplicas L, ¿el periodo se duplica? Escribe tu predicción, duplica L y divide los dos periodos exactos. Prueba también a un ángulo grande.",
+    "Lleva el péndulo de la Tierra a la Luna con θ₀ fijo: el periodo cambia, pero la diferencia en % no se mueve. ¿Por qué?",
+    "Busca el deslizador de la masa. ¿Por qué no hay uno?"
+  ],
+  "notes": "notes.html",
+  "footer": "forma cerrada con funciones elípticas, evaluadas con la media aritmético-geométrica: nada se integra paso a paso · <code>cargo test -p lesson-pendulo</code> corre P1–P6 sobre el mismo crate que corre esta página · ángulos en grados, tiempo en periodos T₀",
+  "card": "Un péndulo exacto y su modelo de ángulos pequeños, lado a lado: van juntos a 5° y se separan a 60°, porque el periodo crece con la amplitud.",
+  "cardClaim": "T = T₀·(1 + θ₀²/16 + …), con T₀ = 2π√(L/g): no depende de la masa, y duplicar L lo multiplica por √2."
+}
