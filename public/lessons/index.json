@@ -9,6 +9,14 @@
    "claim": "El error de la secante dividido entre h converge a |f″(a)|/2."
   },
   {
+   "href": "lessons/pendulo/index.html",
+   "topic": "mechanics",
+   "wasm": true,
+   "title": "El péndulo simple",
+   "card": "Un péndulo exacto y su modelo de ángulos pequeños, lado a lado: van juntos a 5° y se separan a 60°, porque el periodo crece con la amplitud.",
+   "claim": "T = T₀·(1 + θ₀²/16 + …), con T₀ = 2π√(L/g): no depende de la masa, y duplicar L lo multiplica por √2."
+  },
+  {
    "href": "lessons/plano-inclinado/index.html",
    "topic": "mechanics",
    "wasm": true,
