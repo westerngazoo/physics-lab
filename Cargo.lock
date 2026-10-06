@@ -3,6 +3,10 @@
 version = 4
 
 [[package]]
+name = "difraccion"
+version = "0.1.0"
+
+[[package]]
 name = "garust"
 version = "0.1.0"
 dependencies = [
@@ -95,7 +99,13 @@ dependencies = [
 name = "oraculos"
 version = "0.1.0"
 dependencies = [
+ "difraccion",
  "garust",
  "garust-core",
  "mecanica",
+ "vehiculo",
 ]
+
+[[package]]
+name = "vehiculo"
+version = "0.1.0"

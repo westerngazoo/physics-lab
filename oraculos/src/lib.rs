@@ -25,6 +25,8 @@
 //! - **Tablas publicadas** (Winter, *Biomechanics and Motor Control of
 //!   Human Movement*), citadas.
 //! - **Leyes de conservación**, que no dependen del camino de integración.
+//! - **Tablas de funciones especiales** (Abramowitz y Stegun, *Handbook of
+//!   Mathematical Functions*), citadas con su número de tabla.
 
 #![forbid(unsafe_code)]
 
@@ -235,5 +237,75 @@ mod tests {
             (v / esperado - 1.0).abs() < 1e-3,
             "cayó a {v:.5} m/s, la conservación dice {esperado:.5}"
         );
+    }
+
+    /// **Las integrales de Fresnel en 1**, de la tabla: C(1) = 0.7798934 y
+    /// S(1) = 0.4382591 (Abramowitz y Stegun, tabla 7.7, a siete cifras).
+    #[test]
+    fn fresnel_en_uno_como_la_tabla() {
+        let (c, s) = difraccion::fresnel(1.0);
+        assert!((c - 0.779_893_4).abs() < 1e-7, "C(1) = {c}");
+        assert!((s - 0.438_259_1).abs() < 1e-7, "S(1) = {s}");
+    }
+
+    /// **En el borde de la sombra llega un cuarto.** C(0) = S(0) = 0, así
+    /// que I/I₀ = ½ (¼ + ¼) = ¼: la mitad de la amplitud, un cuarto de la
+    /// intensidad. Sin tolerancia: es aritmética de potencias de dos.
+    #[test]
+    fn en_el_borde_llega_un_cuarto() {
+        assert_eq!(difraccion::borde_recto(0.0), 0.25);
+    }
+
+    /// **Lejos del borde, toda la luz.** ∫₀^∞ cos(πt²/2) dt = ½ (y lo mismo
+    /// con el seno): con C = S = ½, I/I₀ = ½ (1 + 1) = 1. A w = 1000 la franja
+    /// que queda mide √2/(1000π) ≈ 4.5 × 10⁻⁴.
+    #[test]
+    fn lejos_del_borde_llega_toda_la_luz() {
+        let i = difraccion::borde_recto(1000.0);
+        assert!((i - 1.0).abs() < 5e-4, "I(1000) = {i}");
+        assert!(difraccion::borde_recto(-1000.0) < 1e-6, "y del otro lado, la sombra");
+    }
+
+    /// **La primera franja brillante pasa de la luz sin borde:** 1.37 veces
+    /// (Hecht, *Optics*, §10.3, la difracción de Fresnel en un borde recto).
+    #[test]
+    fn la_primera_franja_brilla_un_37_por_ciento_mas() {
+        let (_, i) = difraccion::franja(0);
+        assert!((i - 1.37).abs() < 0.005, "I = {i}");
+    }
+
+    /// **El círculo de fricción con un 3-4-5.** Se piden (30, 40) m/s² y el
+    /// tope es μ g = 1 × 10 = 10: el largo pedido es 50, así que se escala por
+    /// 10/50 = 1/5 y quedan (6, 8). Con la misma dirección, exacto.
+    #[test]
+    fn el_circulo_de_friccion_con_un_3_4_5() {
+        let a = vehiculo::agarre([30.0, 40.0], 1.0, 10.0);
+        assert!((a[0] - 6.0).abs() < 1e-12 && (a[1] - 8.0).abs() < 1e-12, "{a:?}");
+    }
+
+    /// **La rapidez tope y el radio mínimo, a mano.** μ = 1, g = 10, r = 10:
+    /// v = √(1 × 10 × 10) = 10 m/s. Y a 20 m/s el giro más cerrado es
+    /// 20²/(1 × 10) = 40 m.
+    #[test]
+    fn la_rapidez_tope_y_el_radio_minimo_a_mano() {
+        assert!((vehiculo::v_tope(1.0, 10.0, 10.0) - 10.0).abs() < 1e-12);
+        assert!((vehiculo::radio_minimo(20.0, 1.0, 10.0) - 40.0).abs() < 1e-12);
+        // el que perdió el agarre en (20, 0) yendo hacia +y gira alrededor
+        // de (15, 0) con radio 5: el centro queda del lado de la curva
+        let c = vehiculo::centro_de_giro([20.0, 0.0], [0.0, 10.0], 5.0, [0.0, 0.0]);
+        assert!((c[0] - 15.0).abs() < 1e-12 && c[1].abs() < 1e-12, "{c:?}");
+    }
+
+    /// **La trazada abierta en tres curvas de libro.** R = r + w/(1 − cos(θ/2)):
+    ///
+    /// - 120°: cos 60° = ½ (el triángulo equilátero), R = 10 + 5/½ = 20.
+    /// - 180°, la horquilla: cos 90° = 0, R = 10 + 8 = 18.
+    /// - 90°: 1 − 1/√2 da R = 10 + (2 + √2) × 8 = 10 + 27.31371 = 37.31371.
+    #[test]
+    fn la_trazada_en_tres_curvas_de_libro() {
+        use std::f64::consts::PI;
+        assert!((vehiculo::trazada(10.0, 5.0, 2.0 * PI / 3.0) - 20.0).abs() < 1e-12);
+        assert!((vehiculo::trazada(10.0, 8.0, PI) - 18.0).abs() < 1e-12);
+        assert!((vehiculo::trazada(10.0, 8.0, PI / 2.0) - 37.313_708_5).abs() < 1e-7);
     }
 }
