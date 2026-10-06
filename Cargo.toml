@@ -3,7 +3,7 @@
 # pages run; that identity is the whole point (RFC-001 §4.0).
 [workspace]
 resolver = "2"
-members = ["mecanica", "difraccion", "vehiculo", "oraculos", "lessons-common", "lessons/two-mirrors/crate", "lessons/three-mechanics/crate", "lessons/wave-equation/crate", "lessons/projectile/crate", "lessons/plano-inclinado/crate", "lessons/derivada/crate", "lessons/riemann/crate"]
+members = ["mecanica", "difraccion", "vehiculo", "oraculos", "lessons-common", "lessons/two-mirrors/crate", "lessons/three-mechanics/crate", "lessons/wave-equation/crate", "lessons/projectile/crate", "lessons/plano-inclinado/crate", "lessons/derivada/crate", "lessons/riemann/crate", "lessons/curva/crate"]
 
 [profile.release]
 opt-level = "z"
