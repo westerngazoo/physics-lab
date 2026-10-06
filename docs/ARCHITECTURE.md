@@ -199,6 +199,15 @@ structure) because prose-only rules rot:
 - **A lesson**: follow `public/classroom/authoring.html` (crate + manifest
   + notes + stub, then `build-wasm.sh` + `gen-index.py`). The hub and CI
   pick it up unaided.
+- **A domain crate** (`mecanica`, `difraccion`, `vehiculo`): pure Rust,
+  no I/O, no clock, no stepping — closed forms a lesson draws or a
+  sibling repo consumes. The reels' motor in `rotorf-sico` imports
+  `difraccion` and `vehiculo` by path, so a claim tested here is the
+  number a reel draws. A law meant to be integrated (say
+  `vehiculo::aceleracion_en_curva`) may live here; the integrator never
+  does, and the crate ships the closed form the integration must agree
+  with. Each domain crate gets literal-answer cases in `oraculos` and an
+  independent implementation in `checks/`.
 - **A runtime capability**: only if it's data-drivable from the
   manifest and useful to ≥2 lessons; it's written once and never
   per-lesson. Everything else belongs lesson-side in Rust.
