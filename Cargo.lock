@@ -35,6 +35,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-curva"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+ "vehiculo",
+]
+
+[[package]]
 name = "lesson-derivada"
 version = "0.1.0"
 dependencies = [

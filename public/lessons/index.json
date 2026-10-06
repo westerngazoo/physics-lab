@@ -1,6 +1,14 @@
 {
  "lessons": [
   {
+   "href": "lessons/curva/index.html",
+   "topic": "mechanics",
+   "wasm": true,
+   "title": "¿Qué tan rápido entra una curva?",
+   "card": "Un kart en una curva: lo que pide la curva, v²/r, contra lo que da la llanta, μ g. Pasado el tope no se sale en línea recta: se abre.",
+   "claim": "La rapidez tope es √(μ g r): el doble de radio da √2 veces la rapidez."
+  },
+  {
    "href": "lessons/derivada/index.html",
    "topic": "calculus",
    "wasm": true,
