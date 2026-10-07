@@ -275,6 +275,47 @@ const MENSAJES_FORMULA = {
   Object.entries(lesson.params).forEach(([key, p], idx) => {
     state[key] = p.value;
     if (p.widget === "hidden") return;
+    if (p.choices) {
+      // A pick among a few options is a choice, not a number to decode:
+      // one radio per integer from min to max, labelled in order. The
+      // lesson still receives the integer, so draw() never changes.
+      if (!Number.isInteger(p.min) || !Number.isInteger(p.max) ||
+          !Array.isArray(p.choices) || p.choices.length !== p.max - p.min + 1) {
+        throw new Error("runtime: param " + key +
+          ": choices must be one label per integer from min to max");
+      }
+      const fs = document.createElement("fieldset");
+      fs.className = "choice";
+      const lg = document.createElement("legend");
+      lg.className = "k";
+      lg.textContent = p.label;
+      const opts = h("div", "opts");
+      const radios = [];
+      p.choices.forEach((text, i) => {
+        const v = p.min + i;
+        const opt = document.createElement("label");
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "p-" + key;
+        radio.value = v;
+        radio.checked = v === p.value;
+        radio.addEventListener("change", () => {
+          if (!radio.checked) return;
+          if (sweep) stopSweep();
+          state[key] = v;
+          draw();
+        });
+        const name = document.createElement("span");
+        name.textContent = text;
+        opt.append(radio, name);
+        opts.append(opt);
+        radios.push(radio);
+      });
+      fs.append(lg, opts);
+      ctlBox.appendChild(fs);
+      ctl[key] = { radios, p };   // so the port (a take) can pick them too
+      return;
+    }
     const wrap = document.createElement("div");
     const lab = document.createElement("label");
     lab.className = "k";
@@ -307,6 +348,10 @@ const MENSAJES_FORMULA = {
   function showValue(key) {
     const c = ctl[key];
     if (!c) return;
+    if (c.radios) {
+      for (const r of c.radios) r.checked = +r.value === state[key];
+      return;
+    }
     c.input.value = state[key];
     c.out.textContent = (+state[key]).toFixed(c.p.digits ?? 2) + (c.p.unit ? " " + c.p.unit : "");
   }
@@ -314,6 +359,8 @@ const MENSAJES_FORMULA = {
   // ---- readouts generated from the manifest ------------------------------
   // An unknown fmt is a load-time error, not a silent fix3: a readout
   // that cannot say what its manifest asked for is a page that lies.
+  // A yes/no readout speaks the page's language (the stub's <html lang>).
+  const yes = document.documentElement.lang.startsWith("es") ? "Sí" : "Yes";
   const FMT = {
     turns3: v => v.toFixed(3) + " τ",
     fix0: v => v.toFixed(0),
@@ -321,6 +368,7 @@ const MENSAJES_FORMULA = {
     fix2: v => v.toFixed(2),
     fix3: v => v.toFixed(3),
     sci: v => (v === 0 ? "0" : v.toExponential(1)),
+    bool: v => (v === 0 ? "No" : yes),
   };
   const roEls = [];
   for (const r of lesson.readouts) {
@@ -332,7 +380,9 @@ const MENSAJES_FORMULA = {
     const d = h("div", "num" + (r.hero ? " hero" : ""),
       "<dt>" + r.label + "</dt><dd>&mdash;</dd>");
     roBox.appendChild(d);
-    roEls.push({ slot: r.slot, f, unit: r.unit, el: d.querySelector("dd") });
+    // A yes/no answer carries no unit; anything else wears its own.
+    const unit = r.unit && r.fmt !== "bool" ? " " + r.unit : "";
+    roEls.push({ slot: r.slot, f, unit, el: d.querySelector("dd") });
   }
 
   // ---- painting ----------------------------------------------------------
@@ -512,7 +562,7 @@ const MENSAJES_FORMULA = {
     const rd = new Float64Array(wasm.memory.buffer, wasm.readouts_ptr(), 8);
     for (const r of roEls) {
       const v = rd[r.slot];
-      r.el.textContent = Number.isFinite(v) ? r.f(v) + (r.unit ? " " + r.unit : "") : "—";
+      r.el.textContent = Number.isFinite(v) ? r.f(v) + r.unit : "—";
     }
     if (hasText) readDiag();
   }

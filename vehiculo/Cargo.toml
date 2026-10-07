@@ -1,0 +1,9 @@
+[package]
+name = "vehiculo"
+version = "0.1.0"
+edition = "2021"
+description = "El vehículo en la curva: el círculo de fricción, la rapidez tope y la trazada, en forma cerrada."
+license = "MIT OR Apache-2.0"
+
+# Sin dependencias: todo es aritmética del plano.
+[dependencies]

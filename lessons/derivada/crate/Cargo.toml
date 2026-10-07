@@ -6,12 +6,5 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-# La primera lección que lee lo que el lector ESCRIBE: `formulas` analiza
-# x(t) y y(t) y entrega sus derivadas exactas. garust entra por una sola
-# puerta, y es la honesta: en 2D la aceleración se parte en v·a (cambia
-# la rapidez) y v∧a (dobla el camino), y la curvatura es |v∧a|/|v|³ —
-# un producto cuña, no una fórmula de memoria.
 [dependencies]
 lessons-common = { path = "../../../lessons-common" }
-formulas = { path = "../../../formulas" }
-garust = { path = "../../../../garust" }

@@ -1,0 +1,186 @@
+{
+  "slug": "riemann",
+  "title": "Sumas de Riemann",
+  "topic": "calculus",
+  "eyebrow": "Goosethropic Physics · Cálculo · el área como límite",
+  "lede": "El área bajo una curva, con n rectángulos. Con más rectángulos la suma se acerca a la integral, pero lo interesante es <i>a qué ritmo</i>. Midiendo la altura a la izquierda o a la derecha, el error cae como 1/n. En el punto medio cae como 1/n², un orden entero más rápido, sin hacer nada más. Las dos últimas lecturas lo muestran.",
+  "views": [
+    {
+      "world": {
+        "x0": -0.3,
+        "x1": 3.3,
+        "y0": -0.3,
+        "y1": 2.3
+      },
+      "viewBox": {
+        "w": 1080,
+        "h": 780
+      },
+      "wide": true,
+      "title": "Rectángulos bajo la curva",
+      "law": "∫₀ᵇ f(x) dx = lím n→∞ Σ f(xᵢ*) Δx"
+    }
+  ],
+  "params": {
+    "fun": {
+      "label": "Función",
+      "min": 0,
+      "max": 2,
+      "step": 1,
+      "value": 0,
+      "digits": 0,
+      "choices": [
+        "x²/4",
+        "sen x",
+        "√x"
+      ]
+    },
+    "regla": {
+      "label": "Regla",
+      "min": 0,
+      "max": 2,
+      "step": 1,
+      "value": 0,
+      "digits": 0,
+      "choices": [
+        "izquierda",
+        "derecha",
+        "punto medio"
+      ]
+    },
+    "n": {
+      "label": "Rectángulos n",
+      "min": 1,
+      "max": 60,
+      "step": 1,
+      "value": 6,
+      "digits": 0
+    },
+    "b": {
+      "label": "Hasta b",
+      "min": 0.5,
+      "max": 3,
+      "step": 0.01,
+      "value": 2.5,
+      "digits": 2
+    }
+  },
+  "sweep": {
+    "param": "n",
+    "rate": 6,
+    "label": "Más rectángulos"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "Suma de Riemann",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 1,
+      "label": "Integral exacta",
+      "fmt": "fix3",
+      "hero": true
+    },
+    {
+      "slot": 2,
+      "label": "Error",
+      "fmt": "sci"
+    },
+    {
+      "slot": 3,
+      "label": "Error × n",
+      "fmt": "fix3"
+    },
+    {
+      "slot": 4,
+      "label": "Error × n²",
+      "fmt": "fix3"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 3
+    },
+    {
+      "var": "--gold",
+      "width": 1.5
+    },
+    {
+      "var": "--red-hot",
+      "width": 2
+    },
+    {
+      "var": "--ash",
+      "width": 2,
+      "dash": true
+    },
+    {
+      "var": "--bone",
+      "width": 1,
+      "size": 22
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "la función"
+    },
+    {
+      "style": 2,
+      "label": "los rectángulos"
+    },
+    {
+      "style": 3,
+      "label": "dónde se mide la altura"
+    }
+  ],
+  "labels": [
+    "f(x) = x²/4",
+    "f(x) = sen x",
+    "f(x) = √x"
+  ],
+  "claims": [
+    {
+      "id": "R1",
+      "text": "Con más rectángulos, la suma se acerca a la integral, con las tres reglas y las tres funciones.",
+      "test": "r1_mas_rectangulos_se_acercan_a_la_integral"
+    },
+    {
+      "id": "R2",
+      "text": "Si f crece, la suma por la izquierda se queda corta y la de la derecha se pasa, para cualquier n.",
+      "test": "r2_si_f_crece_la_izquierda_queda_corta_y_la_derecha_se_pasa"
+    },
+    {
+      "id": "R3",
+      "text": "Izquierda y derecha fallan como 1/n: «error × n» se detiene en |f(b) − f(0)|·b/2.",
+      "test": "r3_izquierda_y_derecha_fallan_como_uno_sobre_n"
+    },
+    {
+      "id": "R4",
+      "text": "El punto medio falla como 1/n²: «error × n²» se detiene en |f′(b) − f′(0)|·b²/24.",
+      "test": "r4_el_punto_medio_falla_como_uno_sobre_n_cuadrado"
+    },
+    {
+      "id": "R5",
+      "text": "Con √x el punto medio pierde esa ventaja: su pendiente no es finita en 0.",
+      "test": "r5_con_raiz_el_punto_medio_pierde_su_ventaja"
+    }
+  ],
+  "tryThis": [
+    "Con x²/4 y la regla izquierda, predice: ¿la suma queda por encima o por debajo de la integral? Compruébalo, y luego cambia a la derecha.",
+    "Pulsa «Más rectángulos» con la regla izquierda y mira «Error × n»: se detiene. Cambia al punto medio: ahora el que se detiene es «Error × n²».",
+    "Con n = 10, ¿qué regla se acerca más? ¿Cuántos rectángulos necesita la izquierda para igualar al punto medio?",
+    "Ahora usa √x con el punto medio: «Error × n²» ya no se detiene. Mira la curva cerca de 0: ¿qué tiene de raro su pendiente?"
+  ],
+  "notes": "notes.html",
+  "footer": "lección de cálculo · la integral exacta está en forma cerrada: nunca se aproxima una integral con otra",
+  "card": "El área como límite de rectángulos, y por qué medir la altura en el punto medio converge un orden más rápido.",
+  "cardClaim": "El punto medio falla como 1/n²; la izquierda y la derecha, como 1/n."
+}

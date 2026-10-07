@@ -9,3 +9,5 @@ license = "MIT OR Apache-2.0"
 garust = { path = "../../garust", features = ["physics"] }
 garust-core = { path = "../../garust/crates/garust-core" }
 mecanica = { path = "../mecanica" }
+difraccion = { path = "../difraccion" }
+vehiculo = { path = "../vehiculo" }

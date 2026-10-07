@@ -3,6 +3,10 @@
 version = 4
 
 [[package]]
+name = "difraccion"
+version = "0.1.0"
+
+[[package]]
 name = "formulas"
 version = "0.1.0"
 
@@ -35,11 +39,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-curva"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+ "vehiculo",
+]
+
+[[package]]
 name = "lesson-derivada"
 version = "0.1.0"
 dependencies = [
- "formulas",
- "garust",
  "lessons-common",
 ]
 
@@ -58,6 +68,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-riemann"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
 name = "lesson-three-mechanics"
 version = "0.1.0"
 dependencies = [
@@ -68,6 +85,15 @@ dependencies = [
 name = "lesson-two-mirrors"
 version = "0.1.0"
 dependencies = [
+ "garust",
+ "lessons-common",
+]
+
+[[package]]
+name = "lesson-velocidad"
+version = "0.1.0"
+dependencies = [
+ "formulas",
  "garust",
  "lessons-common",
 ]
@@ -94,7 +120,13 @@ dependencies = [
 name = "oraculos"
 version = "0.1.0"
 dependencies = [
+ "difraccion",
  "garust",
  "garust-core",
  "mecanica",
+ "vehiculo",
 ]
+
+[[package]]
+name = "vehiculo"
+version = "0.1.0"

@@ -170,9 +170,12 @@ lección reporta qué parámetros usa cada renglón como una máscara de bits.
 el decimal es con punto, y la coma se rechaza con un mensaje que lo dice.
 
 **Un solo motor para Akademos.** `cas.js` decide equivalencias evaluando en
-puntos al azar — exactamente lo que `Formula::valor` permite. Propuesta: que
-los ejercicios de Akademos usen el mismo `formulas` (vía un wasm pequeño) en
-vez de mantener una segunda gramática en JavaScript. Es la regla de
+puntos al azar — exactamente lo que `Formula::valor` permite. Y desde R-0022
+akademos tiene además un *grapher* que reusa la gramática de `cas.js` y
+calcula `f′` por diferencia central con `h = 10⁻⁵·max(1, |x|)`: ya son **tres**
+motores (dos gramáticas y dos derivadas). Propuesta: que los ejercicios y el
+grapher de Akademos usen el mismo `formulas` (vía un wasm pequeño) en vez
+de mantener una segunda gramática en JavaScript y una derivada aproximada. Es la regla de
 guion-video-creator aplicada al álgebra: *si el reel y la app dan números
 distintos, uno de los dos miente*.
 
@@ -265,31 +268,51 @@ presupuesto de un DOM que se rehace a 60 Hz) — y canvas además se captura
 más rápido para video. Se declara por vista en el manifiesto; la lección no
 se entera.
 
-### 4.5 Akademos: el lab como `ContentItem::Interactive`
+### 4.5 Akademos: el lab como `ContentItem::Interactive` — ya existe
 
-`spec` ya es JSON opaco en `akademos-content`, así que no hace falta cambiar
-el esquema de Akademos:
+*(Reescrito el 2026-10-07, al leer akademos `main`.)* Lo que este RFC
+proponía como opción (b) — mismo origen, versión fija — **ya está
+construido** en akademos (R-0016, R-0037…R-0044):
 
-```json
-{ "kind": "interactive", "title": "La derivada es una velocidad",
-  "widget": "physics-lab",
-  "spec": { "leccion": "derivada", "params": { "t": 5 },
-            "expresiones": ["a t²", ""], "toma": null } }
-```
+- `scripts/vendor-sims.sh` copia `lesson.json`, `lesson.wasm` y las notas
+  de un **commit fijo** de physics-lab a `apps/student/sims/<slug>/`, con la
+  procedencia en `sims/index.json` (hoy: `d106e24`, de `feat/lab-hosted`,
+  siete lecciones).
+- Un curso las usa como `Interactive { widget: "sim", spec: { lesson } }`,
+  servidas por el mismo binario, sin iframe.
+- Las maneja **un segundo anfitrión del ABI**: `apps/student/src/sim.js`
+  (puro, con pruebas) más `buildSim` en `main.js`, que llaman a las
+  exportaciones del wasm directamente. No copia `runtime.js`: lo reescribe.
+- Alrededor crecieron predicciones (R-0031), el banco (R-0037), elecciones
+  (R-0038), una tabla de corridas **guardada en el servidor** (R-0039, la
+  tabla `LAB_RUNS` de redb), gráfica y ley (R-0040), protocolo, retos,
+  reporte y editor (R-0041…R-0044).
 
-Dos maneras de montarlo:
+Lo que eso implica para este RFC:
 
-| | (a) iframe a physics.goosethropic.systems | (b) mismo origen: Akademos sirve runtime + lecciones |
-|---|---|---|
-| CSP | aflojar `frame-ancestors`, quitar `X-Frame-Options: DENY`, y hablar por `postMessage` | ninguna frontera nueva |
-| Offline (PWA) | no | sí |
-| Versionado | la lección cambia bajo el curso | el curso fija la versión que vendorizó (como KaTeX en `apps/student/vendor`) |
-| Costo en el runtime | ninguno | montarse en un elemento y una base dados, no en `#lesson` y `data-lesson` |
-
-**Recomendación: (b).** Y el progreso del alumno sale del puerto: una
-práctica se declara en el manifiesto como un predicado sobre el estado
-("lleva el error de la secante por debajo de 10⁻⁶") — ejercicios basados en
-afirmaciones, no en opción múltiple.
+1. **Dos implementaciones de un contrato.** `sim.js` dice dibujar
+   "exactamente como el runtime de physics-lab", y nada lo comprueba. La
+   propuesta es una **batería de conformidad**: casos dorados (manifiesto +
+   parámetros + texto → buffer de prims y lecturas) que `cargo test`
+   escribe aquí y `node --test` verifica allá. Es la disciplina N-versión
+   de L2, aplicada al anfitrión.
+2. **El brazo de texto no existe allá.** `checkManifest` no conoce
+   `expresiones`: si hoy se vendorizara `velocidad`, cargaría sin error y
+   dibujaría marcos vacíos — una falla silenciosa. Antes de vendorizarla,
+   `sim.js` tiene que implementar el brazo (escribir en `text_ptr`,
+   `set_text_len`, leer `diag_ptr`, unas 40 líneas) y las cajas de fórmula;
+   como mínimo, `checkManifest` debe **rechazar** `expresiones` mientras no
+   lo haga. Para lo que venga, se propone un campo `"requiere": ["texto"]`
+   que todo anfitrión entienda o rechace — como los bits de capacidad de un
+   descriptor USB: el driver que no conoce un bit no finge que no está.
+3. **El puerto y las tomas** viven en `runtime.js`; `sim.js` no los expone.
+   akademos ya graba algo parecido — una `LabRun` guarda parámetros y filas
+   — pero no el tiempo. Converger es natural: una corrida puede llevar una
+   toma.
+4. **Los slugs son contrato.** Los cursos apuntan a una lección por su slug,
+   y akademos ya vendorizó `derivada` (*La derivada como pendiente*, de
+   `main`). Por eso la lección de este RFC vive en `velocidad`: reutilizar
+   el slug habría cambiado la lección debajo de cursos ya escritos.
 
 ### 4.6 El mapa: matemática ↔ evento físico
 
@@ -299,9 +322,9 @@ RFC-004 (simulada).
 
 | Matemática | El evento que la describe | Tipo | Donde GA paga | Estado |
 |---|---|---|---|---|
-| derivada | la velocidad de un coche; la cinta registradora | cerrada | — | **construida** |
+| derivada | la pendiente de una secante que gira (`derivada`, en `main`); la velocidad de un coche y la cinta registradora (`velocidad`, este RFC) | cerrada | — | **construidas las dos** |
 | segunda derivada, curvatura | la aceleración; una curva en la carretera | cerrada | `κ = |v∧a|/|v|³` | **construida** (2D) |
-| integral, teorema fundamental | el odómetro contra el velocímetro; área bajo v(t) | cerrada | — | siguiente (reusa `formulas`) |
+| integral, teorema fundamental | el odómetro contra el velocímetro; área bajo v(t) | cerrada | — | sumas de Riemann **construida** en `main` (`riemann`); el odómetro, siguiente (reusa `formulas`) |
 | exponencial | un capacitor que se carga; café que se enfría | cerrada | — | |
 | logaritmo | decibeles; la escala de un sonido | cerrada | — | |
 | trigonometría | movimiento circular, resorte (MAS) | cerrada | rotores | |
@@ -374,7 +397,7 @@ manejando la página, no mirando capturas.
 |---|---|---|
 | `formulas`: léxico, sintaxis → RPN, jets de 2º orden, errores ubicados | `formulas/` (sin dependencias) | 14, incluida una batería de 11 fórmulas contra derivadas a mano y 25 000 entradas aleatorias |
 | ABI de texto aditivo: `lesson!(draw, texto)`, `Diagnosticos`, `texto_valido` | `lessons-common/src/lib.rs` | 2 nuevas: el texto cruza el ABI real y los diagnósticos regresan; UTF-8 cortado a media letra |
-| *La derivada es una velocidad* | `lessons/derivada/`, `public/lessons/derivada/` | 9: afirmaciones D1–D7, el manifiesto contra el Rust, y el arranque limpio |
+| *La derivada es una velocidad* | `lessons/velocidad/`, `public/lessons/velocidad/` | 9: afirmaciones D1–D7, el manifiesto contra el Rust, y el arranque limpio |
 | Cajas de fórmula, deslizadores automáticos, el puerto | `public/js/runtime.js`, `public/css/lesson.css` | L3 |
 | El estudio: grabar, marcar, guardar, reproducir, `cuadro(t)` | `public/js/estudio.js` | L3 |
 
@@ -494,11 +517,11 @@ recomprometieron sus `.wasm`.
 | Etapa | Trabajo | Resultado |
 |---|---|---|
 | **E0** | esta rama | fórmulas, la derivada, tomas, cuatro bugs |
-| **E1** | cálculo con `formulas`: la integral (odómetro/velocímetro, sumas de Riemann con su error), Fourier como epiciclos, eigenvalores como modos normales | el tramo cerrado del mapa §4.6 |
+| **E1** | cálculo con `formulas`: la integral (odómetro/velocímetro), Fourier como epiciclos, eigenvalores como modos normales — `main` ya trae `derivada` (pendiente) y `riemann` | el tramo cerrado del mapa §4.6 |
 | **E2** | RFC-004 (lecciones simuladas) adoptado; doble péndulo; "la tasa de aprendizaje es un paso de tiempo" (cerrada) y luego XOR (simulada) | la puerta a la red neuronal |
 | **E3** | 3D por proyección + sumidero canvas | paisajes de pérdida, sólidos |
 | **E4** | tomas → guion: `guion import-toma`, `[[narration]]` desde las marcas, camino A productizado, camino B en `guion-motion` | de la clase al reel |
-| **E5** | Akademos: `widget: "physics-lab"`, montaje de mismo origen, prácticas como predicados sobre el estado | el lab dentro de los cursos |
+| **E5** | Akademos: el alojamiento ya existe (§4.5); falta el brazo de texto en `sim.js`, la batería de conformidad, `"requiere"`, y las prácticas como predicados sobre el estado | el lab con fórmulas dentro de los cursos |
 | **E6** | el estudio como producto: lienzos 9:16 y 16:9, teleprompter, "modo dedo" (mueves el coche con el dedo y aparece x(t)) | el estudio de física matemática |
 
 ---
@@ -524,12 +547,14 @@ recomprometieron sus `.wasm`.
    principio, en lugar de "sólo forma cerrada"? (Recomiendo sí; §4.2.)
 2. **¿El borrador de lecciones simuladas entra como RFC-004?** El número
    RFC-002 que tenía previsto ya está tomado.
-3. **¿`estudio.js` como segundo archivo del framework**, o todo dentro de
-   `runtime.js`? (Recomiendo el segundo archivo: el alumno no lo descarga.)
+3. ~~¿`estudio.js` como segundo archivo del framework?~~ **Decidido**
+   (2026-10-07): sí, "si es necesario" — ver el registro.
 4. **Gramática de `formulas`**: ¿`1/2t` como `(1/2)·t` (hoy) o como
    `1/(2t)` (como muchas calculadoras)? ¿Coma decimal rechazada (hoy) o
    aceptada?
-5. **Akademos: ¿iframe o mismo origen?** (Recomiendo mismo origen, §4.5.)
+5. ~~Akademos: ¿iframe o mismo origen?~~ **Decidido por construcción**:
+   mismo origen, con vendorización fija (§4.5). Lo abierto ahora es otro:
+   ¿un anfitrión del ABI o dos con batería de conformidad?
 6. **Video: ¿camino A ya (con doble captura para verificar), C (SVG +
    `resvg`) como destino, y B sólo para los reels con la marca de guion?**
 7. **¿Arreglar la costura débil antes de crecer?** Parámetros y lecturas por
@@ -574,7 +599,13 @@ píxeles**; y la destinación del programa es el álgebra geométrica.
 | 2026-09-29 | Errores como `(código, columna)` en f64; mensajes en la página, comparados con Rust por una prueba | el buffer sigue siendo de números; la costura tiene guardián |
 | 2026-09-29 | Tomas de entradas, no de píxeles, a través de un puerto; el estudio fuera de `runtime.js` | pureza ⇒ re-render exacto en cualquier formato; el alumno no descarga el estudio |
 | 2026-09-29 | No recompilar los `.wasm` de lecciones no tocadas | no son reproducibles con este toolchain; su comportamiento se verificó idéntico |
+| 2026-10-07 | `estudio.js` como segundo archivo del framework — **aprobado por el dueño** («está bien si es necesario») | lo necesario es el puerto; `estudio.js` es su cliente para grabar desde cualquier navegador sin instalar nada, y el alumno nunca lo descarga. Dentro de akademos no aplica (allá no hay puerto; ver §4.5) |
+| 2026-10-07 | Al fusionar `main`, la lección de este RFC pasa de `derivada` a `velocidad` | `main` ya tenía *La derivada como pendiente* en `derivada`, y akademos ya la vendorizó con ese slug: un slug no se reutiliza |
 
 ## Changelog
 
 - 2026-09-29 — creado (Discussing), con la rebanada vertical E0 construida.
+- 2026-10-07 — fusionado con `main` (elecciones, `bool`, unidades, `derivada`
+  de pendiente, `riemann`, `curva`, `difraccion`, `vehiculo`); la lección pasa a
+  `velocidad`; §4.5 reescrito contra lo que akademos construyó; `estudio.js`
+  aprobado.

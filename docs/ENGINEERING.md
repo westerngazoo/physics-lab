@@ -77,11 +77,11 @@ Measured artifact sizes (release, as shipped):
 
 | Lesson | bytes | notes |
 |---|---|---|
-| projectile | 33 024 | no garust; smallest real lesson |
+| projectile | 34 447 | no garust; the minimal template. Built with rustc 1.98, which alone accounts for the growth: its previous source gives the same 34 447 there, and 33 024 with the older toolchain the other rows were built with |
 | three-mechanics | 37 637 | no garust (scalar mechanics) |
 | two-mirrors | 39 346 | links garust `Vga2` |
 | wave-equation | 45 449 | mode tables + dissector |
-| derivada | 128 725 (59 292 gzip-9) | reads formulas: carries libm (every function a student can type), `core`'s float parser and dlmalloc; lesson + `formulas` logic are the minority. Built with rustc 1.94.1 |
+| velocidad | 128 725 (59 292 gzip-9) | reads formulas: carries libm (every function a student can type), `core`'s float parser and dlmalloc; lesson + `formulas` logic are the minority. Built with rustc 1.94.1 |
 
 Most of the floor is Rust core/fmt machinery, not lesson logic; a
 second garust-linking lesson costs far less than the first.
@@ -213,11 +213,15 @@ sharpest remaining foot-gun; see §10 for the proposed fix.
    with `mx = viewBox.w/(x1−x0)`, `my = viewBox.h/(y1−y0)`. If
    `|mx−my| > 1e-9·max(mx,my)` and the view has not declared
    `uniform:false`, the runtime **throws at load** (§9 invariant 1).
-5. **Controls**: one range input per non-hidden param; `input` events
-   stop the sweep and redraw.
+5. **Controls**: one range input per non-hidden param, or, for a param
+   with `choices`, one radio per integer from `min` to `max` (the
+   runtime throws at load if the labels do not cover that range
+   exactly); `input`/`change` events stop the sweep and redraw.
 6. **Readouts**: one `<dd>` per manifest entry; formatters are
-   `fix3` (3 decimals), `turns3` (3 decimals + " τ"), `sci`
-   (exponential, exact 0 special-cased).
+   `fix0`…`fix3` (0–3 decimals), `turns3` (3 decimals + " τ"), `sci`
+   (exponential, exact 0 special-cased) and `bool` (0 → «No», anything
+   else → «Sí» or «Yes» by the page's `<html lang>`); a readout's
+   `unit`, if any, follows the number.
 7. **Stepper** (if `steps` present): prev/next buttons mutate the
    hidden `stepParam`, show the matching panel, and redraw — the step
    number reaches `draw` as an ordinary parameter, so per-step

@@ -1,0 +1,268 @@
+{
+  "slug": "velocidad",
+  "title": "La derivada es una velocidad",
+  "topic": "cálculo",
+  "eyebrow": "Goosethropic Physics · Cálculo · la primera lección que se escribe",
+  "lede": "Escribe cómo se mueve un coche — <code>x(t)</code>, como en Desmos — y míralo moverse. Al lado, su posición contra el tiempo: la <b>pendiente de la tangente</b> en cada instante es la velocidad del coche en ese instante. No se parece: es el mismo número. La <b>secante</b> es la definición, con un Δt finito; encógelo y se acuesta sobre la tangente… hasta que lo encoges demasiado. Escribe también <code>y(t)</code> y el coche sale al plano.",
+  "expresiones": [
+    {
+      "etiqueta": "x(t) =",
+      "valor": "3t² − 0.2t³",
+      "placeholder": "por ejemplo 5 + 2t, 4sin(t), a t² …"
+    },
+    {
+      "etiqueta": "y(t) =",
+      "valor": "",
+      "placeholder": "vacía: el coche va sobre una recta · prueba 3sin(t)"
+    }
+  ],
+  "labels": [
+    "v",
+    "a",
+    "Δt",
+    "Δx",
+    "t",
+    "x",
+    "x · y",
+    "v",
+    "vx · vy · |v|",
+    "Δr/Δt",
+    "cinta · 0.5 s"
+  ],
+  "views": [
+    {
+      "world": {
+        "x0": -0.06,
+        "x1": 1.06,
+        "y0": -0.14,
+        "y1": 0.42
+      },
+      "viewBox": {
+        "w": 1120,
+        "h": 560
+      },
+      "wide": true,
+      "title": "El coche",
+      "law": "v = dx/dt · la cinta marca dónde estaba cada 0.5 s"
+    },
+    {
+      "world": {
+        "x0": -0.14,
+        "x1": 1.06,
+        "y0": -0.16,
+        "y1": 1.1
+      },
+      "viewBox": {
+        "w": 520,
+        "h": 360
+      },
+      "uniform": false,
+      "title": "La posición x(t)",
+      "law": "pendiente de la tangente = velocidad"
+    },
+    {
+      "world": {
+        "x0": -0.14,
+        "x1": 1.06,
+        "y0": -0.16,
+        "y1": 1.1
+      },
+      "viewBox": {
+        "w": 520,
+        "h": 360
+      },
+      "uniform": false,
+      "title": "La velocidad v(t) = x′(t)",
+      "law": "exacta · el punto rojo es la secante"
+    }
+  ],
+  "params": {
+    "t": {
+      "label": "Tiempo <span class='m'>t</span>",
+      "min": 0,
+      "max": 10,
+      "step": 0.01,
+      "value": 2.5,
+      "unit": "s",
+      "digits": 2
+    },
+    "k": {
+      "label": "<span class='m'>Δt = 10^k</span> (0 un segundo · −12 roto)",
+      "min": -12,
+      "max": 0.3,
+      "step": 0.01,
+      "value": -0.3,
+      "digits": 2
+    },
+    "centrada": {
+      "label": "Secante (0 hacia adelante · 1 centrada)",
+      "min": 0,
+      "max": 1,
+      "step": 1,
+      "value": 0,
+      "digits": 0
+    },
+    "a": {
+      "label": "<span class='m'>a</span>",
+      "min": -5,
+      "max": 5,
+      "step": 0.05,
+      "value": 1,
+      "digits": 2,
+      "widget": "auto"
+    },
+    "b": {
+      "label": "<span class='m'>b</span>",
+      "min": -5,
+      "max": 5,
+      "step": 0.05,
+      "value": 1,
+      "digits": 2,
+      "widget": "auto"
+    },
+    "c": {
+      "label": "<span class='m'>c</span>",
+      "min": -5,
+      "max": 5,
+      "step": 0.05,
+      "value": 0,
+      "digits": 2,
+      "widget": "auto"
+    }
+  },
+  "sweep": {
+    "param": "t",
+    "rate": 1,
+    "label": "Arrancar el reloj"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "Posición <span class='m'>x(t)</span>",
+      "fmt": "fix2",
+      "unit": "m"
+    },
+    {
+      "slot": 1,
+      "label": "Velocidad <span class='m'>x′(t)</span>",
+      "fmt": "fix3",
+      "unit": "m/s",
+      "hero": true
+    },
+    {
+      "slot": 2,
+      "label": "Secante <span class='m'>Δx/Δt</span>",
+      "fmt": "fix3",
+      "unit": "m/s"
+    },
+    {
+      "slot": 3,
+      "label": "Error <span class='m'>|Δx/Δt − x′|</span>",
+      "fmt": "sci",
+      "hero": true
+    },
+    {
+      "slot": 4,
+      "label": "<span class='m'>Δt</span>",
+      "fmt": "sci",
+      "unit": "s"
+    },
+    {
+      "slot": 5,
+      "label": "Aceleración <span class='m'>x″(t)</span>",
+      "fmt": "fix3",
+      "unit": "m/s²"
+    },
+    {
+      "slot": 6,
+      "label": "Rapidez <span class='m'>|v|</span>",
+      "fmt": "fix3",
+      "unit": "m/s"
+    },
+    {
+      "slot": 7,
+      "label": "Curvatura <span class='m'>κ = |v∧a|/|v|³</span>",
+      "fmt": "fix3",
+      "unit": "1/m"
+    }
+  ],
+  "styles": [
+    { "var": "--ash-dim", "width": 1.2 },
+    { "var": "--steel", "width": 2.5 },
+    { "var": "--gold", "width": 2.5 },
+    { "var": "--red-hot", "width": 2, "dash": true },
+    { "var": "--gold" },
+    { "var": "--gold", "width": 3.5 },
+    { "var": "--red", "width": 3 },
+    { "var": "--bone", "width": 2.5 },
+    { "var": "--steel-dim", "width": 2 },
+    { "var": "--ash-dim", "width": 1.5, "dash": true },
+    { "var": "--white", "width": 2, "dash": true },
+    { "var": "--ash", "size": 13 },
+    { "var": "--ash", "size": 22 },
+    { "var": "--bone", "size": 26 },
+    { "var": "--steel-dim", "size": 15 },
+    { "var": "--red-hot", "width": 1.2 },
+    { "var": "--ash", "width": 1.5, "dash": true },
+    { "var": "--steel-dim" }
+  ],
+  "legend": [
+    { "style": 1, "label": "x(t) — y en el plano, sus velocidades" },
+    { "style": 10, "label": "y(t) (sólo en el plano)" },
+    { "style": 2, "label": "tangente: su pendiente ES la velocidad" },
+    { "style": 3, "label": "secante: la definición, con Δt finito" },
+    { "style": 5, "label": "velocidad v" },
+    { "style": 6, "label": "aceleración a (a su propia escala)" },
+    { "style": 17, "label": "la cinta: dónde estaba el coche cada 0.5 s" }
+  ],
+  "claims": [
+    {
+      "id": "D1",
+      "text": "La velocidad y la aceleración son las derivadas EXACTAS de lo que escribes: diferenciación automática, no una secante disfrazada.",
+      "test": "d1_derivadas_exactas"
+    },
+    {
+      "id": "D2",
+      "text": "La secante hacia adelante converge con orden 1 (Δt ÷10 → error ÷10); la centrada con orden 2 (error ÷100).",
+      "test": "d2_orden_de_la_secante"
+    },
+    {
+      "id": "D3",
+      "text": "Por debajo de Δt ≈ 10⁻⁸ la secante EMPEORA: el redondeo se come la resta. La derivada exacta no tiene ese piso.",
+      "test": "d3_el_piso_del_redondeo"
+    },
+    {
+      "id": "D4",
+      "text": "La tangente dibujada tiene pendiente v(t), medida sobre el dibujo mismo.",
+      "test": "d4_la_tangente_dibujada_mide_la_velocidad"
+    },
+    {
+      "id": "D5",
+      "text": "x = 3t² − 0.2t³ sale del reposo y vuelve al reposo, y va más rápido justo en su inflexión, donde a = 0.",
+      "test": "d5_arranca_frena_y_la_inflexion_es_la_maxima"
+    },
+    {
+      "id": "D6",
+      "text": "En el círculo, v ⊥ r, |a| = |v|²/R y la curvatura del producto cuña es κ = |v∧a|/|v|³ = 1/R.",
+      "test": "d6_el_circulo"
+    },
+    {
+      "id": "D7",
+      "text": "Nada que escribas tumba la página: ni pánico, ni buffer desbordado, ni una coordenada que no sea un número.",
+      "test": "d7_nada_tumba_la_pagina"
+    }
+  ],
+  "tryThis": [
+    "Arranca el reloj y mira la cinta: ¿dónde están más separados los puntos? Compáralo con la flecha amarilla y con la gráfica de v(t). Son tres maneras de ver lo mismo.",
+    "Pon t = 5. La flecha de la aceleración desaparece y la tangente de v(t) queda horizontal: es la inflexión de x(t), y ahí el coche va a su máxima velocidad (D5).",
+    "Baja k a −3 y mira el error: cada paso de k que bajas, el error baja un orden. Ahora pon la secante centrada: baja DOS órdenes por cada uno (D2).",
+    "Sigue bajando k hasta −12. En algún punto cerca de −8 el error deja de bajar y empieza a SUBIR. Eso no es un error del lab: es el redondeo de la máquina (D3).",
+    "Escribe x(t) = a t² y aparece un deslizador para a. ¿Qué pasa con la gráfica de v(t) cuando lo mueves? ¿Y con su pendiente?",
+    "Escribe x(t) = 3cos(t) y y(t) = 3sin(t): el coche da vueltas. La velocidad es tangente al círculo, la aceleración apunta al centro, y κ marca 1/3 (D6).",
+    "Rompe una fórmula a propósito — por ejemplo 3t² − — y lee el mensaje. Dice qué falta y en qué columna, como un compilador."
+  ],
+  "notes": "notes.html",
+  "footer": "la primera lección con fórmulas escritas por ti · se analizan en Rust (crate formulas), nunca se ejecutan · τ es la constante del círculo",
+  "card": "Escribe x(t) como en Desmos y un coche se mueve con eso. La pendiente de la tangente ES la velocidad; la secante es la definición, con su error en pantalla — y un piso de redondeo que la rompe.",
+  "cardClaim": "v = dx/dt exacta por diferenciación automática; la secante converge con orden 1 (adelante) y 2 (centrada), hasta Δt ≈ 10⁻⁸."
+}

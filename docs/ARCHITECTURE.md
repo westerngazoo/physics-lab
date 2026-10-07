@@ -32,6 +32,23 @@ The seam: motoreel films may enter lessons as assets with provenance
 re-implements the studio, and never runs an integrator (that rule is a
 pedagogy contract — scrub-safety and honesty — not an engine limit).
 
+Downstream, three more repos consume what is built here:
+
+| Repo | What it takes | How |
+|---|---|---|
+| **akademos** (the course platform) | lessons, as `Interactive` items in a course | `scripts/vendor-sims.sh` copies `lesson.json` + `lesson.wasm` + notes from a **pinned commit** into `apps/student/sims/<slug>/` (provenance in `sims/index.json`), and its **own** ABI host, `apps/student/src/sim.js`, drives them same-origin |
+| **guion-video-creator** (video) | lessons, as an `InPlace` motion source | `guion-motion` runs `lesson.wasm` under `wasmi` (closed-form arm only) |
+| **rotorf-sico** (the reels' motor) | domain crates | imports `difraccion` and `vehiculo` by path |
+
+**The ABI therefore has three hosts**, and a change to it is a change to
+all three: this runtime (the whole ABI, text arm included), akademos'
+`sim.js` (the closed-form arm; it does **not** implement the text arm
+yet, so a lesson with `expresiones` there would load and draw empty
+frames — see [RFC-003](RFC-003-estudio.md) §4.5), and guion's
+`WasmLesson` (closed-form arm, no painting). Slugs are a contract too:
+akademos courses point at a lesson by its slug, so a slug is never reused
+for a different lesson.
+
 ## 2. The stack
 
 ```
@@ -123,11 +140,11 @@ Everything a page is, as data. Fields marked ○ are optional.
 | `slug`, `title`, `topic` | identity; `topic` shows on the hub card |
 | ○ `eyebrow`, `lede` | header strip and intro paragraph (HTML allowed in `lede`) |
 | `views[]` | one per stage: `world {x0,x1,y0,y1}`, `viewBox {w,h}`, ○ `wide` (span the grid), ○ `title`/`law` (stage header), ○ `uniform: false` — permitted **only** where axes carry different quantities (phase portrait, graph); geometry views must scale both axes alike or the runtime throws at load |
-| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param) or `"auto"` (shown only while some formula names it) |
+| `params{}` | ordered; each: `label, min, max, step, value`, ○ `unit`, ○ `digits`, ○ `scale` (multiplier applied before the ABI — e.g. τ so sliders read in turns), ○ `widget: "hidden"` (no slider; e.g. the stepper's param) or `"auto"` (shown only while some formula names it), ○ `choices` (a pick among a few options: one label per integer from `min` to `max`, in order; rendered as radios, and the lesson still receives the integer) |
 | ○ `expresiones[]` | formula boxes, `{etiqueta, valor, ○placeholder}`, at most 8; requires a wasm built with `lesson!(draw, texto)` or the page refuses to start |
 | ○ `labels[]` | the strings `[4]` label records point into (UTF-8, so `ángulo` and `30°` work) |
 | ○ `sweep` | `{param, rate, label}` — the Play button animates that param, wrapping over its range |
-| `readouts[]` | `{slot, label, fmt, ○unit, ○hero}`; `fmt ∈ fix0 | fix1 | fix2 | fix3 | turns3 | sci` — an unknown `fmt` **throws at load**; a non-finite value reads `—` |
+| `readouts[]` | `{slot, label, fmt, ○unit, ○hero}`; `fmt ∈ fix0 | fix1 | fix2 | fix3 | turns3 | sci | bool` (`bool`: 0 reads «No», anything else «Sí»/«Yes» by the page's `lang`, and ignores `unit`); an unknown `fmt` **throws at load**; a non-finite value reads `—` |
 | `styles[]` | `{var, ○width, ○dash, ○size}` — `var` is a tokens.css custom property; `size` is the text size for `[4]`/`[5]` |
 | ○ `legend[]` | `{style, label}` swatch rows |
 | ○ `claims[]` | `{id, text, ○test}` — rendered up top; `test` names the cargo test enforcing it, tying the page to CI |
@@ -261,8 +278,17 @@ structure) because prose-only rules rot:
 - **A lesson the student writes into**: depend on `formulas`, declare
   `lesson!(draw, texto)`, compile each line with `formulas::compila`
   against the lesson's variable names, report through `Diagnosticos`,
-  and add `expresiones` to the manifest. `lessons/derivada` is the worked
-  example.
+  and add `expresiones` to the manifest. `lessons/velocidad` is the
+  worked example.
+- **A domain crate** (`mecanica`, `difraccion`, `vehiculo`): pure Rust,
+  no I/O, no clock, no stepping — closed forms a lesson draws or a
+  sibling repo consumes. The reels' motor in `rotorf-sico` imports
+  `difraccion` and `vehiculo` by path, so a claim tested here is the
+  number a reel draws. A law meant to be integrated (say
+  `vehiculo::aceleracion_en_curva`) may live here; the integrator never
+  does, and the crate ships the closed form the integration must agree
+  with. Each domain crate gets literal-answer cases in `oraculos` and an
+  independent implementation in `checks/`.
 - **A runtime capability**: only if it's data-drivable from the
   manifest and useful to ≥2 lessons; it's written once and never
   per-lesson. Everything else belongs lesson-side in Rust.
