@@ -308,4 +308,50 @@ mod tests {
         assert!((vehiculo::trazada(10.0, 8.0, PI) - 18.0).abs() < 1e-12);
         assert!((vehiculo::trazada(10.0, 8.0, PI / 2.0) - 37.313_708_5).abs() < 1e-7);
     }
+
+    /// **La transferencia de carga, a mano.** 100 kg a 10 m/s² de lado, el
+    /// centro de masa a 0.5 m y una vía de 1 m: 100 × 10 × 0.5 / 1 = 500 N
+    /// pasan de la llanta de adentro a la de afuera. Y la llanta de adentro de
+    /// un eje con la mitad del peso a cuestas (0.5 de reparto), vía 1 m y
+    /// h = 0.25 m se levanta a 0.5 × 1 / (2 × 1 × 0.25) = 1 g.
+    #[test]
+    fn la_transferencia_de_carga_a_mano() {
+        use vehiculo::carga::{despegue_en_g, transferencia_lateral};
+        assert!((transferencia_lateral(100.0, 10.0, 0.5, 1.0) - 500.0).abs() < 1e-12);
+        assert!((despegue_en_g(0.5, 1.0, 1.0, 0.25) - 1.0).abs() < 1e-12);
+    }
+
+    /// **Los resortes del kart, a mano.** Dos llantas de 100 kN/m a 1 m:
+    /// k t²/2 = 100 000 × 1 / 2 = 50 000 N·m/rad. Un resorte de 3 y uno de 6
+    /// en serie: 3 × 6 / 9 = 2.
+    #[test]
+    fn los_resortes_del_kart_a_mano() {
+        use vehiculo::carga::{en_serie, rigidez_de_llantas};
+        assert!((rigidez_de_llantas(100e3, 1.0) - 50_000.0).abs() < 1e-9);
+        assert!((en_serie(3.0, 6.0) - 2.0).abs() < 1e-12);
+    }
+
+    /// **El modelo de dos nodos, a mano.** Llantas de 2 adelante y 1 atrás,
+    /// chasis de 2. D = 2 × 1 + 2 × (2 + 1) = 8.
+    ///
+    /// - Todo el par atrás (α = 0): adelante 2 × (0 + 2)/8 = 0.5, atrás
+    ///   1 × (2 + 2)/8 = 0.5.
+    /// - Todo adelante (α = 1): adelante 2 × (1 + 2)/8 = 0.75, atrás
+    ///   1 × (0 + 2)/8 = 0.25.
+    #[test]
+    fn el_modelo_de_dos_nodos_a_mano() {
+        use vehiculo::carga::reparto_dos_nodos;
+        let (d, t) = reparto_dos_nodos(2.0, 1.0, 2.0, 0.0);
+        assert!((d - 0.5).abs() < 1e-12 && (t - 0.5).abs() < 1e-12, "{d}, {t}");
+        let (d, t) = reparto_dos_nodos(2.0, 1.0, 2.0, 1.0);
+        assert!((d - 0.75).abs() < 1e-12 && (t - 0.25).abs() < 1e-12, "{d}, {t}");
+    }
+
+    /// **El vuelco, a mano.** Vías de 1.0 m adelante y 1.4 m atrás, la mitad
+    /// del peso atrás: la vía en la línea del centro de masa es
+    /// 0.5 × 1.0 + 0.5 × 1.4 = 1.2 m. Con h = 0.3 m, a_y/g = 1.2 / 0.6 = 2.
+    #[test]
+    fn el_vuelco_a_mano() {
+        assert!((vehiculo::carga::vuelco_en_g(0.5, 1.0, 1.4, 0.3) - 2.0).abs() < 1e-12);
+    }
 }

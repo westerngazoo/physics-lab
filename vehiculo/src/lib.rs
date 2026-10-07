@@ -14,6 +14,9 @@
 //!   abierto que la curva ([`centro_de_giro`] dice dónde).
 //! - [`trazada`]: el radio de la trazada que abre la curva (de afuera al
 //!   vértice y de vuelta afuera), r + w/(1 − cos(θ/2)).
+//! - [`carga`]: cuánta carga se pasa a las llantas de afuera en una curva
+//!   (m a_y h / t), a qué eje (el modelo de dos nodos) y a qué aceleración
+//!   lateral se levanta una llanta.
 //! - [`aceleracion_en_curva`]: la ley que un integrador necesita para mover
 //!   un vehículo que quiere seguir un círculo. Aquí no se integra nada
 //!   (las páginas no dan pasos de tiempo); quien la integre puede comparar
@@ -28,6 +31,8 @@
 //! Unidades SI (m, s, rad); el plano es (x, y) con y hacia arriba.
 
 #![forbid(unsafe_code)]
+
+pub mod carga;
 
 /// La gravedad estándar, 9.806 65 m/s², exacta por definición (CGPM, 1901).
 pub const G_ESTANDAR: f64 = 9.806_65;
@@ -216,9 +221,15 @@ mod tests {
             for s in [-1.0, 1.0] {
                 let n = [(s * giro / 2.0).cos(), (s * giro / 2.0).sin()];
                 let distancia = (ri + w) - (n[0] * c[0] + n[1] * c[1]);
-                assert!((distancia - rr).abs() < 1e-9, "θ = {giro}: {distancia} vs {rr}");
+                assert!(
+                    (distancia - rr).abs() < 1e-9,
+                    "θ = {giro}: {distancia} vs {rr}"
+                );
             }
-            assert!((largo(c) + ri - rr).abs() < 1e-9, "tangente por dentro al vértice");
+            assert!(
+                (largo(c) + ri - rr).abs() < 1e-9,
+                "tangente por dentro al vértice"
+            );
         }
     }
 
@@ -240,10 +251,16 @@ mod tests {
         let v = [0.0, 50.0 / 3.6];
         let a = aceleracion_en_curva(x, v, centro, 20.0, MU, G_ESTANDAR);
         assert!(a[1].abs() < 1e-15, "perpendicular a v");
-        assert!((a[0] + v[1] * v[1] / 20.0).abs() < 1e-12, "v²/r hacia el centro");
+        assert!(
+            (a[0] + v[1] * v[1] / 20.0).abs() < 1e-12,
+            "v²/r hacia el centro"
+        );
         let rapido = [0.0, 60.0 / 3.6];
         let b = aceleracion_en_curva(x, rapido, centro, 20.0, MU, G_ESTANDAR);
         assert!((b[0] + MU * G_ESTANDAR).abs() < 1e-12, "recortada a μ g");
-        assert_eq!(aceleracion_en_curva(x, [0.0, 0.0], centro, 20.0, MU, G_ESTANDAR), [0.0, 0.0]);
+        assert_eq!(
+            aceleracion_en_curva(x, [0.0, 0.0], centro, 20.0, MU, G_ESTANDAR),
+            [0.0, 0.0]
+        );
     }
 }
