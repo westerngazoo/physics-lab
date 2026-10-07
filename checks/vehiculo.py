@@ -71,7 +71,7 @@ def run():
     # y la de 90° con la de adentro a 1 m del borde: 1.84 veces la rapidez
     assert abs(math.sqrt(trazada_por_bisectriz(10, 8, math.pi / 2) / 11) - 1.84) < 0.005
     # la transferencia de carga del kart del reel 1.3 (valores supuestos)
-    J = math.pi / 32 * (0.030 ** 4 - 0.026 ** 4)
+    J = math.tau / 64 * (0.030 ** 4 - 0.026 ** 4)
     k_ch = 2 * 80e9 * J / 1.04
     k_del, k_tras = 100e3 * 0.975 ** 2 / 2, 100e3 * 1.205 ** 2 / 2
     assert round(k_ch) == 5332 and round(k_del) == 47531 and round(k_tras) == 72601

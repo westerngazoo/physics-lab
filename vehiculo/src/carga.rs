@@ -27,7 +27,7 @@
 //! levanta la trasera de adentro, es geometría de la dirección y va aparte.
 //! Supone agarre suficiente: si μ < a_y/g, el vehículo desliza antes.
 
-use std::f64::consts::PI;
+use std::f64::consts::TAU;
 
 /// La carga vertical que pasa de las llantas de adentro a las de afuera
 /// (N): m a_y h / t, con `m` en kg, `a_y` la aceleración lateral (m/s²), `h`
@@ -46,11 +46,12 @@ pub fn rigidez_de_llantas(k: f64, t: f64) -> f64 {
 }
 
 /// La rigidez torsional de un chasis de dos largueros de tubo (N·m/rad):
-/// 2 G J / L, con J = (π/32)(D⁴ − d⁴) el momento polar del tubo de diámetro
+/// 2 G J / L, con J = (τ/64)(D⁴ − d⁴) el momento polar del tubo de diámetro
 /// exterior `d_ext` e interior `d_int` (m), `g_corte` el módulo de corte
 /// (Pa) y `largo` la distancia entre ejes (m).
 pub fn rigidez_de_chasis(g_corte: f64, d_ext: f64, d_int: f64, largo: f64) -> f64 {
-    let j = PI / 32.0 * (d_ext.powi(4) - d_int.powi(4));
+    // J = ∫ r² dA sobre el anillo: lleva una vuelta completa, τ
+    let j = TAU / 64.0 * (d_ext.powi(4) - d_int.powi(4));
     2.0 * g_corte * j / largo
 }
 
