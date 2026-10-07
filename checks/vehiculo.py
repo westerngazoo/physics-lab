@@ -38,6 +38,16 @@ def trazada_por_bisectriz(ri, w, giro):
     return radio_por_rectas(lo)
 
 
+def reparto_iterado(k_del, k_tras, k_ch, alfa, vueltas=20000):
+    """El modelo de dos nodos por relajación de Gauss-Seidel: cada nodo se
+    equilibra con el otro fijo, una y otra vez. Sin la forma cerrada."""
+    th_d = th_t = 0.0
+    for _ in range(vueltas):
+        th_d = (alfa + k_ch * th_t) / (k_del + k_ch)
+        th_t = ((1 - alfa) + k_ch * th_d) / (k_tras + k_ch)
+    return k_del * th_d, k_tras * th_t
+
+
 def run():
     # el círculo de fricción: 3-4-5 y la dirección se conserva
     assert agarre(3, 4, MU, G) == (3, 4)
@@ -60,4 +70,21 @@ def run():
     assert abs(trazada_por_bisectriz(10, 8, math.pi) - 18) < 1e-9
     # y la de 90° con la de adentro a 1 m del borde: 1.84 veces la rapidez
     assert abs(math.sqrt(trazada_por_bisectriz(10, 8, math.pi / 2) / 11) - 1.84) < 0.005
-    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción"
+    # la transferencia de carga del kart del reel 1.3 (valores supuestos)
+    J = math.pi / 32 * (0.030 ** 4 - 0.026 ** 4)
+    k_ch = 2 * 80e9 * J / 1.04
+    k_del, k_tras = 100e3 * 0.975 ** 2 / 2, 100e3 * 1.205 ** 2 / 2
+    assert round(k_ch) == 5332 and round(k_del) == 47531 and round(k_tras) == 72601
+    d, t = reparto_iterado(k_del, k_tras, k_ch, 0.0)
+    assert abs(d + t - 1) < 1e-9 and abs(t - 0.938) < 5e-4, (d, t)
+    assert abs(0.58 * 1.205 / (2 * t * 0.28) - 1.33) < 5e-3     # la trasera, masa atrás
+    d, t = reparto_iterado(k_del, k_tras, k_ch, 0.42)
+    assert abs(t - 0.584) < 5e-4, t
+    assert abs(0.42 * 0.975 / (2 * d * 0.28) - 1.76) < 5e-3     # la delantera, masa repartida
+    # chasis casi rígido (mil veces las llantas): manda k_del : k_tras, entre
+    # donde entre el par. La relajación se arrastra cuando el chasis acopla
+    # mucho (cada vuelta corrige ~0.4 %), así que lleva sus 20 000 vueltas.
+    for alfa in (0.0, 0.5, 1.0):
+        d, t = reparto_iterado(1.0, 3.0, 1e3, alfa)
+        assert abs(t - 0.75) < 1e-3, (alfa, t)
+    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción + dos nodos por relajación (94 %, 1.33 g; 58 %, 1.76 g)"
