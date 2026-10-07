@@ -20,6 +20,7 @@ pub mod curl;
 pub mod gluteo;
 pub mod jalon;
 pub mod maquina_humana;
+pub mod musculo;
 /// La palanca compartida: brazo de momento y momento de una carga.
 pub mod palanca;
 pub mod patada;
