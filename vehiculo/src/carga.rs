@@ -15,9 +15,17 @@
 //! **A qué eje se pasa** lo decide la rigidez a rodar de cada eje
 //! ([`reparto_dos_nodos`]). En un kart, sin suspensión, las llantas y el
 //! chasis son los resortes: adelante, las llantas en serie con el chasis que
-//! se tuerce; atrás, las llantas sobre el eje sólido. El eje que se lleva más
-//! transferencia descarga primero su llanta de adentro, y la levanta cuando
-//! la transferencia iguala la carga que tenía ([`despegue_en_g`]).
+//! se tuerce; atrás, las llantas sobre el eje sólido. Cada eje levanta su
+//! llanta de adentro cuando su parte de la transferencia iguala la carga que
+//! esa llanta tenía ([`despegue_en_g`]), y se despega primero el que llega
+//! antes, no el que se lleva más: un eje con menos peso o con la vía más
+//! angosta se descarga antes aunque aguante menos vuelco.
+//!
+//! Lo que no depende de nada de eso es el **vuelco** ([`vuelco_en_g`]): las
+//! dos llantas de adentro en el aire, cuando el par m a_y h iguala el que el
+//! peso puede devolver apoyado solo en las de afuera. Es la fórmula de una
+//! sola vía, a_y/g = t/(2h), con la vía medida en la línea del centro de
+//! masa. Ni la rigidez del chasis ni dónde entra el par la mueven.
 //!
 //! # El modelo, y lo que no es
 //!
@@ -112,6 +120,24 @@ pub fn despegue_en_g(reparto: f64, t: f64, fraccion: f64, h: f64) -> f64 {
     reparto * t / (2.0 * fraccion * h)
 }
 
+/// La aceleración lateral, en g, a la que el vehículo vuelca: las dos llantas
+/// de adentro en el aire. Apoyado solo en las de afuera, el peso devuelve como
+/// mucho m g · t/2, con `t` la vía en la línea del centro de masa,
+/// (1 − w) t_del + w t_tras (`reparto` es w, la fracción del peso atrás). El
+/// par m a_y h lo iguala en
+///
+/// ```text
+/// a_y / g = t / (2 h),
+/// ```
+///
+/// la de una sola vía (la transferencia de carga con la masa cancelada). No
+/// depende de la rigidez del chasis ni de dónde entra el par: es estática pura.
+/// Ninguna llanta sola puede quedar en el aire después de esto; alguna puede
+/// despegarse antes ([`despegue_en_g`]).
+pub fn vuelco_en_g(reparto: f64, t_del: f64, t_tras: f64, h: f64) -> f64 {
+    ((1.0 - reparto) * t_del + reparto * t_tras) / (2.0 * h)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -182,6 +208,31 @@ mod tests {
         assert!(
             despegue_en_g(0.58, 1.205, atras, 0.28) > g_del,
             "la delantera primero"
+        );
+    }
+
+    /// T6: el vuelco del kart del reel 1.3 es 1.98 g, con cualquier chasis; y
+    /// la delantera de adentro, con la masa repartida, se despega antes (1.76
+    /// g), aunque el eje de atrás se lleve más vuelco (58 %).
+    #[test]
+    fn t6_el_vuelco_no_depende_del_chasis() {
+        let v = vuelco_en_g(0.58, 0.975, 1.205, 0.28);
+        assert!((v - 1.979).abs() < 5e-4, "{v}");
+        let (kd, kt, kc) = kart();
+        for k_ch in [1e-9, kc, 1e15] {
+            let (del, atras) = reparto_dos_nodos(kd, kt, k_ch, 0.42);
+            let g_del = despegue_en_g(0.42, 0.975, del, 0.28);
+            let g_tras = despegue_en_g(0.58, 1.205, atras, 0.28);
+            // alguna llanta de adentro se despega antes del vuelco
+            assert!(g_del.min(g_tras) < v, "chasis {k_ch}: {g_del} {g_tras} {v}");
+            assert!(
+                atras > del && g_del < g_tras,
+                "atrás aguanta más vuelco y aun así la delantera va primero"
+            );
+        }
+        // con una sola vía y la masa en el centro, despegue y vuelco son lo mismo
+        assert!(
+            (vuelco_en_g(0.5, 1.2, 1.2, 0.3) - despegue_en_g(0.5, 1.2, 0.5, 0.3)).abs() < 1e-12
         );
     }
 

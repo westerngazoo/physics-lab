@@ -87,4 +87,27 @@ def run():
     for alfa in (0.0, 0.5, 1.0):
         d, t = reparto_iterado(1.0, 3.0, 1e3, alfa)
         assert abs(t - 0.75) < 1e-3, (alfa, t)
-    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción + dos nodos por relajación (94 %, 1.33 g; 58 %, 1.76 g)"
+    # el vuelco por momentos alrededor del eje de vuelco (la recta de las dos
+    # huellas de afuera), con productos cruz y sin la fórmula. El eje está
+    # sesgado (las vías difieren), así que no basta la distancia perpendicular:
+    # la fuerza de lado va a lo ancho del kart, no perpendicular al eje.
+    def cruz(a, b):
+        return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
+
+    def punto(a, b):
+        return sum(x * y for x, y in zip(a, b))
+
+    L, h = 1.04, 0.28
+    A = (0.975 / 2, 0.0, 0.0)                 # huella delantera de afuera (x, y, z)
+    B = (1.205 / 2, 0.0, -L)                  # huella trasera de afuera
+    eje = tuple(b - a for a, b in zip(A, B))
+    eje = tuple(c / math.sqrt(punto(eje, eje)) for c in eje)
+    cm = (0.0, h, -0.58 * L)                  # el centro de masa, con w = 0.58 atrás
+    r = tuple(c - a for c, a in zip(cm, A))
+    m_peso = punto(cruz(r, (0.0, -1.0, 0.0)), eje)    # el peso, m g = 1
+    # en el marco del kart, la aceleración hacia adentro equivale al término de
+    # d'Alembert, m a hacia afuera (+x), en el centro de masa
+    m_lado = punto(cruz(r, (1.0, 0.0, 0.0)), eje)
+    a_vuelco = -m_peso / m_lado                       # a/g que los equilibra
+    assert abs(a_vuelco - 1.979) < 5e-4, a_vuelco
+    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción + dos nodos por relajación (94 %, 1.33 g; 58 %, 1.76 g) + vuelco por momentos con productos cruz (1.98 g)"

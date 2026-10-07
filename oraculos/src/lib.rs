@@ -346,4 +346,12 @@ mod tests {
         let (d, t) = reparto_dos_nodos(2.0, 1.0, 2.0, 1.0);
         assert!((d - 0.75).abs() < 1e-12 && (t - 0.25).abs() < 1e-12, "{d}, {t}");
     }
+
+    /// **El vuelco, a mano.** Vías de 1.0 m adelante y 1.4 m atrás, la mitad
+    /// del peso atrás: la vía en la línea del centro de masa es
+    /// 0.5 × 1.0 + 0.5 × 1.4 = 1.2 m. Con h = 0.3 m, a_y/g = 1.2 / 0.6 = 2.
+    #[test]
+    fn el_vuelco_a_mano() {
+        assert!((vehiculo::carga::vuelco_en_g(0.5, 1.0, 1.4, 0.3) - 2.0).abs() < 1e-12);
+    }
 }
