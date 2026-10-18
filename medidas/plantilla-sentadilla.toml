@@ -1,0 +1,72 @@
+# Medidas para la sentadilla: plantilla para llenar.
+#
+# Cómo medir cada cosa: docs/protocolo-medidas-sentadilla.md
+# Cómo correrlo:        mecanica sentadilla --medidas este-archivo.toml --carga 100
+#
+# Reglas del archivo:
+# - Cada tabla es "medido" (con valor, fecha y como) o "estimado" (sin valor).
+#   Si no estás seguro de una medida, déjala "estimado": la estima la
+#   proporción de Winter a partir de tu estatura, y el resultado lo dice.
+# - Estatura y masa siempre se miden: lo demás se estima con ellas.
+# - Las alturas se miden de pie, descalzo, del PISO a la referencia, en cm.
+# - Nada de nombres, caras ni fotos aquí. "persona" es un seudónimo.
+# - Copia este archivo con otro nombre (p. ej. medidas/P-7K3Q.toml). Los
+#   archivos de medidas reales no se suben al repositorio (.gitignore).
+
+formato = "medidas-sentadilla/1"
+persona = "P-XXXX"        # P- y de 4 a 12 mayúsculas o cifras, con al menos una cifra
+fecha = "AAAA-MM-DD"      # el día de la sesión de medidas
+
+[estatura]                # §2.1: descalzo, de espaldas a la pared, escuadra sobre la cabeza
+fuente = "medido"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "cinta en la pared, descalzo, escuadra sobre la cabeza"
+
+[masa]                    # §2.2: báscula, en ropa ligera
+fuente = "medido"
+# valor_kg = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "báscula de baño, en la mañana, ropa ligera"
+
+[altura_hombro]           # §3.1: piso → acromion (la punta ósea del hombro)
+fuente = "estimado"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "piso → acromion, cinta en la pared, marca con escuadra"
+
+[altura_trocanter]        # §3.2: piso → trocánter mayor (el hueso de la cadera, de lado)
+fuente = "estimado"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "piso → trocánter mayor, palpado al girar la pierna"
+
+[altura_rodilla]          # §3.3: piso → interlínea lateral de la rodilla
+fuente = "estimado"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "piso → interlínea lateral, palpada con la rodilla a 90°"
+
+[altura_maleolo]          # §3.4: piso → centro del maléolo lateral (el hueso del tobillo, afuera)
+fuente = "estimado"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "piso → centro del maléolo lateral"
+
+[largo_pie]               # §3.5: talón → punta del dedo más largo (no lo usa el modelo de la barra; sí la app)
+fuente = "estimado"
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "pie sobre hoja contra la pared, talón a la pared"
+
+[altura_barra]            # §3.6: piso → donde descansa la barra en tu espalda, de pie
+fuente = "estimado"       # estimado = a la altura del hombro (convención del modelo)
+# valor_cm = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "palo de escoba donde va la barra (barra alta), marca en la pared"
+
+[angulo_tibia]            # §4: ángulo de la espinilla desde la vertical, en el fondo, foto de lado
+fuente = "estimado"       # estimado = 22° (convención del modelo, sin fuente)
+# valor_grados = 0.0
+# fecha = "AAAA-MM-DD"
+# como = "foto de lado a la altura de la rodilla, sin carga, ángulo medido en la foto"
