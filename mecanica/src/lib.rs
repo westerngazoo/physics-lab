@@ -5,6 +5,9 @@
 //! one function, written once instead of per exercise.
 //!
 //! Pure by construction: no dependencies, no I/O, no clock, no state.
+//! The one exception is the `mecanica` binary (`src/main.rs`), which reads
+//! a measurements file ([`medidas`]) and prints the result; the library it
+//! calls stays pure.
 //! [`RFC-002`](../../docs/RFC-002-mecanica.md) is the design.
 //!
 //! # The model, and what it is not
@@ -20,6 +23,7 @@ pub mod curl;
 pub mod gluteo;
 pub mod jalon;
 pub mod maquina_humana;
+pub mod medidas;
 /// La palanca compartida: brazo de momento y momento de una carga.
 pub mod palanca;
 pub mod patada;

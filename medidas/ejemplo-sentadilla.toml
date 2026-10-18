@@ -1,0 +1,63 @@
+# EJEMPLO. Valores inventados para mostrar el formato: no son de ninguna
+# persona real, no se midieron y no deben citarse como datos.
+#
+# Correrlo:
+#   cargo run -q -p mecanica -- sentadilla --medidas medidas/ejemplo-sentadilla.toml --carga 100
+#
+# Muestra los dos casos: casi todo "medido" y el pie "estimado".
+
+formato = "medidas-sentadilla/1"
+persona = "P-EJEMPLO1"
+fecha = "2026-10-18"
+
+[estatura]
+fuente = "medido"
+valor_cm = 172.0
+fecha = "2026-10-18"
+como = "EJEMPLO: cinta en la pared, descalzo, escuadra sobre la cabeza"
+
+[masa]
+fuente = "medido"
+valor_kg = 78.0
+fecha = "2026-10-18"
+como = "EJEMPLO: báscula de baño, en la mañana, ropa ligera"
+
+[altura_hombro]
+fuente = "medido"
+valor_cm = 141.0
+fecha = "2026-10-18"
+como = "EJEMPLO: piso → acromion, cinta en la pared, marca con escuadra"
+
+[altura_trocanter]
+fuente = "medido"
+valor_cm = 91.5
+fecha = "2026-10-18"
+como = "EJEMPLO: piso → trocánter mayor, palpado al girar la pierna"
+
+[altura_rodilla]
+fuente = "medido"
+valor_cm = 49.0
+fecha = "2026-10-18"
+como = "EJEMPLO: piso → interlínea lateral, palpada con la rodilla a 90°"
+
+[altura_maleolo]
+fuente = "medido"
+valor_cm = 6.5
+fecha = "2026-10-18"
+como = "EJEMPLO: piso → centro del maléolo lateral"
+
+[largo_pie]
+fuente = "estimado"
+como = "EJEMPLO: no había hoja a la mano"
+
+[altura_barra]
+fuente = "medido"
+valor_cm = 143.5
+fecha = "2026-10-18"
+como = "EJEMPLO: palo de escoba en posición de barra alta, marca en la pared"
+
+[angulo_tibia]
+fuente = "medido"
+valor_grados = 26.0
+fecha = "2026-10-18"
+como = "EJEMPLO: foto de lado a la altura de la rodilla, sin carga, ángulo medido en la foto"

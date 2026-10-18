@@ -2,3 +2,9 @@ node_modules/
 .wrangler/
 .DS_Store
 target/
+
+# Archivos de medidas reales: nunca al repositorio (privacidad). Solo la
+# plantilla y el ejemplo inventado.
+/medidas/*.toml
+!/medidas/plantilla-sentadilla.toml
+!/medidas/ejemplo-sentadilla.toml
