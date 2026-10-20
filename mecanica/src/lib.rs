@@ -20,6 +20,7 @@
 #![forbid(unsafe_code)]
 
 pub mod curl;
+pub mod dominada;
 pub mod gluteo;
 pub mod jalon;
 pub mod maquina_humana;
