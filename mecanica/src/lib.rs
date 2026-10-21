@@ -31,6 +31,8 @@ pub mod palanca;
 pub mod patada;
 pub mod press;
 pub mod sentadilla;
+/// Extensión de tríceps en polea alta: el codo contra la línea del cable.
+pub mod triceps;
 
 /// Standard gravity, m/s².
 pub const G: f64 = 9.81;
