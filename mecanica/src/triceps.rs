@@ -251,14 +251,15 @@ mod tests {
     }
 
     /// Pegado, el cable baja casi a plomo en el bloqueo (4°); inclinado
-    /// llega inclinado (18°). Y la placa sube lo que se alarga el cable: 32
-    /// contra 39 cm.
+    /// llega inclinado (18°). Y la placa sube lo que se alarga el cable: de
+    /// 1.036 a 1.354 m pegado (31.7 cm) y de 1.105 a 1.490 m inclinado
+    /// (38.4 cm), a mano.
     #[test]
     fn el_cable_a_plomo_contra_inclinado() {
         assert!(pegado().cable_rad(0.0).abs().to_degrees() < 5.0);
         assert!(inclinado().cable_rad(0.0).abs().to_degrees() > 17.0);
-        assert!((pegado().recorrido(0.0) - 0.319).abs() < 2e-3, "{}", pegado().recorrido(0.0));
-        assert!((inclinado().recorrido(0.0) - 0.386).abs() < 2e-3, "{}", inclinado().recorrido(0.0));
+        assert!((pegado().recorrido(0.0) - (1.35370 - 1.03639)).abs() < 5e-5, "{}", pegado().recorrido(0.0));
+        assert!((inclinado().recorrido(0.0) - (1.48960 - 1.10520)).abs() < 5e-5, "{}", inclinado().recorrido(0.0));
         assert!(pegado().recorrido(pegado().flexion_max_rad).abs() < 1e-12);
     }
 }
