@@ -19,6 +19,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod cadera;
 pub mod curl;
 pub mod dominada;
 pub mod gluteo;
