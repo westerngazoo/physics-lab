@@ -626,6 +626,22 @@ pub fn media<R: Repeticion + ?Sized>(r: &R, a: Articulacion, n: usize) -> f64 {
     (0..=n).map(|i| tau(r, a, i as f64 / n as f64)).sum::<f64>() / (n + 1) as f64
 }
 
+/// El promedio de |τ| a lo largo de lo jalado ([`Repeticion::recorrido`]: lo
+/// que sube la placa en el jalón), no del avance: cada tramo de `n` pesa lo
+/// que avanza el recorrido en él (trapecios). Es el promedio del eje de una
+/// gráfica de τ contra lo jalado. En un jalón a plomo el avance y el
+/// recorrido son proporcionales y da lo mismo que [`media`]; con el cable
+/// inclinado, no.
+#[must_use]
+pub fn media_por_recorrido<R: Repeticion + ?Sized>(r: &R, a: Articulacion, n: usize) -> f64 {
+    let mut area = 0.0;
+    for i in 0..n {
+        let (u0, u1) = (i as f64 / n as f64, (i + 1) as f64 / n as f64);
+        area += 0.5 * (tau(r, a, u0) + tau(r, a, u1)) * (r.recorrido(u1) - r.recorrido(u0));
+    }
+    area / (r.recorrido(1.0) - r.recorrido(0.0))
+}
+
 /// El balance de energía: lo que hacen los músculos en hombro y codo
 /// (∫τ dφ sobre los ángulos RELATIVOS, con todos los pesos) contra lo que
 /// sube la energía potencial de todo el sistema. Cierra solo si la postura
@@ -1189,5 +1205,31 @@ mod tests {
             "menos de la mitad del recorrido"
         );
         assert!(media(&r, Hombro, 300) > media(&d, Hombro, 300));
+    }
+
+    /// El promedio por lo que sube la placa: a plomo es el mismo que por el
+    /// avance; reclinado, el recorrido crece y se encoge parejo con el τ, así
+    /// que pesa menos el arranque alto (la placa apenas sube ahí).
+    #[test]
+    fn el_promedio_por_lo_que_sube_la_placa() {
+        use Articulacion::Hombro;
+        let (d, r) = (jalon((0.24, 1.60)), reclinado(30.0));
+        cerca(
+            media_por_recorrido(&d, Hombro, 300),
+            183.6432,
+            1e-9,
+            "a plomo",
+        );
+        // el recorrido avanza todo el camino (sin vueltas atrás)
+        for i in 0..300 {
+            assert!(r.recorrido(f64::from(i + 1) / 300.0) > r.recorrido(f64::from(i) / 300.0));
+        }
+        let m = media_por_recorrido(&r, Hombro, 300);
+        // convergido: con 3000 tramos cambia menos de 0.01 N·m
+        cerca(m, media_por_recorrido(&r, Hombro, 3000), 1e-2, "convergido");
+        assert!(
+            m < media(&r, Hombro, 300) && m > media(&d, Hombro, 300),
+            "{m}"
+        );
     }
 }
