@@ -43,6 +43,15 @@
 //! de las DOS manos juntas: un solo brazo en el plano sagital con la masa
 //! de los dos.
 //!
+//! # El jalón reclinado
+//!
+//! [`JalonReclinado`] es el mismo jalón con el torso echado atrás (el reel 29
+//! de fisicobuenfisico, «¿derecho o reclinado?»). Ahí el cable deja de colgar
+//! a plomo y apunta a la polea, así que la fuerza de la mano lleva su línea
+//! ([`Repeticion::polea`]) y la palanca es la distancia a ESA línea
+//! ([`palanca`]). La dominada y el jalón derecho no la usan: sus números no
+//! cambian.
+//!
 //! El modelo es 2D, cuasi-estático, con el cuerpo de la dominada rígido del
 //! hombro al pie y las fracciones de Winter de [`crate::maquina_humana`].
 
@@ -163,6 +172,12 @@ pub trait Repeticion {
     /// El trabajo de la carga por repetición, J: la carga por lo que viaja
     /// en su línea de acción.
     fn trabajo(&self) -> f64;
+    /// La polea hacia la que jala la mano, si su cable NO cuelga a plomo (el
+    /// jalón reclinado). `None`: la fuerza de la mano es vertical (la barra de
+    /// la dominada, o el cable a plomo del jalón derecho).
+    fn polea(&self) -> Option<Punto> {
+        None
+    }
 }
 
 /// La dominada. La barra está en el origen y es el ÚNICO apoyo.
@@ -368,23 +383,161 @@ impl Repeticion for JalonPlomo {
     }
 }
 
-/// Las fuerzas verticales sobre el brazo: (fuerza hacia ABAJO, N, dónde).
-/// La primera es la de la mano, que va hacia arriba (negativa); las otras,
-/// los pesos del húmero y del antebrazo, solo con `con_brazos`.
-fn cargas<R: Repeticion + ?Sized>(r: &R, pose: &Pose, con_brazos: bool) -> Vec<(f64, Punto)> {
-    let mut c = vec![(-r.fuerza_mano(), pose.mano)];
+/// El jalón con el torso RECLINADO hacia atrás un ángulo fijo, en la misma
+/// máquina que [`JalonPlomo`] (la misma persona, la misma placa, la misma
+/// polea). Es la pregunta del reel 29 de fisicobuenfisico («¿derecho o
+/// reclinado?»), con el modelo de este módulo.
+///
+/// Lo declarado: el torso gira atrás `reclinado_rad` sobre L5/S1 y se queda
+/// así toda la repetición. Arriba la barra CUELGA bajo la polea, con el brazo
+/// tan extendido como en el jalón derecho (la misma distancia hombro-mano).
+/// Abajo la barra llega al MISMO punto de tu pecho que en el derecho, que al
+/// reclinarte se va contigo: la barra viaja contigo, no se queda clavada en el
+/// aire. Entre los dos, en línea recta.
+///
+/// Lo que sale: el cable ya no cuelga a plomo, apunta de la mano a la polea, y
+/// su línea cambia con la bajada. La palanca del hombro es la distancia de
+/// la articulación a ESA línea ([`palanca`]), y deja de ser constante.
+///
+/// Con `reclinado_rad = 0` es el [`JalonPlomo`] (prueba `derecho_es_el_plomo`).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct JalonReclinado {
+    /// La máquina, la persona, la placa y el recorrido del jalón derecho.
+    pub base: JalonPlomo,
+    /// Cuánto se reclina el torso hacia atrás, radianes, fijo.
+    pub reclinado_rad: f64,
+}
+
+impl JalonReclinado {
+    /// Un punto fijo al torso (en el marco del torso derecho) llevado al
+    /// torso reclinado: el giro sobre L5/S1.
+    #[must_use]
+    pub fn con_el_torso(&self, q: Punto) -> Punto {
+        let (s, c) = self.reclinado_rad.sin_cos();
+        (q.0 * c - q.1 * s, q.0 * s + q.1 * c)
+    }
+
+    /// El hombro: el del jalón derecho, girado con el torso.
+    #[must_use]
+    pub fn hombro(&self) -> Punto {
+        self.con_el_torso(self.base.hombro())
+    }
+
+    /// Arriba: la barra cuelga bajo la polea, con la misma distancia
+    /// hombro-mano que en el jalón derecho.
+    #[must_use]
+    pub fn arranque(&self) -> Punto {
+        let b = &self.base;
+        let h0 = b.hombro();
+        let largo = (b.polea.0 - h0.0).hypot(b.y_alta - h0.1);
+        let h = self.hombro();
+        let dx = b.polea.0 - h.0;
+        assert!(largo > dx, "el brazo no alcanza a la barra bajo la polea");
+        (b.polea.0, h.1 + (largo * largo - dx * dx).sqrt())
+    }
+
+    /// Abajo: el punto del pecho donde acaba el jalón derecho, que se va con
+    /// el torso.
+    #[must_use]
+    pub fn final_(&self) -> Punto {
+        self.con_el_torso((self.base.polea.0, self.base.y_baja))
+    }
+
+    /// La mano en el avance `u`.
+    #[must_use]
+    pub fn mano(&self, u: f64) -> Punto {
+        let (a, b) = (self.arranque(), self.final_());
+        (a.0 + (b.0 - a.0) * u, a.1 + (b.1 - a.1) * u)
+    }
+
+    /// El tramo de cable de la mano a la polea, m.
+    #[must_use]
+    pub fn largo_cable(&self, u: f64) -> f64 {
+        let (m, p) = (self.mano(u), self.base.polea);
+        (p.0 - m.0).hypot(p.1 - m.1)
+    }
+
+    /// Cuántos grados se sale el cable de la vertical en el avance `u`.
+    #[must_use]
+    pub fn cable_grados(&self, u: f64) -> f64 {
+        let (m, p) = (self.mano(u), self.base.polea);
+        (p.0 - m.0).atan2(p.1 - m.1).to_degrees()
+    }
+}
+
+impl Repeticion for JalonReclinado {
+    fn persona(&self) -> &Persona {
+        &self.base.persona
+    }
+
+    fn pose(&self, u: f64) -> Pose {
+        let hombro = self.hombro();
+        let mano = self.mano(u);
+        let (s, c) = self.reclinado_rad.sin_cos();
+        Pose {
+            hombro,
+            codo: codo_de(&self.base.persona, hombro, mano, Doblez::Abajo),
+            mano,
+            reclinado: self.reclinado_rad,
+            eje: (s, -c),
+            cadera: (0.0, 0.0),
+        }
+    }
+
+    fn fuerza_mano(&self) -> f64 {
+        self.base.fuerza_mano()
+    }
+
+    /// Lo que sube la placa: lo que se alarga el cable de la mano a la polea.
+    fn recorrido(&self, u: f64) -> f64 {
+        self.largo_cable(u) - self.largo_cable(0.0)
+    }
+
+    fn potencial(&self, u: f64) -> f64 {
+        let pose = self.pose(u);
+        let w = masa::BRAZO * self.base.persona.masa_kg * G;
+        // la placa sube lo que se alarga el cable
+        w * medio(pose.hombro, pose.codo).1
+            + w * medio(pose.codo, pose.mano).1
+            + self.fuerza_mano() * self.largo_cable(u)
+    }
+
+    fn trabajo(&self) -> f64 {
+        self.fuerza_mano() * self.recorrido(1.0)
+    }
+
+    fn polea(&self) -> Option<Punto> {
+        Some(self.base.polea)
+    }
+}
+
+/// Las fuerzas sobre el brazo: (fuerza, N, dónde, su línea). La primera es
+/// la de la mano: vertical hacia arriba (negativa sobre la línea vertical,
+/// que apunta abajo) o, si hay [`Repeticion::polea`], por el cable hacia la
+/// polea. Las otras, los pesos del húmero y del antebrazo, solo con
+/// `con_brazos`.
+fn cargas<R: Repeticion + ?Sized>(
+    r: &R,
+    pose: &Pose,
+    con_brazos: bool,
+) -> Vec<(f64, Punto, Linea)> {
+    let mano = match r.polea() {
+        None => (-r.fuerza_mano(), pose.mano, Linea::Vertical),
+        Some(p) => (r.fuerza_mano(), pose.mano, Linea::Cable(p)),
+    };
+    let mut c = vec![mano];
     if con_brazos {
         let w = masa::BRAZO * r.persona().masa_kg * G;
-        c.push((w, medio(pose.hombro, pose.codo)));
-        c.push((w, medio(pose.codo, pose.mano)));
+        c.push((w, medio(pose.hombro, pose.codo), Linea::Vertical));
+        c.push((w, medio(pose.codo, pose.mano), Linea::Vertical));
     }
     c
 }
 
-fn momento(piv: Punto, cargas: &[(f64, Punto)]) -> f64 {
+fn momento(piv: Punto, cargas: &[(f64, Punto, Linea)]) -> f64 {
     cargas
         .iter()
-        .map(|&(f, q)| palanca::momento(piv, q, f, Linea::Vertical))
+        .map(|&(f, q, l)| palanca::momento(piv, q, f, l))
         .sum()
 }
 
@@ -392,7 +545,7 @@ fn momento(piv: Punto, cargas: &[(f64, Punto)]) -> f64 {
 fn momentos<R: Repeticion + ?Sized>(r: &R, pose: &Pose, con_brazos: bool) -> (f64, f64) {
     let c = cargas(r, pose, con_brazos);
     // el codo solo ve la mano y el antebrazo
-    let del_codo: Vec<(f64, Punto)> = c
+    let del_codo: Vec<(f64, Punto, Linea)> = c
         .iter()
         .enumerate()
         .filter(|(i, _)| *i != 1)
@@ -431,6 +584,20 @@ pub fn palanca_codo(pose: &Pose) -> f64 {
     (pose.mano.0 - pose.codo.0).abs()
 }
 
+/// La palanca de la fuerza de la mano en una articulación, m: la distancia
+/// de la articulación a la LÍNEA por la que jala (la vertical por la mano, o
+/// el cable hacia la polea). Con la línea vertical es [`palanca_hombro`] o
+/// [`palanca_codo`].
+#[must_use]
+pub fn palanca<R: Repeticion + ?Sized>(r: &R, pose: &Pose, a: Articulacion) -> f64 {
+    let piv = match a {
+        Articulacion::Hombro => pose.hombro,
+        Articulacion::Codo => pose.codo,
+    };
+    let linea = r.polea().map_or(Linea::Vertical, Linea::Cable);
+    palanca::brazo(piv, pose.mano, linea)
+}
+
 /// El ángulo del hombro, grados: 0 con el húmero pegado al cuerpo, 180
 /// estirado en la línea del cuerpo (colgado de la barra).
 #[must_use]
@@ -457,6 +624,22 @@ pub fn pico<R: Repeticion + ?Sized>(r: &R, a: Articulacion, n: usize) -> f64 {
 #[must_use]
 pub fn media<R: Repeticion + ?Sized>(r: &R, a: Articulacion, n: usize) -> f64 {
     (0..=n).map(|i| tau(r, a, i as f64 / n as f64)).sum::<f64>() / (n + 1) as f64
+}
+
+/// El promedio de |τ| a lo largo de lo jalado ([`Repeticion::recorrido`]: lo
+/// que sube la placa en el jalón), no del avance: cada tramo de `n` pesa lo
+/// que avanza el recorrido en él (trapecios). Es el promedio del eje de una
+/// gráfica de τ contra lo jalado. En un jalón a plomo el avance y el
+/// recorrido son proporcionales y da lo mismo que [`media`]; con el cable
+/// inclinado, no.
+#[must_use]
+pub fn media_por_recorrido<R: Repeticion + ?Sized>(r: &R, a: Articulacion, n: usize) -> f64 {
+    let mut area = 0.0;
+    for i in 0..n {
+        let (u0, u1) = (i as f64 / n as f64, (i + 1) as f64 / n as f64);
+        area += 0.5 * (tau(r, a, u0) + tau(r, a, u1)) * (r.recorrido(u1) - r.recorrido(u0));
+    }
+    area / (r.recorrido(1.0) - r.recorrido(0.0))
 }
 
 /// El balance de energía: lo que hacen los músculos en hombro y codo
@@ -885,5 +1068,168 @@ mod tests {
         assert!(c > 30.0, "ni a 30° se alcanza: {c}");
         // en promedio, ni a 30° la dominada alcanza al jalón
         assert!(media(&dominada(30.0), Hombro, 300) < 0.6 * media(&j, Hombro, 300));
+    }
+
+    /// El jalón reclinado del remake del reel 29: la máquina del reel 42.
+    fn reclinado(grados: f64) -> JalonReclinado {
+        JalonReclinado {
+            base: jalon((0.24, 1.60)),
+            reclinado_rad: grados.to_radians(),
+        }
+    }
+
+    /// Sin reclinarse es el jalón a plomo: las mismas posturas, los mismos
+    /// torques (por el cable, no por la vertical) y el mismo recorrido.
+    #[test]
+    fn derecho_es_el_plomo() {
+        use Articulacion::{Codo, Hombro};
+        let (r, j) = (reclinado(0.0), jalon((0.24, 1.60)));
+        for i in 0..=20 {
+            let u = f64::from(i) / 20.0;
+            let (a, b) = (r.pose(u), j.pose(u));
+            for (x, y) in [(a.hombro, b.hombro), (a.codo, b.codo), (a.mano, b.mano)] {
+                cerca(x.0, y.0, 1e-12, "x");
+                cerca(x.1, y.1, 1e-12, "y");
+            }
+            cerca(tau(&r, Hombro, u), tau(&j, Hombro, u), 1e-9, "τ hombro");
+            cerca(tau(&r, Codo, u), tau(&j, Codo, u), 1e-9, "τ codo");
+            cerca(
+                palanca(&r, &a, Hombro),
+                palanca_hombro(&b),
+                1e-12,
+                "palanca",
+            );
+            cerca(r.recorrido(u), j.recorrido(u), 1e-12, "recorrido");
+        }
+    }
+
+    /// Arriba la barra cuelga bajo la polea: el cable va a plomo y la palanca
+    /// es la distancia horizontal hombro-barra, aritmética de mano: 0.24 m
+    /// más lo que se fue el hombro atrás, torso · sen 30°.
+    #[test]
+    fn reclinado_arriba_a_mano() {
+        let r = reclinado(30.0);
+        let p = r.pose(0.0);
+        cerca(r.cable_grados(0.0), 0.0, 1e-12, "a plomo arriba");
+        let d = 0.24 + persona().torso() * 0.5;
+        cerca(
+            palanca(&r, &p, Articulacion::Hombro),
+            d,
+            1e-12,
+            "palanca arriba",
+        );
+        cerca(
+            tau(&r, Articulacion::Hombro, 0.0),
+            765.18 * d,
+            1e-9,
+            "τ = F · d arriba",
+        );
+        // la mano, a la distancia del jalón derecho
+        let j = jalon((0.24, 1.60)).pose(0.0);
+        let l0 = (j.mano.0 - j.hombro.0).hypot(j.mano.1 - j.hombro.1);
+        cerca(
+            (p.mano.0 - p.hombro.0).hypot(p.mano.1 - p.hombro.1),
+            l0,
+            1e-12,
+            "el mismo brazo",
+        );
+    }
+
+    /// La palanca contra el cable, por otra cuenta: el doble del área del
+    /// triángulo hombro-mano-polea entre la base mano-polea.
+    #[test]
+    fn la_palanca_por_el_area() {
+        let r = reclinado(30.0);
+        for i in 0..=10 {
+            let u = f64::from(i) / 10.0;
+            let p = r.pose(u);
+            let (h, m, q) = (p.hombro, p.mano, (0.24, 1.60));
+            let area2 = ((m.0 - h.0) * (q.1 - h.1) - (m.1 - h.1) * (q.0 - h.0)).abs();
+            let base = (q.0 - m.0).hypot(q.1 - m.1);
+            cerca(
+                palanca(&r, &p, Articulacion::Hombro),
+                area2 / base,
+                1e-12,
+                "palanca",
+            );
+            cerca(
+                tau(&r, Articulacion::Hombro, u),
+                765.18 * area2 / base,
+                1e-9,
+                "τ = F · d",
+            );
+        }
+    }
+
+    /// El balance de energía cierra también con el cable inclinado: los
+    /// músculos de hombro y codo contra lo que suben la placa y los brazos.
+    #[test]
+    fn el_balance_del_reclinado() {
+        for g in [10.0, 20.0, 30.0] {
+            let r = reclinado(g);
+            let (m, e) = balance(&r, 1200);
+            cerca(m, e, 1e-3, &format!("cierra a {g}°"));
+        }
+    }
+
+    /// Lo que afirma el remake del reel 29, con su prueba: reclinarse pone
+    /// la palanca más grande arriba y la quita en el pecho, la línea del
+    /// cable se inclina en la bajada, y la barra viaja menos.
+    #[test]
+    fn reclinarse_cambia_donde_pide() {
+        use Articulacion::Hombro;
+        let (d, r) = (jalon((0.24, 1.60)), reclinado(30.0));
+        cerca(
+            tau(&r, Hombro, 0.0),
+            765.18 * 0.496_32,
+            1e-9,
+            "arriba: 765.18 N · (0.24 + 0.51264 · sen 30°) m",
+        );
+        cerca(tau(&r, Hombro, 1.0), 97.6, 0.05, "en el pecho");
+        assert!(
+            tau(&r, Hombro, 0.0) > 2.0 * tau(&d, Hombro, 0.0),
+            "más del doble arriba"
+        );
+        assert!(
+            tau(&r, Hombro, 1.0) < tau(&d, Hombro, 1.0),
+            "menos en el pecho"
+        );
+        // baja todo el camino, y el cable se va inclinando
+        for i in 0..20 {
+            let (u0, u1) = (f64::from(i) / 20.0, f64::from(i + 1) / 20.0);
+            assert!(tau(&r, Hombro, u1) < tau(&r, Hombro, u0));
+            assert!(r.cable_grados(u1) > r.cable_grados(u0));
+        }
+        assert!(
+            r.recorrido(1.0) < 0.5 * d.recorrido(1.0),
+            "menos de la mitad del recorrido"
+        );
+        assert!(media(&r, Hombro, 300) > media(&d, Hombro, 300));
+    }
+
+    /// El promedio por lo que sube la placa: a plomo es el mismo que por el
+    /// avance; reclinado, el recorrido crece y se encoge parejo con el τ, así
+    /// que pesa menos el arranque alto (la placa apenas sube ahí).
+    #[test]
+    fn el_promedio_por_lo_que_sube_la_placa() {
+        use Articulacion::Hombro;
+        let (d, r) = (jalon((0.24, 1.60)), reclinado(30.0));
+        cerca(
+            media_por_recorrido(&d, Hombro, 300),
+            183.6432,
+            1e-9,
+            "a plomo",
+        );
+        // el recorrido avanza todo el camino (sin vueltas atrás)
+        for i in 0..300 {
+            assert!(r.recorrido(f64::from(i + 1) / 300.0) > r.recorrido(f64::from(i) / 300.0));
+        }
+        let m = media_por_recorrido(&r, Hombro, 300);
+        // convergido: con 3000 tramos cambia menos de 0.01 N·m
+        cerca(m, media_por_recorrido(&r, Hombro, 3000), 1e-2, "convergido");
+        assert!(
+            m < media(&r, Hombro, 300) && m > media(&d, Hombro, 300),
+            "{m}"
+        );
     }
 }
