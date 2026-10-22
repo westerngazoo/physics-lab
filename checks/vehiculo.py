@@ -110,4 +110,31 @@ def run():
     m_lado = punto(cruz(r, (1.0, 0.0, 0.0)), eje)
     a_vuelco = -m_peso / m_lado                       # a/g que los equilibra
     assert abs(a_vuelco - 1.979) < 5e-4, a_vuelco
-    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción + dos nodos por relajación (94 %, 1.33 g; 58 %, 1.76 g) + vuelco por momentos con productos cruz (1.98 g)"
+
+    # la frenada con freno solo atrás, sin la fórmula μ g b/(L + μ h): la carga
+    # de atrás sale de los momentos alrededor de la huella delantera (en el marco
+    # del kart que frena, el término de d'Alembert, m a hacia adelante, va en el
+    # centro de masa), y el tope, de bisección: la a más alta con μ F_z ≥ m a
+    def momento(r, f):                  # z de r × f en el plano (x adelante, y arriba)
+        return r[0] * f[1] - r[1] * f[0]
+
+    def carga_atras(a, b, L, h, m=1.0, g=G):
+        cm, huella = (-b, h), (-L, 0.0)
+        # peso y d'Alembert en el cm; la normal de atrás (0, N) en su huella; la
+        # fricción de atrás va a ras del piso y no hace momento ahí
+        suma = momento(cm, (0.0, -m * g)) + momento(cm, (m * a, 0.0))
+        return -suma / momento(huella, (0.0, 1.0))
+
+    def frenada_por_biseccion(mu, b, L, h):
+        lo, hi = 0.0, mu * G
+        for _ in range(200):
+            a = 0.5 * (lo + hi)
+            lo, hi = (a, hi) if mu * carga_atras(a, b, L, h) >= a else (lo, a)
+        return lo
+
+    a = frenada_por_biseccion(1.2, 0.58 * L, L, h)
+    assert abs(a / G - 0.526) < 5e-4, a / G                # el kart de la casa
+    assert round(100 * a / (1.2 * G)) == 44
+    assert abs(carga_atras(a, 0.58 * L, L, h) / G - a / (1.2 * G)) < 1e-9   # 44 % del peso atrás
+    assert abs(carga_atras(0.0, 0.58 * L, L, h) / G - 0.58) < 1e-12
+    return "vehiculo: círculo de fricción + tope (√2, 55/78 km/h, 23.6 m) + trazada por construcción + dos nodos por relajación (94 %, 1.33 g; 58 %, 1.76 g) + vuelco por momentos con productos cruz (1.98 g) + frenada solo atrás por momentos y bisección (0.526 g, 44 %)"

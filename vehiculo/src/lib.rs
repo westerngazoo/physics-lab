@@ -17,6 +17,9 @@
 //! - [`carga`]: cuánta carga se pasa a las llantas de afuera en una curva
 //!   (m a_y h / t), a qué eje (el modelo de dos nodos) y a qué aceleración
 //!   lateral se levanta una llanta.
+//! - [`frenada`]: cuánto frena un vehículo que solo frena atrás,
+//!   μ g b/(L + μ h): al frenar, la carga se va adelante y descarga las que
+//!   frenan.
 //! - [`aceleracion_en_curva`]: la ley que un integrador necesita para mover
 //!   un vehículo que quiere seguir un círculo. Aquí no se integra nada
 //!   (las páginas no dan pasos de tiempo); quien la integre puede comparar
@@ -33,6 +36,7 @@
 #![forbid(unsafe_code)]
 
 pub mod carga;
+pub mod frenada;
 
 /// La gravedad estándar, 9.806 65 m/s², exacta por definición (CGPM, 1901).
 pub const G_ESTANDAR: f64 = 9.806_65;
