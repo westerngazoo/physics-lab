@@ -64,14 +64,18 @@ impl Curl {
 
 impl Lift for Curl {
     /// `phi` es la flexión del codo en radianes.
+    ///
+    /// Con signo, como pide [`Lift::tau`]: positivo si la carga resiste la
+    /// flexión. La flexión gira la mano en sentido antihorario (z sale del
+    /// papel), así que la carga que resiste da `r × F` negativo y aquí se
+    /// le cambia el signo. Un cable que ayuda a subir da negativo.
     fn tau(&self, phi: f64) -> f64 {
-        palanca::momento(
+        -palanca::momento(
             (0.0, 0.0),
             self.mano(phi),
             palanca::peso(self.carga_kg),
             self.agarre.linea(),
         )
-        .abs()
     }
 
     fn range(&self) -> (f64, f64) {
@@ -105,13 +109,47 @@ mod tests {
     /// "casi cero". Es la comprobación que mata cualquier ajuste de curva.
     #[test]
     fn la_barra_arranca_en_cero() {
-        assert!(barra().tau(0.0) < 1e-12);
+        assert!(barra().tau(0.0).abs() < 1e-12);
     }
 
-    /// Y la polea NO: ahí está la pieza entera.
+    /// Y la polea NO arranca en cero, pero abajo AYUDA: con la polea
+    /// adelante y abajo, flexionar acerca la mano a la polea, así que el
+    /// cable tira a favor de la subida. En valor absoluto esto se leía
+    /// como 39 N·m de carga; con signo es −39.
     #[test]
-    fn la_polea_no_arranca_en_cero() {
-        assert!(polea().tau(0.0) > 30.0);
+    fn la_polea_abajo_ayuda() {
+        let t = polea().tau(0.0);
+        assert!(t < -30.0, "dio {t}");
+    }
+
+    /// La barra resiste en todo el recorrido: nunca cambia de signo.
+    #[test]
+    fn la_barra_siempre_resiste() {
+        for i in 1..=20 {
+            let phi = PI / 2.0 * f64::from(i) / 20.0;
+            assert!(barra().tau(phi) > 0.0, "en {phi} dio {}", barra().tau(phi));
+        }
+    }
+
+    /// La polea deja de ayudar y empieza a resistir cuando la línea del
+    /// cable pasa por el codo. A mano: la mano (L sen φ, −L cos φ) queda
+    /// en la recta codo–polea cuando tan φ = −x_p / y_p = 0.42 / 0.85,
+    /// φ ≈ 26.3°. Ese cruce es el que el valor absoluto escondía.
+    #[test]
+    fn la_polea_cruza_donde_el_cable_apunta_al_codo() {
+        let p = polea();
+        let (mut a, mut b) = (0.0_f64, PI / 2.0);
+        for _ in 0..60 {
+            let m = 0.5 * (a + b);
+            if p.tau(a) * p.tau(m) <= 0.0 {
+                b = m;
+            } else {
+                a = m;
+            }
+        }
+        let phi = 0.5 * (a + b);
+        let esperado = (0.42_f64 / 0.85).atan();
+        assert!((phi - esperado).abs() < 1e-9, "dio {phi}, no {esperado}");
     }
 
     /// `τ = F·L·sen φ` a mano, sin pasar por el motor.
