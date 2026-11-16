@@ -35,6 +35,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "lesson-convex-lens"
+version = "0.1.0"
+dependencies = [
+ "lessons-common",
+]
+
+[[package]]
 name = "lesson-curva"
 version = "0.1.0"
 dependencies = [
