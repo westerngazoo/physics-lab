@@ -1,0 +1,201 @@
+{
+  "slug": "curva",
+  "title": "¿Qué tan rápido entra una curva?",
+  "topic": "mechanics",
+  "eyebrow": "Goosethropic Physics · Mecánica · el círculo de fricción",
+  "lede": "Para seguir una curva de radio <b>r</b> a rapidez <b>v</b>, el kart necesita una aceleración hacia el centro de <b>v²/r</b>. La llanta da, como mucho, <b>μ g</b>. Acelera y mira la flecha roja salirse del círculo: el kart no se va en línea recta, se abre a un círculo más grande.",
+  "views": [
+    {
+      "world": {
+        "x0": -0.45,
+        "x1": 1.55,
+        "y0": -0.35,
+        "y1": 1.65
+      },
+      "viewBox": {
+        "w": 700,
+        "h": 700
+      },
+      "wide": true,
+      "title": "La curva, desde arriba (en radios de la curva)",
+      "law": "sigue la curva si v²/r ≤ μ g · si no, gira con radio v²/(μ g)"
+    },
+    {
+      "world": {
+        "x0": -1.8,
+        "x1": 1.8,
+        "y0": -1.8,
+        "y1": 1.8
+      },
+      "viewBox": {
+        "w": 500,
+        "h": 500
+      },
+      "title": "El círculo de fricción (en g)",
+      "law": "lo que da la llanta ≤ μ g"
+    }
+  ],
+  "params": {
+    "mu": {
+      "label": "Agarre μ",
+      "min": 0.3,
+      "max": 1.6,
+      "step": 0.01,
+      "value": 1.2,
+      "digits": 2
+    },
+    "r": {
+      "label": "Radio de la curva",
+      "min": 5,
+      "max": 60,
+      "step": 0.5,
+      "value": 20,
+      "unit": "m",
+      "digits": 1
+    },
+    "v": {
+      "label": "Rapidez de entrada",
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "value": 45,
+      "unit": "km/h",
+      "digits": 0,
+      "scale": 0.2777777777777778
+    }
+  },
+  "sweep": {
+    "param": "v",
+    "rate": 6,
+    "label": "Acelera"
+  },
+  "readouts": [
+    {
+      "slot": 0,
+      "label": "Rapidez tope de la curva",
+      "fmt": "fix1",
+      "unit": "km/h",
+      "hero": true
+    },
+    {
+      "slot": 3,
+      "label": "Agarre que pide",
+      "fmt": "fix1",
+      "unit": "%",
+      "hero": true
+    },
+    {
+      "slot": 1,
+      "label": "Lo que pide la curva",
+      "fmt": "fix2",
+      "unit": "g"
+    },
+    {
+      "slot": 2,
+      "label": "Lo que da la llanta",
+      "fmt": "fix2",
+      "unit": "g"
+    },
+    {
+      "slot": 4,
+      "label": "Radio que sigue el kart",
+      "fmt": "fix1",
+      "unit": "m"
+    }
+  ],
+  "styles": [
+    {
+      "var": "--ash",
+      "width": 1.5
+    },
+    {
+      "var": "--steel",
+      "width": 2.5,
+      "dash": true
+    },
+    {
+      "var": "--gold",
+      "width": 3.5
+    },
+    {
+      "var": "--red-hot",
+      "width": 3
+    },
+    {
+      "var": "--bone",
+      "width": 1,
+      "size": 20
+    },
+    {
+      "var": "--steel",
+      "width": 2.5
+    },
+    {
+      "var": "--gold-dim",
+      "width": 3
+    }
+  ],
+  "legend": [
+    {
+      "style": 1,
+      "label": "la curva"
+    },
+    {
+      "style": 2,
+      "label": "por donde va el kart · lo que da la llanta"
+    },
+    {
+      "style": 3,
+      "label": "lo que pide, si no alcanza"
+    }
+  ],
+  "labels": [
+    "centro",
+    "μ g",
+    "pide",
+    "da"
+  ],
+  "claims": [
+    {
+      "id": "K1",
+      "text": "La rapidez tope es <b>√(μ g r)</b>: a esa rapidez se usa el 100 % del agarre.",
+      "test": "k1_al_tope_se_usa_todo_el_agarre"
+    },
+    {
+      "id": "K2",
+      "text": "El doble de radio no da el doble de rapidez: da <b>√2 ≈ 1.41</b> veces.",
+      "test": "k2_doble_radio_da_raiz_de_dos"
+    },
+    {
+      "id": "K3",
+      "text": "Debajo del tope, el kart sigue la curva: la llanta da exactamente lo que pide.",
+      "test": "k3_debajo_del_tope_sigue_la_curva"
+    },
+    {
+      "id": "K4",
+      "text": "Pasado el tope no se sale en línea recta: gira con radio <b>v²/(μ g)</b>, más abierto que la curva, y la llanta da todo lo que tiene.",
+      "test": "k4_pasado_el_tope_se_abre_a_v2_entre_mu_g"
+    },
+    {
+      "id": "K5",
+      "text": "Al doble de rapidez, la curva pide <b>cuatro veces</b> el agarre: crece con v².",
+      "test": "k5_al_doble_de_rapidez_pide_cuatro_veces"
+    },
+    {
+      "id": "K6",
+      "text": "La llanta nunca da más que μ g, se le pida lo que se le pida.",
+      "test": "k6_la_llanta_nunca_da_mas_que_mu_g"
+    }
+  ],
+  "tryThis": [
+    "Con μ = 1.2 y r = 20 m, predice la rapidez tope <i>antes</i> de mover nada. Luego compruébala con la lectura: K1 dice √(μ g r).",
+    "Duplica el radio, de 20 a 40 m. ¿La rapidez tope se duplica? Mira K2 y busca de dónde sale el √2.",
+    "Pon v = 60 km/h en la curva de 20 m y mira el camino dorado: ¿cuánto mide su radio? Compáralo con v²/(μ g).",
+    "Baja μ a 0.5 (piso mojado) sin tocar la rapidez. ¿Qué flecha cambia en el círculo de fricción, y cuál no?",
+    "La página no pide la masa del kart. ¿Por qué un kart más pesado no entra más lento? (Pista: la llanta aprieta más fuerte también.)"
+  ],
+  "notes": "notes.html",
+  "footer": "lección de mecánica · piso plano, un solo μ, sin alerones ni transferencia de carga: el límite que todos los refinamientos corrigen",
+  "card": "Un kart en una curva: lo que pide la curva, v²/r, contra lo que da la llanta, μ g. Pasado el tope no se sale en línea recta: se abre.",
+  "cardClaim": "La rapidez tope es √(μ g r): el doble de radio da √2 veces la rapidez."
+}

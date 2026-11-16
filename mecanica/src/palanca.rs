@@ -28,6 +28,13 @@ pub enum Linea {
     /// Cable. De la mano hacia la polea, así que la línea se mueve con la
     /// repetición. Ésa es toda la diferencia con la barra.
     Cable(Punto),
+    /// Una máquina con apoyo (el remo con el pecho en el cojín): la
+    /// resistencia jala horizontal, hacia el frente (+x), en todo el
+    /// recorrido. Es la misma cuenta que [`Linea::Vertical`] girada 90°:
+    /// con ésta el brazo de momento es una distancia VERTICAL, cuánto queda
+    /// la mano por debajo (o por encima) del pivote, y no se muere donde la
+    /// mano cuelga a plomo. Es un supuesto de máquina, declarado como tal.
+    Horizontal,
 }
 
 impl Linea {
@@ -39,6 +46,7 @@ impl Linea {
     pub fn direccion(&self, mano: Punto) -> Punto {
         match *self {
             Linea::Vertical => (0.0, -1.0),
+            Linea::Horizontal => (1.0, 0.0),
             Linea::Cable(polea) => {
                 let (dx, dy) = (polea.0 - mano.0, polea.1 - mano.1);
                 let n = dx.hypot(dy);
@@ -119,6 +127,19 @@ mod tests {
         let cable = brazo((0.0, 0.0), mano, Linea::Cable((0.42, -0.85)));
         assert!(vertical < 1e-15);
         assert!(cable > 0.1, "el cable sí tiene palanca ahí: {cable}");
+    }
+
+    /// La misma mano, la misma cuenta girada 90°: con la carga a plomo del
+    /// pivote la vertical no tiene palanca y la horizontal sí (lo que la mano
+    /// queda por debajo). Eso es el reel 44.
+    #[test]
+    fn la_horizontal_es_la_vertical_girada() {
+        let mano = (0.0, -0.5);
+        assert!(brazo((0.0, 0.0), mano, Linea::Vertical) < 1e-15);
+        assert!((brazo((0.0, 0.0), mano, Linea::Horizontal) - 0.5).abs() < 1e-12);
+        let mano = (0.5, 0.0);
+        assert!((brazo((0.0, 0.0), mano, Linea::Vertical) - 0.5).abs() < 1e-12);
+        assert!(brazo((0.0, 0.0), mano, Linea::Horizontal) < 1e-15);
     }
 
     /// El signo se voltea al pasar la carga del otro lado del pivote.

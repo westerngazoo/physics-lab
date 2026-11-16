@@ -12,6 +12,8 @@ Claim-first interactive physics classroom — WASM lessons
 | [flows.md](./flows.md) | Flujos Mermaid + PlantUML |
 | [design-philosophy.md](./design-philosophy.md) | Principios de diseño y decisiones |
 | [diagrams/](./diagrams/) | Fuentes `.puml` exportables |
+| [protocolo-medidas-sentadilla.md](./protocolo-medidas-sentadilla.md) | Cómo medir en casa los segmentos de la sentadilla y correr `mecanica sentadilla` |
+| [propuestas/sargentai-r0045-medidas.md](./propuestas/sargentai-r0045-medidas.md) | Lo que la app (R-0045) necesita para recibir medidas, y los cambios propuestos |
 
 ## Stack
 

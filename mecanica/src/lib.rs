@@ -5,6 +5,9 @@
 //! one function, written once instead of per exercise.
 //!
 //! Pure by construction: no dependencies, no I/O, no clock, no state.
+//! The one exception is the `mecanica` binary (`src/main.rs`), which reads
+//! a measurements file ([`medidas`]) and prints the result; the library it
+//! calls stays pure.
 //! [`RFC-002`](../../docs/RFC-002-mecanica.md) is the design.
 //!
 //! # The model, and what it is not
@@ -16,16 +19,22 @@
 
 #![forbid(unsafe_code)]
 
+pub mod cadera;
 pub mod curl;
+pub mod dominada;
 pub mod gluteo;
 pub mod jalon;
 pub mod maquina_humana;
+pub mod medidas;
 pub mod musculo;
 /// La palanca compartida: brazo de momento y momento de una carga.
 pub mod palanca;
 pub mod patada;
 pub mod press;
+pub mod remo;
 pub mod sentadilla;
+/// Extensión de tríceps en polea alta: el codo contra la línea del cable.
+pub mod triceps;
 
 /// Standard gravity, m/s².
 pub const G: f64 = 9.81;

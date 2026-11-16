@@ -1,39 +1,39 @@
 {
   "slug": "projectile",
-  "title": "Projectile Range",
+  "title": "Tiro parabólico",
   "topic": "mechanics",
-  "eyebrow": "Goosethropic Physics · Mechanics · the authoring template",
-  "lede": "The smallest lesson in the lab, on purpose: a launch at speed v and angle θ, everything closed form. It exists twice — once as physics, and once as the worked example the <a href='../../classroom/authoring.html'>authoring guide</a> walks through line by line. The trajectory is drawn in natural units v²/g, which is why changing v or g never changes the shape — only the numbers.",
+  "eyebrow": "Goosethropic Physics · Mecánica · la plantilla de autoría",
+  "lede": "Un lanzamiento con rapidez v y ángulo θ, sin aire que lo frene, y todo sale de fórmulas exactas: nada se simula paso a paso. Mueve el ángulo y mira tres números a la vez: hasta dónde llega (el alcance), qué tan alto sube y cuánto tarda en caer. La trayectoria se dibuja en unidades naturales, v²/g, y por eso cambiar v o g nunca cambia la forma: sólo los números.",
   "views": [
     {
       "world": {
-        "x0": -0.075,
-        "x1": 1.125,
-        "y0": -0.06,
-        "y1": 0.54
+        "x0": -0.05,
+        "x1": 1.05,
+        "y0": -0.03,
+        "y1": 0.52
       },
       "viewBox": {
         "w": 1000,
         "h": 500
       },
       "wide": true,
-      "title": "The flight, in natural units",
+      "title": "El vuelo, en unidades naturales",
       "law": "y = x·tan θ − g x²/(2 v² cos² θ)"
     }
   ],
   "params": {
     "theta": {
-      "label": "Launch angle θ",
-      "min": 0.01,
-      "max": 0.24,
-      "step": 0.001,
-      "value": 0.1,
-      "unit": "τ",
-      "digits": 3,
-      "scale": 6.283185307179586
+      "label": "Ángulo de lanzamiento θ",
+      "min": 1,
+      "max": 89,
+      "step": 0.5,
+      "value": 36,
+      "unit": "°",
+      "digits": 1,
+      "scale": 0.017453292519943295
     },
     "v": {
-      "label": "Launch speed v",
+      "label": "Rapidez de lanzamiento v",
       "min": 1,
       "max": 4,
       "step": 0.05,
@@ -42,7 +42,7 @@
       "digits": 2
     },
     "g": {
-      "label": "Gravity g",
+      "label": "Gravedad g",
       "min": 1.62,
       "max": 24.79,
       "step": 0.01,
@@ -53,41 +53,40 @@
   },
   "sweep": {
     "param": "theta",
-    "rate": 0.02,
-    "label": "Sweep the angle"
+    "rate": 7.2,
+    "label": "Barre el ángulo"
   },
   "readouts": [
     {
-      "slot": 0,
-      "label": "θ",
-      "fmt": "turns3"
-    },
-    {
       "slot": 1,
-      "label": "Range",
+      "label": "Alcance",
       "fmt": "fix3",
+      "unit": "m",
       "hero": true
     },
     {
       "slot": 2,
-      "label": "Apex height",
-      "fmt": "fix3"
+      "label": "Altura máxima",
+      "fmt": "fix3",
+      "unit": "m"
     },
     {
       "slot": 3,
-      "label": "Flight time",
-      "fmt": "fix3"
+      "label": "Tiempo de vuelo",
+      "fmt": "fix3",
+      "unit": "s"
     },
     {
       "slot": 4,
-      "label": "% of best range",
-      "fmt": "fix3",
+      "label": "% del alcance máximo",
+      "fmt": "fix2",
+      "unit": "%",
       "hero": true
     }
   ],
   "styles": [
     {
-      "var": "--ash-dim",
+      "var": "--ash",
       "width": 1.5
     },
     {
@@ -106,52 +105,52 @@
   "legend": [
     {
       "style": 1,
-      "label": "the flight"
+      "label": "el vuelo"
     },
     {
       "style": 2,
-      "label": "apex"
+      "label": "el punto más alto"
     },
     {
       "style": 3,
-      "label": "launch direction / range tick"
+      "label": "dirección de lanzamiento / marca del alcance"
     }
   ],
   "claims": [
     {
       "id": "P1",
-      "text": "The drawn curve lands exactly where the range formula says.",
-      "test": "p1_curve_lands_on_the_range"
+      "text": "La curva dibujada cae exactamente donde dice la fórmula del alcance.",
+      "test": "p1_la_curva_cae_en_el_alcance"
     },
     {
       "id": "P2",
-      "text": "Range is maximized at θ = τ/8 and nowhere else.",
-      "test": "p2_range_maxes_at_tau_over_eight"
+      "text": "El alcance es máximo a θ = 45°, y en ningún otro ángulo.",
+      "test": "p2_el_alcance_es_maximo_a_45_grados"
     },
     {
       "id": "P3",
-      "text": "Complementary angles share a range: R(θ) = R(τ/4 − θ).",
-      "test": "p3_complementary_angles_share_a_range"
+      "text": "Los ángulos complementarios tienen el mismo alcance: R(θ) = R(90° − θ).",
+      "test": "p3_los_complementarios_tienen_el_mismo_alcance"
     },
     {
       "id": "P4",
-      "text": "The drawn apex sits at v²sin²θ/2g.",
-      "test": "p4_apex_matches"
+      "text": "El punto más alto dibujado está a v²·sen²θ/2g.",
+      "test": "p4_el_punto_mas_alto_coincide"
     },
     {
       "id": "P5",
-      "text": "The drawn shape is structurally independent of v and g.",
-      "test": "p5_shape_ignores_v_and_g"
+      "text": "La forma dibujada no depende de v ni de g, por construcción.",
+      "test": "p5_la_forma_ignora_v_y_g"
     }
   ],
   "tryThis": [
-    "Sweep the angle and watch % of best range: it touches 100 exactly once. Where, and why is it τ/8 and not τ/4?",
-    "Find two angles with the same range readout — then check their sum. P3 says it is always τ/4.",
-    "Slide v and g around while the sweep runs: the numbers churn, the shape never moves. What combination of v and g IS the shape? (It isn't any — that is P5.)",
-    "Moon vs Jupiter at fixed θ: how do range and flight time each scale with g?"
+    "Barre el ángulo y mira el % del alcance máximo: llega a 100 una sola vez. ¿En qué ángulo? ¿Y por qué ése, y no 90°?",
+    "Busca dos ángulos con la misma lectura de alcance y súmalos. P3 dice que siempre dan 90°.",
+    "Mueve v y g mientras corre el barrido: los números cambian y la forma no se mueve. ¿Qué combinación de v y g ES la forma? (Ninguna: eso es P5.)",
+    "La Luna contra Júpiter, con θ fijo: ¿cómo cambian el alcance y el tiempo de vuelo con g?"
   ],
   "notes": "notes.html",
-  "footer": "the authoring template — its full source is walked through in the classroom guide · angles in turns of τ",
-  "card": "The smallest lesson in the lab, on purpose — and the worked example the authoring guide dissects line by line. Range peaks at τ/8; complementary angles tie.",
-  "cardClaim": "R = v²·sin(2θ)/g, maximized at θ = τ/8; the drawn shape is independent of v and g by construction."
+  "footer": "la plantilla de autoría: la <a href='../../classroom/authoring.html'>guía de autoría</a> (en inglés) recorre su código completo línea por línea, y <code>cargo test -p lesson-projectile</code> corre P1–P5 sobre el mismo crate que corre esta página · ángulos en grados",
+  "card": "La lección más pequeña del laboratorio, a propósito, y el ejemplo trabajado que la guía de autoría disecciona línea por línea. El alcance es máximo a 45°; los ángulos complementarios empatan.",
+  "cardClaim": "R = v²·sen(2θ)/g, máximo a θ = 45°; la forma dibujada no depende de v ni de g, por construcción."
 }

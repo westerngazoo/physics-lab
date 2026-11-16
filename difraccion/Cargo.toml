@@ -1,0 +1,9 @@
+[package]
+name = "difraccion"
+version = "0.1.0"
+edition = "2021"
+description = "Difracción de Fresnel: las integrales C y S y la luz detrás de un borde recto, sin pasos de integración."
+license = "MIT OR Apache-2.0"
+
+# Sin dependencias: un número especial no necesita kernel.
+[dependencies]

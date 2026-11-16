@@ -197,6 +197,44 @@ function fatal(title, detail) {
   for (const [key, p] of Object.entries(lesson.params)) {
     state[key] = p.value;
     if (p.widget === "hidden") continue;   // e.g. the stepper's parameter
+    if (p.choices) {
+      // A pick among a few options is a choice, not a number to decode:
+      // one radio per integer from min to max, labelled in order. The
+      // lesson still receives the integer, so draw() never changes.
+      if (!Number.isInteger(p.min) || !Number.isInteger(p.max) ||
+          !Array.isArray(p.choices) || p.choices.length !== p.max - p.min + 1) {
+        throw new Error("runtime: param " + key +
+          ": choices must be one label per integer from min to max");
+      }
+      const fs = document.createElement("fieldset");
+      fs.className = "choice";
+      const lg = document.createElement("legend");
+      lg.className = "k";
+      lg.textContent = p.label;
+      const opts = h("div", "opts");
+      p.choices.forEach((text, i) => {
+        const v = p.min + i;
+        const opt = document.createElement("label");
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "p-" + key;
+        radio.value = v;
+        radio.checked = v === p.value;
+        radio.addEventListener("change", () => {
+          if (!radio.checked) return;
+          if (sweep) stopSweep();
+          state[key] = v;
+          draw();
+        });
+        const name = document.createElement("span");
+        name.textContent = text;
+        opt.append(radio, name);
+        opts.append(opt);
+      });
+      fs.append(lg, opts);
+      ctlBox.appendChild(fs);
+      continue;
+    }
     const wrap = document.createElement("div");
     const lab = document.createElement("label");
     lab.className = "k";
@@ -224,12 +262,19 @@ function fatal(title, detail) {
     const d = h("div", "num" + (r.hero ? " hero" : ""),
       "<dt>" + r.label + "</dt><dd>&mdash;</dd>");
     roBox.appendChild(d);
-    roEls.push({ slot: r.slot, fmt: r.fmt, el: d.querySelector("dd") });
+    const unit = r.unit && r.fmt !== "bool" ? " " + r.unit : "";
+    roEls.push({ slot: r.slot, fmt: r.fmt, unit, el: d.querySelector("dd") });
   }
+  // A yes/no readout speaks the page's language (the stub's <html lang>).
+  const yes = document.documentElement.lang.startsWith("es") ? "Sí" : "Yes";
   const FMT = {
     turns3: v => v.toFixed(3) + " τ",
+    fix0: v => v.toFixed(0),
+    fix1: v => v.toFixed(1),
+    fix2: v => v.toFixed(2),
     fix3: v => v.toFixed(3),
     sci: v => (v === 0 ? "0" : v.toExponential(1)),
+    bool: v => (v === 0 ? "No" : yes),
   };
 
   // ---- painting ----------------------------------------------------------
@@ -345,7 +390,9 @@ function fatal(title, detail) {
     const n = wasm.state_at(keys.length);
     paint(new Float64Array(wasm.memory.buffer, wasm.prims_ptr(), n), n);
     const rd = new Float64Array(wasm.memory.buffer, wasm.readouts_ptr(), 8);
-    for (const r of roEls) r.el.textContent = (FMT[r.fmt] || FMT.fix3)(rd[r.slot]);
+    for (const r of roEls) {
+      r.el.textContent = (FMT[r.fmt] || FMT.fix3)(rd[r.slot]) + r.unit;
+    }
   }
 
   // ---- sweep clock -------------------------------------------------------
