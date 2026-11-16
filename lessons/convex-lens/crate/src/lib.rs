@@ -177,7 +177,7 @@ mod tests {
     #[test]
     fn c2_ray3_lands_on_image_tip() {
         for d_o in [0.7, 1.0, 3.0, 4.0, 6.0, 7.5] {
-            let (di, m) = solve(d_o, 2.0).unwrap();
+            let (_di, m) = solve(d_o, 2.0).unwrap();
             let y3 = ray3_lens_y(1.0, d_o, 2.0);
             assert!((y3 - m * 1.0).abs() < 1e-9, "d_o={d_o}");
         }
